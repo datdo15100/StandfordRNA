@@ -189,3 +189,20 @@ Faithful port of the 1st-place `adaptive_rna_constraints` (single-pass greedy nu
 **New honest headline: ~0.21 best-of-5 TM** on the 12 CASP15 targets (was 0.161 before the de novo fallback), fully temporal-safe.
 
 Attribution: de novo generator and rule-based refiner are adapted from the 1st-place notebook (credited in module docstrings); the gradient geometry-energy refinement, temporal-safety, MMseqs pipeline, and evaluation harness are ours.
+
+---
+
+## Machine migration setup — DONE
+
+Preparing to move to a new box (i7-9700F / RTX 3060 Ti 8 GB / 24 GB RAM / 1 TB NVMe).
+- **git initialised** + first commit (60 code files, ~490 KB; data/binaries/secrets gitignored). `.gitignore` extended for `data/*.complete` and `*.tmp.*` (stray atomic-write files from the /mnt mount were cleaned up).
+- **`environment.yml`** (was missing) — reproducible conda env; torch installed via pip index matching the GPU/CUDA.
+- **Path portability**: `RNA3D_DATA` / `RNA3D_CACHE` env-var overrides in `paths.py` so the 61 GB dataset can live anywhere on the new NVMe with no config edit (verified).
+- **`SETUP.md`**: new-machine bootstrap (clone → env → data placement → USalign recompile → `scripts/rebuild_artifacts.sh` → sanity). Notes the NVMe/24 GB wins (CIF parse minutes not ~35 min; MMseqs can return to default `k=15`).
+- **`scripts/rebuild_artifacts.sh`**: regenerates priors → template DB → MMseqs DB in order.
+
+### Pretrained-model feasibility on the 3060 Ti (`reports/thesis_notes/pretrained_feasibility.md`)
+- **RibonanzaNet2** (single-seq prior) and **DRfold2** (RNA-specific 3D): **fit in 8 GB** for typical lengths → run locally; these realise Source-B and feed the `L_dist` hook / candidate pool.
+- **Boltz-1** marginal (short RNA only), **Boltz-2 / Chai-1** OOM beyond very short → run on **Kaggle (16 GB T4×2/P100)** or a rented 24 GB GPU. AF3-style models OOM on long targets (e.g. R1138 720 nt) even at 16 GB → TBM/de novo fallback there regardless.
+- MSAs are provided by the competition (`MSA/`), so Boltz/Chai can run offline on Kaggle; RibonanzaNet needs no MSA.
+- **Answer**: the 3060 Ti box is enough for the pretrained branch the plan prioritises (RibonanzaNet2 + DRfold2); reserve Kaggle for AF3-style models and the final submission run.
