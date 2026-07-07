@@ -1,0 +1,35 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+
+# Derived data (rebuildable from raw competition data)
+data/interim/
+data/processed/
+data/cache/
+
+# Raw competition data (57GB+, do not commit)
+data/stanford-rna-3d-folding/
+
+# Reports artifacts
+reports/figures/
+reports/tables/
+
+# External binaries / models
+external/binaries/USalign
+external/pretrained/
+
+# Large/binary artifacts
+*.zip
+*.npz
+*.parquet
+*.pkl
+*.pt
+*.pth
+
+# Data markers + atomic-write temp files (from /mnt mount hiccups)
+data/*.complete
+*.tmp.*

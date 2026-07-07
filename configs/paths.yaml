@@ -1,0 +1,40 @@
+# Central path configuration for the RNA 3D thesis pipeline.
+# All paths are resolved relative to the repo root unless absolute.
+
+# Raw competition data (read-only)
+comp_data: data/stanford-rna-3d-folding
+
+# Derived artifacts (gitignored)
+interim: data/interim
+processed: data/processed
+cache: data/cache
+
+# External binaries
+usalign: external/binaries/USalign
+
+# Reports
+figures: reports/figures
+tables: reports/tables
+
+# Key competition files (relative to comp_data)
+files:
+  train_sequences: train_sequences.csv
+  train_labels: train_labels.csv
+  train_sequences_v2: train_sequences.v2.csv
+  train_labels_v2: train_labels.v2.csv
+  validation_sequences: validation_sequences.csv
+  validation_labels: validation_labels.csv
+  test_sequences: test_sequences.csv
+  sample_submission: sample_submission.csv
+  msa_dir: MSA
+  msa_v2_dir: MSA_v2
+  pdb_rna_dir: PDB_RNA
+  pdb_seqres: PDB_RNA/pdb_seqres_NA.fasta
+  pdb_release_dates: PDB_RNA/pdb_release_dates_NA.csv
+
+# Temporal safety: the safe cutoff for the public CASP15 validation/test set.
+# Train only on structures released strictly before this date when evaluating on validation.
+casp15_safe_cutoff: "2022-05-27"
+
+# Sentinel value used in label CSVs for unresolved coordinates.
+coord_sentinel: -1.0e17
