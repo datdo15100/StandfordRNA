@@ -266,3 +266,21 @@ Honest, temporal-safe best-of-5 TM on the 12 CASP15 targets — how the pipeline
 Method (research value): *measure* honestly → *diagnose* the weakness by **faithfully reproducing the 1st-place baseline** (0.297 temporal-safe, 0.94 leaked) → *fix* the identified bottleneck (search recall) → *surpass* the baseline, while our distinct contribution (gradient geometry-energy refinement) independently wins on physical validity (−53 % clashes, −86 % backbone deviation vs the rule-based nudging). Plus the leakage analysis (temporal-safe 0.31 vs full-PDB 0.94 for the 1st-place method) quantifying what CASP15 leaderboard scores actually rest on.
 
 Reminder: these are **12-CASP15, temporal-safe** numbers. The private-leaderboard 0.593 the 1st place reports is on ~40 hidden targets with full-PDB templates — reproducible only via a Kaggle late submission, where our temporal filter is a no-op and the pipeline runs at full template power.
+
+---
+
+## Refinement ablation — is the geometry refinement truthful? — DONE
+
+Adversarial test of our own contribution on the NEW pipeline (`scripts/run_refine_ablation.py`). Added an **independent** physical metric (`sharp_kinks` = fraction of C1' pseudo-bond-angles < 70°) that the refiner does **not** optimize, alongside the optimized ones. Settings: `none` (no refine) / `gradient` (ours) / `rule` (1st place). Aux metrics averaged over all 5 predicted structures, temporal-safe.
+
+| setting | TM (indep.) | clash/res (opt) | bb_dev Å (opt) | kinks (indep.) |
+|---|---|---|---|---|
+| none | 0.309 | 0.163 | 1.458 | 0.054 |
+| rule (1st place) | 0.310 | 0.099 | 1.026 | 0.094 |
+| **gradient (ours)** | 0.307 | **0.094** | **0.777** | 0.102 |
+
+**Honest verdict — partly truthful, with a caveat:**
+1. **TM is preserved, not gamed**: none 0.309 → gradient 0.307 (−0.002). On the new pipeline the composite-search candidates are already good, so refinement is **TM-neutral** (it was slightly TM-positive on the older, weaker pool). It is not needed for the leaderboard metric.
+2. **Clash/backbone gains are real but not free**: gradient cuts clashes −42 % and backbone −47 % (beats rule), **but the independent sharp-kink rate nearly doubles** (0.054→0.102). The v1 energy constrains distances (adjacent + clash) with **no angle term**, so it satisfies them by bending the chain more sharply — **trading distance error for angle error**, not uniformly improving geometry.
+
+So "refinement improves physical validity" is only defensible **scoped to clash + backbone spacing**, and must be reported with the kink regression. **v2 fix**: add a soft pseudo-bond-angle/curvature penalty so it can't buy distance compliance with kinks; expected to push clash+backbone down *and* keep kinks ≤ no-refine, truthfully, at unchanged TM. Artifacts: `reports/tables/refine_ablation.csv`, `reports/thesis_notes/refine_ablation.md`.

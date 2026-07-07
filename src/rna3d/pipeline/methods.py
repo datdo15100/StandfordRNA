@@ -97,6 +97,13 @@ def _candidate_pool(cands: list[Candidate], seq: str, base_seed: int, n: int = 5
     return pool
 
 
+def m_tbm_none(cands: list[Candidate], seq: str, L: int,
+               rng: np.random.Generator) -> np.ndarray:
+    """TBM (or de novo fallback) candidate pool with NO refinement (raw gap-filled)."""
+    pool = _candidate_pool(cands, seq, base_seed=0)
+    return _pad_to_five([x0 for x0, _t, _c, _tc in pool], L, rng)
+
+
 def m_tbm_grad(cands: list[Candidate], seq: str, L: int, priors: dict,
                rng: np.random.Generator, cfg: RefineConfig | None = None) -> np.ndarray:
     """TBM (or de novo fallback) + our gradient geometry-energy refinement."""
