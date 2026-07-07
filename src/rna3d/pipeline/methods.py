@@ -81,16 +81,18 @@ def m_denovo(seq: str, rng: np.random.Generator, base_seed: int = 0) -> np.ndarr
     return np.stack(de_novo_ensemble(seq, n=5, base_seed=base_seed)).astype(float)
 
 
-def _candidate_pool(cands: list[Candidate], seq: str, base_seed: int):
-    """Up to five (coords, template_coords, conf_residue, confidence) tuples.
+def _candidate_pool(cands: list[Candidate], seq: str, base_seed: int, n: int = 5):
+    """Up to `n` (coords, template_coords, conf_residue, confidence) tuples.
 
-    Uses TBM candidates when available, else de novo folds (template_coords=None).
+    Uses TBM / composite candidates first, then fills any remaining slots with de
+    novo folds (template_coords=None) as a best-of-5 hedge — so weak-template targets
+    still carry both a real-fold copy and a de novo alternative.
     """
     pool = []
-    for c in cands[:5]:
+    for c in cands[:n]:
         pool.append((c.coords, c.coords, c.conf_residue, c.confidence))
-    if not pool:
-        for x in de_novo_ensemble(seq, n=5, base_seed=base_seed):
+    if len(pool) < n:
+        for x in de_novo_ensemble(seq, n=n - len(pool), base_seed=base_seed):
             pool.append((x, None, None, 0.1))  # no template to anchor to
     return pool
 

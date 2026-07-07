@@ -233,3 +233,36 @@ Ported the full 1st-place pipeline (`utilities/top1_tbm.py`) to `src/rna3d/basel
 **Actionable next step (highest value)**: strengthen search — a brute-force composite-similarity fallback when MMseqs returns few hits (or the 2nd-place RibonanzaNet-representation search). Expected to close most of the 0.21→0.30 gap, since it directly fixes the no-template targets.
 
 Artifacts: `src/rna3d/baselines/top1.py`, `scripts/reproduce_top1.py`, `scripts/build_top1_from_existing.py`, `reports/tables/reproduce_top1.csv`, `reports/thesis_notes/reproduce_top1.md`.
+
+---
+
+## Composite-similarity search — fixing the diagnosed weakness — DONE
+
+The reproduction pinned our loss on **template recall**: MMseqs k=13 returns 0 temporal-safe candidates on the no-homolog CASP15 targets, so we fell to de novo. Fix: add an exhaustive **composite-similarity search** (`src/rna3d/template/composite_search.py`, reusing the ported `find_similar_sequences`: global+local Smith-Waterman + RNA k-mer/feature similarity over the 7,155-seq deduped library), **always merged** with the MMseqs hits inside `build_tbm_candidates` and re-ranked by confidence — so the best template from either source wins. Best-of-5 also keeps a **de novo hedge** in any unused slots. Still temporal-safe + leakage-guarded.
+
+**Ablation** (`scripts/run_composite_ablation.py`, temporal-safe best-of-5 TM):
+
+| | mean | note |
+|---|---|---|
+| comp_off (MMseqs only, previous) | 0.2117 | |
+| **comp_on (MMseqs + composite, merged)** | **0.3072** | Δ **+0.0955**, 11/12 improved, 1 worse (R1116 −0.008) |
+| top-1 reproduced (temporal-safe) | 0.2973 | **we now edge past it (+0.010)** |
+
+We beat the reproduced 1st-place method on **9 of 12** targets. Biggest gains are exactly the previously-broken no-template targets (R1117 0.10→0.42, R1149 0.16→0.32, R1156 0.17→0.28) — several now surpass top-1. The gradient refinement is unchanged; **all the gain is search recall**. Composite is always-on (~8 s/target; ~5 min for a 40-target Kaggle run — well within budget). Now the default in `build_tbm_candidates` and the Kaggle inference loop; `scripts/rebuild_artifacts.sh` builds the composite library.
+
+---
+
+## Experimental story (the full arc)
+
+Honest, temporal-safe best-of-5 TM on the 12 CASP15 targets — how the pipeline evolved:
+
+| step | mean TM | what changed |
+|---|---|---|
+| B0 dummy (extended chain) | 0.069 | floor |
+| TBM + gradient refine (MMseqs only) | 0.161 | temporal-safe template modeling + geometry refinement |
+| + de novo fallback | 0.212 | replace extended-chain fallback for no-template targets (idea from 1st place) |
+| **+ composite-similarity search (merged)** | **0.307** | fix the diagnosed recall gap — **surpasses the reproduced 1st-place method (0.297)** |
+
+Method (research value): *measure* honestly → *diagnose* the weakness by **faithfully reproducing the 1st-place baseline** (0.297 temporal-safe, 0.94 leaked) → *fix* the identified bottleneck (search recall) → *surpass* the baseline, while our distinct contribution (gradient geometry-energy refinement) independently wins on physical validity (−53 % clashes, −86 % backbone deviation vs the rule-based nudging). Plus the leakage analysis (temporal-safe 0.31 vs full-PDB 0.94 for the 1st-place method) quantifying what CASP15 leaderboard scores actually rest on.
+
+Reminder: these are **12-CASP15, temporal-safe** numbers. The private-leaderboard 0.593 the 1st place reports is on ~40 hidden targets with full-PDB templates — reproducible only via a Kaggle late submission, where our temporal filter is a no-op and the pipeline runs at full template power.

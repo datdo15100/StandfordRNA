@@ -21,13 +21,16 @@ $PY scripts/run_phase2_priors.py
 echo "== [2/3] template DB (parse ~8.6k CIFs; minutes on NVMe, ~35min on a slow mount) =="
 $PY scripts/build_template_db.py --workers "$(nproc)"
 
-echo "== [3/3] warm the MMseqs target DB (createdb over template FASTA) =="
+echo "== [3/4] warm the MMseqs target DB (createdb over template FASTA) =="
 $PY - <<'PYEOF'
 import sys; sys.path.insert(0, "src")
 from rna3d.template.mmseqs_search import ensure_target_db, ensure_template_fasta
 ensure_template_fasta(); ensure_target_db()
 print("MMseqs target DB ready")
 PYEOF
+
+echo "== [4/4] composite-search library (deduped template set for the search fallback) =="
+$PY scripts/build_top1_from_existing.py
 
 echo "== done. Derived artifacts:"
 ls -lh data/processed/geometry_priors.json data/processed/template_meta.parquet \

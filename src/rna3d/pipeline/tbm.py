@@ -46,43 +46,61 @@ def build_tbm_candidates(
     max_candidates: int = 5,
     exclude_pdb_ids: tuple[str, ...] = (),
     apply_temporal: bool = True,
+    composite_fallback: bool = True,
     rng: np.random.Generator | None = None,
 ) -> list[Candidate]:
     if rng is None:
         rng = np.random.default_rng(0)
 
     meta_idx = meta.set_index("chain_key")
-    # candidate chain_keys from mmseqs, best first
-    if hits.empty:
-        return []
-    cand_keys = (hits.sort_values("bits", ascending=False)["target"]
-                 .drop_duplicates().tolist())
-
     scored: list[dict] = []
-    seen_templates = 0
-    for key in cand_keys:
-        if key not in meta_idx.index:
-            continue
-        row = meta_idx.loc[key]
-        # ---- temporal-safety + self-leakage gate ----
-        if apply_temporal and not temporal_valid(row["release_date"], cutoff):
-            continue
-        if str(row["pdb_id"]).upper() in exclude_pdb_ids:
-            continue
 
-        tmpl = db.get_chain(key)
+    def _add_template(key, pdb_id, tmpl, source):
         tr = align_and_transfer(target_seq, tmpl, key)
         if tr.coverage <= 0:
-            continue
+            return False
         completeness = tr.template_resolved / max(tr.template_len, 1)
         conf = template_confidence(tr.identity, tr.coverage, completeness)
-        scored.append({
-            "chain_key": key, "pdb_id": str(row["pdb_id"]).upper(),
-            "transfer": tr, "confidence": conf, "completeness": completeness,
-        })
-        seen_templates += 1
-        if seen_templates >= realign_topk:
-            break
+        scored.append({"chain_key": key, "pdb_id": pdb_id, "transfer": tr,
+                       "confidence": conf, "completeness": completeness, "source": source})
+        return True
+
+    # ---- primary: MMseqs prefilter hits, best first ----
+    if not hits.empty:
+        cand_keys = (hits.sort_values("bits", ascending=False)["target"]
+                     .drop_duplicates().tolist())
+        seen = 0
+        for key in cand_keys:
+            if key not in meta_idx.index:
+                continue
+            row = meta_idx.loc[key]
+            if apply_temporal and not temporal_valid(row["release_date"], cutoff):
+                continue
+            if str(row["pdb_id"]).upper() in exclude_pdb_ids:
+                continue
+            if _add_template(key, str(row["pdb_id"]).upper(), db.get_chain(key), "mmseqs"):
+                seen += 1
+                if seen >= realign_topk:
+                    break
+
+    # ---- exhaustive composite similarity, merged with the MMseqs hits ----
+    # Always run (not just when MMseqs is empty): the composite scan often finds a
+    # higher-confidence template than the k=13 prefilter even on "templated" targets,
+    # and confidence ranking below keeps the best from either source.
+    if composite_fallback:
+        try:
+            from ..template import composite_search
+            comp_cutoff = cutoff if apply_temporal else "9999-12-31"
+            existing = {s["chain_key"] for s in scored}
+            for c in composite_search.search(target_seq, comp_cutoff,
+                                             exclude_pdb_ids=exclude_pdb_ids,
+                                             top_n=max_candidates + 3):
+                if c["chain_key"] in existing:
+                    continue
+                _add_template(c["chain_key"], c["pdb_id"],
+                              {"seq": c["seq"], "coords": c["coords"]}, "composite")
+        except FileNotFoundError:
+            pass  # composite library not built yet — skip gracefully
 
     if not scored:
         return []
@@ -110,10 +128,10 @@ def build_tbm_candidates(
         tr = s["transfer"]
         filled, conf_res = fill_gaps(tr.coords, tr.mask, adj_dist=adj_dist, rng=rng)
         candidates.append(Candidate(
-            target_id=target_id, source="tbm", chain_key=s["chain_key"],
+            target_id=target_id, source=s.get("source", "tbm"), chain_key=s["chain_key"],
             coords=filled, conf_residue=conf_res, mask=tr.mask,
             confidence=s["confidence"], identity=tr.identity, coverage=tr.coverage,
             meta={"pdb_id": s["pdb_id"], "completeness": s["completeness"],
-                  "template_len": tr.template_len},
+                  "template_len": tr.template_len, "source": s.get("source", "tbm")},
         ))
     return candidates

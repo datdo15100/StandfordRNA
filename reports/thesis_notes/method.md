@@ -11,11 +11,18 @@ prioritises getting the **global fold** right over atomic precision.
 
 ## 2. Pipeline overview
 ```
-sequence --> MMseqs2 nucleotide search --> temporal/leakage filter
-         --> Biopython global align --> C1' coordinate transfer (+ transfer mask)
+sequence --> two-stage search: MMseqs2 nucleotide prefilter (fast)
+                             + exhaustive composite similarity (high recall), merged
+         --> temporal/leakage filter --> Biopython global align --> C1' transfer (+mask)
          --> geometry-aware gap fill --> confidence-weighted geometry refinement
-         --> best-of-5 selection --> submission.csv
+         --> best-of-5 (+ de novo hedge for no-template targets) --> submission.csv
 ```
+Search is two-stage because the MMseqs k=13 prefilter, while fast, misses weak/remote RNA
+matches (0 hits on no-homolog CASP15 targets). An exhaustive composite-similarity scan
+(global+local Smith-Waterman + RNA k-mer/feature similarity) is merged in and everything is
+re-ranked by confidence, so the best template from either source wins. This raised
+temporal-safe CASP15 best-of-5 TM from 0.21 to **0.307**, past the reproduced 1st-place
+method (0.297). See `reports/thesis_notes/composite_ablation.md`.
 
 ## 3. Temporal safety & leakage control (central to a credible thesis)
 - **Geometry priors** estimated only from train chains with `temporal_cutoff < 2022-05-27`.
