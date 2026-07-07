@@ -206,3 +206,30 @@ Preparing to move to a new box (i7-9700F / RTX 3060 Ti 8 GB / 24 GB RAM / 1 TB N
 - **Boltz-1** marginal (short RNA only), **Boltz-2 / Chai-1** OOM beyond very short → run on **Kaggle (16 GB T4×2/P100)** or a rented 24 GB GPU. AF3-style models OOM on long targets (e.g. R1138 720 nt) even at 16 GB → TBM/de novo fallback there regardless.
 - MSAs are provided by the competition (`MSA/`), so Boltz/Chai can run offline on Kaggle; RibonanzaNet needs no MSA.
 - **Answer**: the 3060 Ti box is enough for the pretrained branch the plan prioritises (RibonanzaNet2 + DRfold2); reserve Kaggle for AF3-style models and the final submission run.
+
+---
+
+## Faithful reproduction of the 1st-place TBM-only method — DONE
+
+Ported the full 1st-place pipeline (`utilities/top1_tbm.py`) to `src/rna3d/baselines/top1.py`: composite similarity (global+local Smith-Waterman + RNA features + k-mer) → KMeans diversity → transfer + gap-fill → rule-based refine → de novo fallback. Template library reconstructed from our existing DB (`scripts/build_top1_from_existing.py`, 7,155 unique seqs — the 8 h Biopython re-parse is redundant; we already have the CIFs parsed). Scored on the 12 CASP15 targets in two regimes (`scripts/reproduce_top1.py`).
+
+| regime | mean best-of-5 TM |
+|---|---|
+| **full_pdb (their setup, no temporal filter — LEAKED)** | **0.940** |
+| **temporal_safe (honest)** | **0.297** |
+| leakage on CASP15 | **+0.643** |
+
+**Their public 0.593 is a private-set score (≈40 hidden post-competition RNAs) — NOT reproducible on the 12 public CASP15 targets. `full_pdb` (0.94) is the local leaked proxy: with no date filter the natives sit in the PDB dump and get copied.**
+
+### Honest head-to-head (temporal-safe) — and the key finding
+
+| | all 12 | templated (5) | no-template (7) |
+|---|---|---|---|
+| **top-1 reproduced** | **0.297** | 0.348 | 0.261 |
+| ours (de novo + gradient) | 0.212 | 0.286 | 0.159 |
+
+**The reproduced 1st-place method beats ours on all 12 targets, temporal-safe.** Diagnosis: the gap is **template SEARCH, not refinement**. Their exhaustive composite-similarity scan returns *some* real RNA template for every target (even non-homologous, by feature/k-mer/local similarity); copying a plausible real fold (TM ≈ 0.2–0.4) beats our de novo (≈0.15) where our **MMseqs k=13** search returns 0 candidates. This echoes the 2nd-place team's point that plain nucleotide search misses remote RNA homologs. Our gradient refinement still wins on physical validity (separate axis) — it is not the weak link.
+
+**Actionable next step (highest value)**: strengthen search — a brute-force composite-similarity fallback when MMseqs returns few hits (or the 2nd-place RibonanzaNet-representation search). Expected to close most of the 0.21→0.30 gap, since it directly fixes the no-template targets.
+
+Artifacts: `src/rna3d/baselines/top1.py`, `scripts/reproduce_top1.py`, `scripts/build_top1_from_existing.py`, `reports/tables/reproduce_top1.csv`, `reports/thesis_notes/reproduce_top1.md`.
