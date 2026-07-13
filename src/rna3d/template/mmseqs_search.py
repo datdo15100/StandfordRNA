@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -34,6 +35,9 @@ def mmseqs_bin() -> str:
     installed in the same conda env's bin/) so background shells without the env's
     PATH still find it.
     """
+    configured = os.environ.get("RNA3D_MMSEQS")
+    if configured:
+        return configured
     found = shutil.which("mmseqs")
     if found:
         return found

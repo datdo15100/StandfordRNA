@@ -18,8 +18,10 @@ CONFIG_PATH = REPO_ROOT / "configs" / "paths.yaml"
 # Environment overrides (set these on a new machine so nothing needs editing):
 #   RNA3D_DATA  -> absolute path to the competition data dir (the 61 GB folder)
 #   RNA3D_CACHE -> absolute path for derived caches (default: <repo>/data/cache)
+#   RNA3D_PROCESSED -> absolute path for compact processed artifacts
 ENV_DATA = "RNA3D_DATA"
 ENV_CACHE = "RNA3D_CACHE"
+ENV_PROCESSED = "RNA3D_PROCESSED"
 
 
 @functools.lru_cache(maxsize=1)
@@ -53,7 +55,8 @@ def interim() -> Path:
 
 
 def processed() -> Path:
-    d = _resolve(cfg()["processed"])
+    env = os.environ.get(ENV_PROCESSED)
+    d = Path(env) if env else _resolve(cfg()["processed"])
     d.mkdir(parents=True, exist_ok=True)
     return d
 

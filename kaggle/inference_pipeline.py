@@ -19,6 +19,7 @@ so it can be unit-tested locally against the same code as the thesis experiments
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -26,6 +27,8 @@ import pandas as pd
 
 
 def run_inference(test_sequences: pd.DataFrame, artifacts: Path, *,
+                  work_dir: Path | None = None,
+                  sample_submission: pd.DataFrame | None = None,
                   steps: int = 300, max_len: int = 1000) -> pd.DataFrame:
     """Produce a submission DataFrame for the given test sequences.
 
@@ -33,6 +36,21 @@ def run_inference(test_sequences: pd.DataFrame, artifacts: Path, *,
     safe to import in environments without the full stack.
     """
     import sys
+    artifacts = Path(artifacts).resolve()
+    work_dir = Path(work_dir or Path.cwd() / "rna3d_work").resolve()
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    # Kaggle input datasets are read-only. Load all reusable files from the
+    # mounted artifact bundle while keeping query/search outputs in working.
+    os.environ["RNA3D_PROCESSED"] = str(artifacts)
+    os.environ["RNA3D_CACHE"] = str(artifacts)
+    bundled_mmseqs = artifacts / "bin" / "mmseqs"
+    if bundled_mmseqs.is_file():
+        os.environ["RNA3D_MMSEQS"] = str(bundled_mmseqs)
+        bundled_lib = artifacts / "lib"
+        if bundled_lib.is_dir():
+            old = os.environ.get("LD_LIBRARY_PATH", "")
+            os.environ["LD_LIBRARY_PATH"] = f"{bundled_lib}:{old}" if old else str(bundled_lib)
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
     from rna3d.data import io
@@ -46,11 +64,11 @@ def run_inference(test_sequences: pd.DataFrame, artifacts: Path, *,
     cfg = RefineConfig(steps=steps)
 
     # one batched search
-    qf = artifacts / "_query.fasta"
+    qf = work_dir / "query.fasta"
     with open(qf, "w") as fh:
         for _, r in test_sequences.iterrows():
             fh.write(f">{r['target_id']}\n{r['sequence']}\n")
-    hits = mmseqs_search.search(qf, artifacts / "_hits.m8")
+    hits = mmseqs_search.search(qf, work_dir / "hits.m8")
 
     predictions: dict[str, np.ndarray] = {}
     for _, r in test_sequences.iterrows():
@@ -69,5 +87,7 @@ def run_inference(test_sequences: pd.DataFrame, artifacts: Path, *,
         predictions[tid] = M.m_tbm_grad(cands, seq, L, priors, rng, cfg=cfg)
 
     sub = io.build_submission(predictions, test_sequences)
+    if sample_submission is not None:
+        sub = io.order_submission_like(sub, sample_submission)
     io.validate_submission(sub, test_sequences)
     return sub

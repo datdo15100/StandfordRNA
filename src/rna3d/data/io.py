@@ -133,11 +133,35 @@ def validate_submission(sub: pd.DataFrame, sequences: pd.DataFrame) -> None:
         raise ValueError(f"submission missing columns: {sorted(missing_cols)}")
     if sub[SUBMISSION_COORD_COLS].isna().any().any():
         raise ValueError("submission contains NaN coordinates")
+    if sub["ID"].duplicated().any():
+        raise ValueError("submission contains duplicate IDs")
+    expected_ids = {
+        f"{r['target_id']}_{i + 1}"
+        for _, r in sequences.iterrows()
+        for i in range(len(r["sequence"]))
+    }
+    actual_ids = set(sub["ID"])
+    if actual_ids != expected_ids:
+        missing = sorted(expected_ids - actual_ids)[:5]
+        extra = sorted(actual_ids - expected_ids)[:5]
+        raise ValueError(f"submission ID mismatch: missing={missing}, extra={extra}")
     for _, r in sequences.iterrows():
         tid, seq = r["target_id"], r["sequence"]
-        got = (sub["ID"].map(target_id_of) == tid).sum()
-        if got != len(seq):
-            raise ValueError(f"{tid}: {got} rows vs {len(seq)} residues")
+        target = sub[sub["ID"].map(target_id_of) == tid].sort_values("resid")
+        if target["resid"].tolist() != list(range(1, len(seq) + 1)):
+            raise ValueError(f"{tid}: residue indices do not cover 1..{len(seq)}")
+        if "".join(target["resname"].astype(str)) != seq:
+            raise ValueError(f"{tid}: residue names do not match the sequence")
+
+
+def order_submission_like(sub: pd.DataFrame, sample: pd.DataFrame) -> pd.DataFrame:
+    """Return ``sub`` in the exact row order used by a sample submission."""
+    if sample["ID"].duplicated().any():
+        raise ValueError("sample submission contains duplicate IDs")
+    if set(sub["ID"]) != set(sample["ID"]):
+        raise ValueError("submission and sample submission IDs differ")
+    ordered = sub.set_index("ID").loc[sample["ID"]].reset_index()
+    return ordered[SUBMISSION_COLUMNS]
 
 
 def write_submission(sub: pd.DataFrame, path: str | Path) -> Path:
