@@ -15,6 +15,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import Bio
+
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = REPO / "data" / "interim" / "kaggle_artifact_bundle"
@@ -89,6 +91,25 @@ def main() -> None:
     for library in bundled_libraries(mmseqs):
         copy_file(library, output / "lib" / library.name)
 
+    # Kaggle's base Python image does not guarantee Biopython. Bundle the exact
+    # wheel so the notebook can install it offline into /kaggle/working.
+    wheels = output / "wheels"
+    wheels.mkdir()
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "download",
+            "--only-binary=:all:",
+            "--no-deps",
+            "--dest",
+            str(wheels),
+            f"biopython=={Bio.__version__}",
+        ],
+        check=True,
+    )
+
     git_commit = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=REPO, check=True,
         capture_output=True, text=True,
@@ -117,4 +138,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
