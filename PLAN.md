@@ -1267,3 +1267,967 @@ Kaggle notebook:
 ```
 
 Từ giờ nên bắt đầu bằng **Week 1: scoring + data audit + repo setup**, rồi khóa dần từng module. Không thêm ý tưởng mới vào core nữa; chỉ thêm nếu experiment chứng minh cần.
+
+___________________
+
+
+Tớ nghĩ cảm giác của ní **đúng một nửa**: project không yếu, nhưng framing hiện tại “top solutions làm TBM + pretrained, còn mình thêm geometry refinement” vẫn chưa đủ sắc.
+
+Vấn đề nằm ở chỗ kết quả của chính mình đã cho thấy:
+
+* tăng TM từ `0.212 → 0.307` chủ yếu đến từ **cải thiện template search recall**;
+* gradient refinement gần như **TM-neutral**;
+* nó giảm clash và backbone deviation, nhưng lại làm sharp kinks tăng gần gấp đôi.
+
+Vậy không nên tiếp tục claim rằng “geometry refinement nói chung” là contribution. Contribution cần được nâng lên thành:
+
+> **Một phương pháp confidence-aware để kết hợp template và pretrained predictions theo từng vùng, sau đó chiếu cấu trúc lên một manifold hình học RNA phụ thuộc motif.**
+
+Đây mới là một methodology có câu chuyện: top solutions đã chứng minh A+B hiệu quả, nhưng integration/refinement của họ còn heuristic; mình giải quyết điểm đó.
+
+---
+
+# 1. Research gap nên viết như thế nào?
+
+## Các phương pháp top đã chứng minh
+
+Từ writeup và reproduction của mình:
+
+### Method A — Template-based modeling
+
+```text
+search template
+→ alignment
+→ coordinate transfer
+→ gap filling
+```
+
+Mạnh khi tìm được template phù hợp.
+
+### Method B — Pretrained/deep-learning predictors
+
+```text
+sequence / MSA
+→ DRfold2 / Boltz / Chai / RNA foundation model
+→ 3D candidate hoặc pairwise prior
+```
+
+Dùng cho:
+
+* weak/no-template cases;
+* vùng template bị missing;
+* tạo candidate diversity.
+
+Các pretrained RNA models có thể cung cấp không chỉ tọa độ mà còn secondary-structure hoặc inter-helical information; RhoFold+ là một ví dụ end-to-end dự đoán RNA 3D đồng thời có các output cấu trúc trung gian như secondary structure và inter-helical angles. ([arXiv][1])
+
+### Method C — Heuristic post-processing
+
+Top-1 dùng rule-based nudging:
+
+* sửa sequential distance;
+* đẩy clash;
+* thêm base-pair attraction nhẹ;
+* scale bằng global template confidence.
+
+Top-2 chủ yếu patch vùng missing bằng template hoặc DL candidate sau structural alignment.
+
+---
+
+## Limitation thật sự
+
+Phần integration/refinement hiện vẫn có bốn điểm yếu.
+
+### 1. Quyết định ở mức whole structure
+
+Thông thường pipeline chọn:
+
+```text
+dùng template
+hoặc
+dùng DL
+```
+
+hoặc patch DL vào đúng vùng template thiếu.
+
+Nhưng trong một structure có thể tồn tại đồng thời:
+
+```text
+stem A: template rất đáng tin
+loop B: template sai alignment
+junction C: DL tốt hơn
+terminal D: cả hai đều không chắc
+```
+
+Không nên bắt toàn bộ target tin vào cùng một nguồn.
+
+### 2. Confidence quá thô
+
+Global score kiểu:
+
+```text
+confidence = identity × coverage × completeness
+```
+
+không nói được residue nào đáng tin.
+
+Hai template có cùng confidence tổng thể nhưng có thể:
+
+* một cái sai rải đều;
+* một cái đúng 90% và sai nghiêm trọng ở một junction.
+
+Refinement strength cần là `per-residue`, không chỉ `per-target`.
+
+### 3. Geometry rules không phụ thuộc structural context
+
+Một mean angle hoặc backbone rule dùng cho mọi residue là quá thô.
+
+RNA có:
+
+* stem;
+* hairpin loop;
+* bulge;
+* internal loop;
+* junction;
+* unpaired terminal.
+
+Các vùng này có phân phối góc và torsion rất khác nhau. Kết quả kink hiện tại chính là bằng chứng: optimizer thỏa distance bằng cách bẻ góc quá mạnh.
+
+Các nghiên cứu hình học RNA gần đây cũng nhấn mạnh kiến trúc RNA mang tính motif và representation hình học có thể mã hóa motif-level organization, thay vì coi toàn bộ backbone như một loại đường cong đồng nhất. ([arXiv][2])
+
+### 4. TM-score không đánh giá hết chất lượng refinement
+
+TM-score ưu tiên global fold. Một model có thể có cùng TM nhưng:
+
+* nhiều clash hơn;
+* kink nhiều hơn;
+* geometry backbone tệ hơn;
+* gap reconstruction thiếu ổn định.
+
+Các framework RNA 3D gần đây dùng cả metric global và RNA-specific local validity/self-consistency thay vì chỉ một structure similarity score. ([arXiv][3])
+
+---
+
+# 2. Methodology đề xuất: **GeoFuse-RNA**
+
+## Tên đầy đủ
+
+**GeoFuse-RNA: Confidence-Aware Segment-Level Fusion and Motif-Conditioned Geometric Refinement for Hybrid RNA 3D Prediction**
+
+Tiếng Việt:
+
+**GeoFuse-RNA: Kết hợp cấu trúc theo độ tin cậy từng vùng và tinh chỉnh hình học phụ thuộc motif cho dự đoán RNA 3D lai**
+
+Đây nên là main method của thesis.
+
+---
+
+# 3. Ý tưởng trung tâm
+
+Thay vì:
+
+```text
+TBM candidate
+→ global geometry refine
+```
+
+mình làm:
+
+```text
+TBM candidates + pretrained candidates
+        ↓
+phân cụm theo global fold
+        ↓
+ước lượng độ tin cậy của từng nguồn tại từng residue
+        ↓
+fuse các nguồn theo từng segment
+        ↓
+motif-conditioned differentiable geometry projection
+        ↓
+quality–diversity selection
+        ↓
+5 structures
+```
+
+Tức là pretrained model và TBM vẫn cung cấp **fold information**, nhưng contribution của mình là:
+
+> biết tin nguồn nào, ở vùng nào, với mức độ bao nhiêu, và làm sao dung hòa chúng mà không tạo seam, clash hoặc kink.
+
+---
+
+# 4. Step-by-step methodology
+
+## Step 1 — Candidate generation
+
+Tạo candidate bank từ nhiều nguồn.
+
+### Template candidates
+
+```text
+MMseqs2 search
++ composite-similarity search
+→ exact alignment
+→ coordinate transfer
+→ gap filling
+```
+
+Giữ top-K, ví dụ 5–10 candidate.
+
+### Pretrained candidates
+
+Ưu tiên thực tế:
+
+```text
+DRfold2:
+    3D structure candidates
+
+RibonanzaNet2:
+    representation / secondary / pairwise prior
+    tùy checkpoint thực tế cung cấp gì
+
+Boltz/Chai:
+    optional candidate cho target ngắn hoặc chạy Kaggle GPU
+```
+
+Không cần train model 3D từ đầu.
+
+### De novo candidate
+
+Giữ de novo branch làm diversity/fallback, nhưng không coi nó là nguồn chính khi pretrained model có sẵn.
+
+---
+
+## Step 2 — Fold-family clustering
+
+Không được fuse hai structure có global folds hoàn toàn khác nhau.
+
+Tính self-TM hoặc pairwise structural similarity giữa candidates:
+
+```text
+candidate 1 ─┐
+candidate 2 ─┼─ fold family A
+candidate 3 ─┘
+
+candidate 4 ─┐
+candidate 5 ─┴─ fold family B
+```
+
+Mỗi cluster đại diện cho một hypothesis về global fold.
+
+Sau đó chỉ fuse candidates **trong cùng cluster**.
+
+Điều này tránh trường hợp:
+
+```text
+average hai fold khác topology
+→ structure trung gian vô nghĩa
+```
+
+Best-of-5 cuối cùng có thể lấy từ nhiều fold clusters khác nhau.
+
+---
+
+## Step 3 — Per-residue source confidence
+
+Với mỗi source `s`, residue `i`, tính:
+
+[
+q_{i,s}\in[0,1]
+]
+
+### Template confidence features
+
+* global sequence identity;
+* alignment coverage;
+* local alignment score;
+* match/mismatch;
+* gap mask;
+* coordinate resolved hay interpolated;
+* template completeness;
+* agreement với các template khác;
+* khoảng cách tới alignment boundary.
+
+Ví dụ:
+
+```text
+exact match, resolved C1′, templates agree
+→ q cao
+
+gap-filled, mismatch, templates disagree
+→ q thấp
+```
+
+### Pretrained confidence features
+
+Tùy model:
+
+* pLDDT-like confidence;
+* PAE/distogram entropy;
+* variance giữa nhiều model samples;
+* local agreement với other candidates;
+* base-pair/secondary-structure confidence.
+
+### Hai phiên bản
+
+#### Version cơ bản
+
+Dùng công thức rule-based để tạo `q`.
+
+#### Version mạnh — contribution ML nhẹ
+
+Train một **confidence gate** nhỏ:
+
+```text
+alignment features
++ sequence features
++ local geometry
++ source disagreement
+→ predicted per-residue reliability q_i,s
+```
+
+Model chỉ cần:
+
+* 1D CNN;
+* BiLSTM;
+* hoặc tiny Transformer.
+
+Không cần SE(3)-equivariant model lớn vì nó không trực tiếp predict coordinates, chỉ predict mức độ tin cậy.
+
+---
+
+# 5. Train confidence gate như thế nào?
+
+Dùng `train_v2` temporal-safe.
+
+## Tạo pseudo-template training examples
+
+Từ native structures:
+
+* thêm coordinate noise;
+* xóa residue blocks;
+* tạo alignment gaps;
+* shift một segment;
+* thay một đoạn bằng template khác;
+* tạo terminal extension;
+* inject local clash;
+* inject sharp kink.
+
+Ngoài synthetic corruptions, dùng real template-target pairs nếu tìm được homolog trước cutoff.
+
+## Label
+
+Sau khi align candidate với native bằng Kabsch:
+
+[
+e_{i,s}=|X^{source}_{i,s}-X^{native}_i|
+]
+
+Có thể định nghĩa:
+
+[
+q^{target}_{i,s}
+================
+
+\exp\left(-\frac{e_{i,s}^2}{2\sigma^2}\right)
+]
+
+Hoặc classification:
+
+```text
+good residue: local error < 3 Å
+bad residue:  local error ≥ 3 Å
+```
+
+Gate học được:
+
+> với alignment/context như thế này, residue của template hoặc pretrained source đáng tin đến đâu.
+
+Đây là phần làm methodology khác rõ so với top solution rule-based.
+
+---
+
+# 6. Segment-level fusion
+
+Sau khi candidates trong cùng fold cluster đã được structural alignment về cluster medoid, tạo fused scaffold.
+
+Naive weighted average:
+
+[
+X_i^{fused}
+===========
+
+\frac{\sum_s q_{i,s}X_{i,s}}
+{\sum_s q_{i,s}}
+]
+
+Nhưng không nên chỉ average rồi kết thúc.
+
+Fused coordinates là initialization; optimizer sẽ giải quyết:
+
+* seam giữa các source;
+* backbone discontinuity;
+* clashes;
+* incompatible local distances.
+
+Có thể smooth confidence theo segment để tránh source switching từng residue:
+
+```text
+residues 1–25: template A
+residues 26–45: pretrained model
+residues 46–80: template A
+```
+
+thay vì đổi nguồn liên tục từng nucleotide.
+
+---
+
+# 7. Motif-conditioned geometry refinement
+
+Đây là geometry contribution được nâng cấp.
+
+## Structural context
+
+Dự đoán hoặc suy ra mỗi residue thuộc:
+
+```text
+stem
+hairpin loop
+internal loop / bulge
+junction
+unpaired / terminal
+```
+
+Bản đầu có thể chỉ dùng:
+
+```text
+paired
+unpaired
+```
+
+Từ train structures, học phân phối geometry theo context:
+
+[
+p_m(d,\theta,\tau)
+]
+
+trong đó:
+
+* (d): adjacent C1′ distance;
+* (\theta): pseudo-bond angle của ba C1′ liên tiếp;
+* (\tau): signed pseudo-dihedral của bốn C1′ liên tiếp;
+* (m): motif/context class.
+
+Thay vì ép:
+
+```text
+mọi residue → cùng một mean angle
+```
+
+mình dùng:
+
+```text
+stem residue → stem geometry distribution
+loop residue → loop geometry distribution
+junction → broad flexible distribution
+```
+
+---
+
+## Energy function
+
+Với một fold cluster:
+
+[
+X^*
+===
+
+\arg\min_X E(X)
+]
+
+[
+E(X)
+====
+
+\lambda_{src}L_{source}
++
+\lambda_{pair}L_{pair}
++
+\lambda_{geom}L_{motif}
++
+\lambda_{clash}L_{clash}
++
+\lambda_{size}L_{Rg}
+]
+
+### Source-consistency loss
+
+[
+L_{source}
+==========
+
+\sum_i\sum_s
+q_{i,s},
+\rho\left(
+|X_i-X_{i,s}|
+\right)
+]
+
+Dùng robust loss như Huber để một source sai không kéo structure quá mạnh.
+
+### Pairwise pretrained prior
+
+Nếu model trả distogram:
+
+[
+L_{pair}
+========
+
+-\sum_{i,j}w_{ij}
+\log
+P_{ij}\left(
+bin(|X_i-X_j|)
+\right)
+]
+
+Nếu chỉ có coordinates, dùng distance consensus từ pretrained candidates.
+
+### Motif-conditioned geometry
+
+[
+L_{motif}
+=========
+
+-\sum_i
+\log p_{m_i}(d_i,\theta_i,\tau_i)
+]
+
+Điểm này sửa đúng bug v1:
+
+```text
+v1 giảm distance error bằng cách tạo kink
+v2 phạt geometry joint bất thường
+```
+
+### Clash loss
+
+Giữ non-local C1′ pairs khỏi overlap.
+
+### Rg/size loss
+
+Dùng nhẹ để chống collapse hoặc overexpansion.
+
+---
+
+# 8. Stage-wise optimization
+
+Không optimize mọi thứ cùng lúc với cùng weight.
+
+## Stage A — Preserve/fuse global fold
+
+```text
+source loss mạnh
+pairwise pretrained prior mạnh
+geometry nhẹ
+```
+
+Mục tiêu:
+
+* giữ topology từ TBM/DL;
+* dung hòa các nguồn.
+
+## Stage B — Repair uncertain regions
+
+```text
+freeze hoặc gần-freeze high-confidence residues
+optimize gap/low-confidence residues mạnh hơn
+```
+
+## Stage C — Geometry projection
+
+```text
+motif angle/torsion
+backbone
+clash
+Rg
+```
+
+Mục tiêu:
+
+* xóa seam;
+* giảm clash;
+* không tạo kink.
+
+Đây là khác biệt rõ với single-pass rule nudging.
+
+---
+
+# 9. Sinh 5 predictions
+
+Mỗi fold cluster tạo ít nhất một refined candidate.
+
+Ví dụ:
+
+```text
+S1: strongest TBM cluster, conservative fusion
+S2: strongest TBM cluster, pretrained-heavy fusion
+S3: second fold cluster
+S4: pretrained-only cluster
+S5: uncertainty sample / third fold family
+```
+
+Nếu distance-only branch có reflection ambiguity thì dùng mirror hedge.
+
+Diversity không đến từ đổi nhẹ lambda, mà đến từ:
+
+* distinct fold clusters;
+* distinct source mixtures;
+* sampled distograms;
+* distinct confidence hypotheses.
+
+---
+
+# 10. Candidate selection
+
+Ở test time không có TM-score, nên selector dùng:
+
+```text
+source confidence
+pretrained confidence
+geometry likelihood
+clash/kink penalties
+cluster support
+structural diversity
+```
+
+Một score mẫu:
+
+[
+Q(X)=
+aQ_{source}
++bQ_{pretrained}
+-cE_{geom}
+-dE_{clash}
+-eU_{source}
+]
+
+Nhưng không chọn top-5 score thuần vì có thể toàn cùng fold.
+
+Dùng quality-diversity selection:
+
+```text
+chọn candidate chất lượng cao
+nhưng phạt candidate quá giống các candidate đã chọn
+```
+
+---
+
+# 11. Cái này unique ở đâu?
+
+Không claim:
+
+> TBM + pretrained là mới.
+
+Không claim:
+
+> geometry constraints là mới.
+
+Claim:
+
+### Contribution 1 — Per-residue source fusion
+
+Top pipelines chủ yếu chọn whole candidate hoặc patch gaps. Mình fuse template và pretrained predictions theo độ tin cậy từng residue/segment.
+
+### Contribution 2 — Learned confidence gating
+
+Mình học “nơi nào nên tin nguồn nào” từ temporal-safe corruption-repair data, thay vì dùng một global threshold.
+
+### Contribution 3 — Motif-conditioned geometry projection
+
+Không dùng global C1′ mean rules. Geometry phụ thuộc paired/unpaired hoặc stem/loop/junction context.
+
+### Contribution 4 — Fold-cluster-aware best-of-5
+
+Không hòa trộn incompatible folds; mỗi fold hypothesis được refine riêng và giữ diversity.
+
+### Contribution 5 — Honest multi-objective evaluation
+
+Không chỉ report TM. Report cả:
+
+* clashes;
+* backbone deviation;
+* sharp kinks;
+* torsion likelihood;
+* gap repair;
+* confident-region drift;
+* runtime;
+* temporal leakage.
+
+Ở mức Master thesis, đây là contribution đủ rõ và khó bị nói là “chỉ recreate leaderboard”.
+
+---
+
+# 12. Research questions
+
+## RQ1
+
+**Can per-residue confidence-aware fusion of template and pretrained predictions improve RNA 3D accuracy compared with selecting either source as a whole?**
+
+## RQ2
+
+**Can motif-conditioned geometric projection reduce clashes, backbone distortion, and sharp kinks simultaneously while preserving the global fold?**
+
+## RQ3
+
+**Does fold-family-aware quality–diversity selection improve best-of-five TM-score compared with ranking candidates independently?**
+
+## RQ4
+
+**Which template-confidence regimes benefit most from fusion and refinement?**
+
+---
+
+# 13. Hypotheses
+
+### H1 — Accuracy
+
+GeoFuse-RNA sẽ tăng best-of-5 TM so với:
+
+```text
+TBM only
+pretrained only
+raw union TBM + pretrained
+rule-based refinement
+gradient v1
+```
+
+Gain dự kiến chủ yếu đến từ:
+
+* medium-confidence templates;
+* missing segments;
+* disagreements giữa template và pretrained source.
+
+### H2 — Geometry
+
+GeoFuse-RNA giữ được:
+
+```text
+clash ↓
+backbone deviation ↓
+```
+
+nhưng không làm:
+
+```text
+sharp kinks ↑
+torsion likelihood xấu đi
+```
+
+### H3 — Reliability
+
+High-confidence template residues sẽ di chuyển ít hơn gap/low-confidence residues.
+
+### H4 — Selection
+
+Fold-cluster selection sẽ tăng best-of-5 gain và giữ self-TM diversity tốt hơn lấy năm candidates có score cao nhất.
+
+---
+
+# 14. Experiments bắt buộc
+
+## Main comparison
+
+| Method                       | Ý nghĩa                                 |
+| ---------------------------- | --------------------------------------- |
+| Top-1 reproduced             | strong leaderboard-derived TBM baseline |
+| Our TBM + composite          | current strong baseline                 |
+| Pretrained only              | DL source                               |
+| Raw TBM + pretrained union   | candidate generation benefit            |
+| Rule-based refinement        | top-1 refinement baseline               |
+| Gradient v1                  | current method                          |
+| GeoFuse heuristic confidence | proposed without learned gate           |
+| GeoFuse learned confidence   | full method                             |
+
+## Ablation
+
+| Ablation                  | Câu hỏi                                |
+| ------------------------- | -------------------------------------- |
+| no per-residue confidence | confidence gating có ích không         |
+| no pretrained source      | fusion có hơn TBM không                |
+| no template source        | phụ thuộc TBM đến đâu                  |
+| no motif conditioning     | global geometry vs contextual geometry |
+| no angle/torsion          | kink có quay lại không                 |
+| no clustering             | fuse incompatible folds có hại không   |
+| whole-candidate selection | segment fusion có ích không            |
+| single-stage optimization | stage-wise có ổn định hơn không        |
+| best-of-1                 | best-of-5 thực sự giúp bao nhiêu       |
+
+---
+
+# 15. Metrics để defense chắc
+
+## Accuracy
+
+* mean best-of-5 TM;
+* mean top-1 TM;
+* per-target paired ΔTM;
+* bootstrap confidence interval;
+* number of targets improved.
+
+## Candidate-generation ceiling
+
+### Oracle pool TM
+
+```text
+best TM trong toàn bộ candidate pool
+```
+
+Cho biết nguồn candidate có chứa đúng fold hay chưa.
+
+### Selection regret
+
+[
+regret =
+TM_{oracle\ pool}
+-----------------
+
+TM_{selected\ best5}
+]
+
+Phân biệt:
+
+```text
+candidate generation yếu
+vs
+selection yếu
+```
+
+## Geometry
+
+* clashes/residue;
+* adjacent backbone deviation;
+* sharp-kink rate;
+* motif-conditioned angle NLL;
+* signed pseudo-torsion NLL;
+* relative Rg error.
+
+## Fusion behavior
+
+* confident-residue drift;
+* gap-residue movement;
+* gap-region RMSD;
+* source usage theo segment;
+* geometry seam error tại source boundaries.
+
+## Diversity
+
+* mean/min/max self-TM;
+* số fold clusters được giữ trong final five;
+* best-of-5 gain over best-of-1.
+
+## Practicality
+
+* runtime/target;
+* peak VRAM;
+* full notebook runtime;
+* failure/fallback rate.
+
+---
+
+# 16. Success criteria cụ thể
+
+Thay vì viết “expect score cao hơn”, đặt tiêu chí kiểm chứng:
+
+1. Full method có best-of-5 TM cao hơn `0.307` current temporal-safe pipeline.
+2. Full method cao hơn raw TBM+pretrained candidate union, chứng minh fusion/refinement có giá trị riêng.
+3. Gradient v2 giữ hoặc giảm clash/backbone so với v1 nhưng sharp-kink không cao hơn no-refinement.
+4. Medium-confidence/gapped targets có paired improvement.
+5. Selection regret giảm.
+6. Full Kaggle inference dưới 8 giờ.
+
+Nếu pretrained candidates không nâng oracle pool TM, không refiner nào cứu được. Khi đó conclusion trung thực là bottleneck nằm ở candidate generation.
+
+---
+
+# 17. Implementation roadmap thực tế
+
+## Phase A — Pretrained branch
+
+* chạy DRfold2;
+* kiểm tra RibonanzaNet2 checkpoint/output;
+* cache 3D candidates và confidence/prior;
+* đo oracle pool TM.
+
+Đây là gate đầu tiên.
+
+## Phase B — Geometry v2
+
+* thêm angle distribution;
+* thêm signed pseudo-torsion;
+* paired/unpaired conditioning trước;
+* run v1 vs v2 ablation.
+
+## Phase C — Fold clustering + heuristic fusion
+
+* align candidates;
+* cluster by self-TM;
+* rule-based per-residue confidence;
+* source fusion;
+* stage-wise optimization.
+
+Đây đã đủ thành full non-learned method.
+
+## Phase D — Learned confidence gate
+
+* generate corruption dataset;
+* train tiny 1D model;
+* replace heuristic confidence;
+* compare learned vs heuristic.
+
+## Phase E — Selection + submission
+
+* quality-diversity selector;
+* runtime profiling;
+* Kaggle late submission;
+* thesis tables.
+
+---
+
+# 18. Thesis positioning cuối cùng
+
+Title nên đổi thành:
+
+> **GeoFuse-RNA: Confidence-Aware Fusion of Template and Pretrained Predictions with Motif-Conditioned Geometric Refinement for RNA 3D Structure Prediction**
+
+Main contribution statement:
+
+> Existing competitive approaches demonstrate that template-based modeling and pretrained RNA predictors provide strong and complementary fold hypotheses. However, their combination is commonly performed through whole-model fallback, missing-region patching, or fixed rule-based refinement. This thesis proposes GeoFuse-RNA, a model-agnostic framework that clusters candidate structures by fold, estimates source reliability at residue level, fuses template and pretrained predictions segment-wise, and projects the resulting structures onto context-dependent RNA geometric distributions through differentiable optimization.
+
+# 19. Chốt thật lòng
+
+**Geometry refinement v1 hiện tại chưa đủ làm “đinh” của thesis.** Kết quả kink đã chứng minh điều đó.
+
+Nhưng đấy không phải ngõ cụt; nó chính là research gap:
+
+```text
+fixed distance-based refinement
+→ sửa một metric
+→ làm hỏng metric khác
+```
+
+Method mới giải quyết bằng:
+
+```text
+per-residue confidence
++ source fusion
++ motif-conditioned distance/angle/torsion geometry
++ fold-aware diversity
+```
+
+Và điểm TM cao hơn, nếu có, sẽ đến từ **fusion TBM + pretrained predictions**, còn geometry projection làm cho fusion ổn định, hợp lý và không tạo artifact.
+
+Đó là một story đủ mạnh:
+
+> Top solutions prove candidate sources A and B are effective. Their public integration remains largely heuristic. We propose an adaptive, confidence-aware, geometrically principled fusion layer, and evaluate both fold accuracy and structural validity under temporal-safe conditions.
+
+[1]: https://arxiv.org/abs/2207.01586?utm_source=chatgpt.com "Accurate RNA 3D structure prediction using a language model-based deep learning approach"
+[2]: https://arxiv.org/abs/2603.19636?utm_source=chatgpt.com "RiboSphere: Learning Unified and Efficient Representations of RNA Structures"
+[3]: https://arxiv.org/abs/2406.13839?utm_source=chatgpt.com "RNA-FrameFlow: Flow Matching for de novo 3D RNA Backbone Design"
