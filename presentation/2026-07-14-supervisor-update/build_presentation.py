@@ -51,7 +51,7 @@ def save_charts() -> dict[str, Path]:
     charts: dict[str, Path] = {}
 
     stages = ["Dummy", "TBM + refine", "+ de novo", "+ composite", "Top-1 reproduced"]
-    scores = [0.069, 0.161, 0.212, 0.3072, 0.2973]
+    scores = [0.069, 0.161, 0.212, 0.3072, 0.2983]
     colors = [f"#{MUTED}", f"#{BLUE}", f"#{TEAL}", f"#{ORANGE}", f"#{NAVY}"]
     fig, ax = plt.subplots(figsize=(9, 4.5))
     bars = ax.bar(stages, scores, color=colors, width=0.7)
@@ -290,7 +290,7 @@ def main() -> None:
     deck.chart_slide("How performance evolved", charts["evolution"], 7, "Candidate generation dominates.\n\nThe largest jump came from search recall, not coordinate optimisation.")
     deck.bullet_slide("Bottleneck diagnosis: candidate recall", [
         "Only 5/12 targets originally had an MMseqs temporal-safe hit; 7/12 fell back to de novo.",
-        "A faithful top-1 reproduction scored 0.2973 temporal-safe using exhaustive composite similarity.",
+        "A faithful top-1 reproduction scored 0.2983 temporal-safe using exhaustive composite similarity.",
         "This diagnosed search—not refinement—as the main accuracy bottleneck.",
         "Composite search lifted our pipeline from 0.2117 to 0.3072.",
         "It improved 11/12 targets and beat reproduced top-1 on 9/12.",
@@ -324,10 +324,10 @@ def main() -> None:
     deck.bullet_slide("Current engineering status", [
         "WSL Conda env ‘rna-fold’ installed; RTX 3060 Ti CUDA and MMseqs2 verified.",
         "Four core numerical/temporal tests pass.",
+        "Clean rebuild: 23,869 chains / 10.87M residues / zero parser errors in 4.6 minutes.",
+        "Clean rerun: dummy 0.0687, top-1 0.2983 and current pipeline 0.3072.",
         "Kaggle token and CLI work; the account currently has no competition submission.",
-        "Raw data validated: 61 GiB with all CSV, MSA and 8,670 PDB CIF components present.",
         "WSL cap configured to 18 GB RAM + 8 GB swap; restart is required to apply it.",
-        "CIF rebuild defaults to six workers to preserve Windows headroom.",
     ], 16, size=20)
     deck.bullet_slide("Compute strategy and laptop handoff", [
         "RTX 3060 Ti / 8 GB: artifact builds and DRfold2/RibonanzaNet-scale experiments.",

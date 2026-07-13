@@ -90,7 +90,7 @@ One code path is reused for controlled local evaluation and Kaggle inference.
 | MMseqs TBM + refinement | 0.161 |
 | Add de novo fallback | 0.212 |
 | Add composite template search | **0.307** |
-| Reproduced top-1 method | 0.297 |
+| Reproduced top-1 method | 0.298 |
 
 The largest gain came from finding better candidate folds, not stronger coordinate optimisation.
 
@@ -99,7 +99,7 @@ The largest gain came from finding better candidate folds, not stronger coordina
 # Bottleneck diagnosis: candidate recall
 
 - Only 5/12 targets originally had an MMseqs temporal-safe hit; 7/12 fell back to weak de novo structures.
-- Reproduced top-1 uses an exhaustive composite similarity scan and scored **0.2973** temporal-safe.
+- Reproduced top-1 uses an exhaustive composite similarity scan and scored **0.2983** temporal-safe.
 - This diagnosed search/recall—not refinement—as the main accuracy bottleneck.
 - Adding composite search improved our pipeline from **0.2117 to 0.3072**.
 - Improved 11/12 targets and beat the reproduced top-1 on 9/12.
@@ -202,10 +202,10 @@ Report paired per-target ΔTM, oracle-pool TM, selection regret, kink/clash metr
 
 - New WSL Conda environment `rna-fold` installed and GPU verified on RTX 3060 Ti.
 - PyTorch CUDA, MMseqs2 and four core tests pass.
+- Clean rebuild: 23,869 chains / 10.87M residues / zero parser errors in 4.6 minutes.
+- Clean rerun reproduced dummy 0.0687, top-1 0.2983 and current pipeline 0.3072.
 - Kaggle token and CLI work; account currently has no competition submission.
-- Raw competition dataset validated: 61 GiB, all key CSV/MSA/PDB components present.
 - WSL cap configured for 18 GB RAM + 8 GB swap; restart required to apply.
-- Rebuild now defaults to six CIF workers to preserve Windows headroom.
 
 ---
 

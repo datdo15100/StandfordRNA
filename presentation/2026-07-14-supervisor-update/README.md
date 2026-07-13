@@ -8,6 +8,7 @@ This folder is a self-contained meeting and laptop handoff package.
 - `speaker_notes_vi.md` — detailed Vietnamese speaking notes for every slide.
 - `slides.md` — editable, reviewable slide source.
 - `data_audit.md` — measured dataset inventory and EDA snapshot.
+- `current_run_status.md` — clean-machine rebuild and reproduction results.
 - `research_plan_review.md` — what GeoFuse adds, plus methodological corrections.
 - `sources.md` — evidence map and external references.
 - `laptop_handoff.md` — how to continue on the GTX 1650 / 16 GB Windows laptop.
