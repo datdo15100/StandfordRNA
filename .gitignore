@@ -5,6 +5,19 @@
 __pycache__/
 .ipynb_checkpoints/
 *.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+*.swp
 
 # Derived data (rebuildable from raw competition data)
 data/interim/
@@ -29,6 +42,7 @@ external/pretrained/
 *.pkl
 *.pt
 *.pth
+*.csv.gz
 
 # Data markers + atomic-write temp files (from /mnt mount hiccups)
 data/*.complete
