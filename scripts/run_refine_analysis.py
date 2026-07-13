@@ -58,10 +58,9 @@ def main():
     priors = json.load(open(processed() / "geometry_priors.json"))
 
     qf = cache() / "validation_query.fasta"
-    if not qf.exists():
-        with open(qf, "w") as fh:
-            for _, r in seqs.iterrows():
-                fh.write(f">{r['target_id']}\n{r['sequence']}\n")
+    with open(qf, "w") as fh:
+        for _, r in seqs.iterrows():
+            fh.write(f">{r['target_id']}\n{r['sequence']}\n")
     hits = mmseqs_search.search(qf, cache() / "validation_hits.m8")
 
     import re

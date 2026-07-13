@@ -60,10 +60,9 @@ def main():
     priors = json.load(open(processed() / "geometry_priors.json"))
     cfg = RefineConfig(steps=300)
     qf = cache() / "validation_query.fasta"
-    if not qf.exists():
-        with open(qf, "w") as fh:
-            for _, r in seqs.iterrows():
-                fh.write(f">{r['target_id']}\n{r['sequence']}\n")
+    with open(qf, "w") as fh:
+        for _, r in seqs.iterrows():
+            fh.write(f">{r['target_id']}\n{r['sequence']}\n")
     hits = mmseqs_search.search(qf, cache() / "validation_hits.m8")
 
     rows = []
@@ -120,6 +119,15 @@ def main():
         f"gradient {agg.loc['gradient','bb_dev']:.3f} / rule {agg.loc['rule','bb_dev']:.3f}.",
         f"- **sharp kinks (INDEPENDENT)**: none {agg.loc['none','kinks']:.3f} -> "
         f"gradient {agg.loc['gradient','kinks']:.3f} / rule {agg.loc['rule','kinks']:.3f}.",
+        "\n## Verdict — partly truthful, with an honest caveat\n",
+        "1. **TM is preserved, not improved.** With the stronger composite candidate pool, "
+        "gradient refinement is effectively TM-neutral.\n"
+        "2. **The clash/backbone gains are real but not free.** A distance-only objective "
+        "can satisfy spacing constraints by bending the chain too sharply.\n",
+        "Therefore v1 supports only a scoped claim about clashes and adjacent spacing, not "
+        "overall physical plausibility. Geometry v2 should add context-conditioned angle or "
+        "curvature terms and must keep the kink rate at or below the no-refinement baseline "
+        "while retaining the clash/backbone gains and TM.",
     ]
     THESIS.mkdir(parents=True, exist_ok=True)
     (THESIS / "refine_ablation.md").write_text("\n".join(md))

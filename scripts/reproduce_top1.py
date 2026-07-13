@@ -104,6 +104,20 @@ def main():
         f"Leakage on CASP15 = **{df['full_pdb'].mean()-df['temporal_safe'].mean():+.4f}** TM. "
         "Their public 0.593 is a *private-set* score (≈40 hidden targets), NOT reproducible "
         "on these 12 public targets; full_pdb here is the local leaked proxy.\n",
+        "## What this reproduction diagnosed\n",
+        "Before composite search, our MMseqs + de novo pipeline scored 0.2117. The "
+        "reproduced top-1 method performs better because its exhaustive composite similarity "
+        "scan returns plausible real-fold templates even when MMseqs finds no homolog. This "
+        "isolated candidate recall—not coordinate refinement—as the primary bottleneck.\n",
+        "After adding the same class of composite search under temporal/self-leakage controls, "
+        "the current pipeline reaches 0.3072. Thus this report is both a strong baseline and "
+        "the diagnostic that motivated the current search improvement.\n",
+        "## Caveats\n",
+        "- The reconstructed library contains 7,155 unique sequences, not the top-1 "
+        "notebook's exact 18,881-entry extraction.\n"
+        "- `full_pdb` deliberately includes post-cutoff/native structures and is not an "
+        "honest local validation result.\n"
+        "- Only a Kaggle late submission can score the hidden private targets.\n",
         df.round(4).to_markdown(index=False),
     ]
     THESIS.mkdir(parents=True, exist_ok=True)

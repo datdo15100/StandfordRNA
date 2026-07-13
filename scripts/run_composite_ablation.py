@@ -47,10 +47,11 @@ def main():
     priors = json.load(open(processed() / "geometry_priors.json"))
     cfg = RefineConfig(steps=300)
     qf = cache() / "validation_query.fasta"
-    if not qf.exists():
-        with open(qf, "w") as fh:
-            for _, r in seqs.iterrows():
-                fh.write(f">{r['target_id']}\n{r['sequence']}\n")
+    # Always materialise the exact query set for this run. A previous smoke test
+    # may have written only a target subset to the same cache path.
+    with open(qf, "w") as fh:
+        for _, r in seqs.iterrows():
+            fh.write(f">{r['target_id']}\n{r['sequence']}\n")
     hits = mmseqs_search.search(qf, cache() / "validation_hits.m8")
 
     try:
@@ -94,19 +95,27 @@ def main():
 
     df = pd.DataFrame(rows)
     df.to_csv(tables() / "composite_ablation.csv", index=False)
+    top1_valid = df["top1_tsafe"].notna()
+    n_beat_top1 = int((df.loc[top1_valid, "comp_on"] > df.loc[top1_valid, "top1_tsafe"]).sum())
     md = [
         "# Composite-search fallback ablation — CASP15 (temporal-safe, best-of-5 TM)\n",
+        "`comp_on` merges MMseqs hits with an exhaustive composite-similarity scan and "
+        "re-ranks the combined pool by confidence. Unused best-of-five slots retain a "
+        "de novo hedge. Both branches use the same temporal and self-leakage filters.\n",
         f"- **comp_off (MMseqs only, previous): {df['comp_off'].mean():.4f}**",
         f"- **comp_on (MMseqs + composite fallback): {df['comp_on'].mean():.4f}**  "
         f"(Δ **{df['comp_on'].mean()-df['comp_off'].mean():+.4f}**)",
         f"- top-1 reproduced (temporal-safe): {df['top1_tsafe'].mean():.4f}\n",
         f"Targets improved: {(df['delta'] > 1e-3).sum()}, unchanged "
-        f"{(df['delta'].abs() <= 1e-3).sum()}, worse {(df['delta'] < -1e-3).sum()}.\n",
+        f"{(df['delta'].abs() <= 1e-3).sum()}, worse {(df['delta'] < -1e-3).sum()}. "
+        f"The current method beats the reproduced top-1 baseline on "
+        f"{n_beat_top1}/{int(top1_valid.sum())} targets. The gain comes from better "
+        "template recall; the gradient refiner is unchanged.\n",
         df.round(4).to_markdown(index=False),
     ]
     THESIS.mkdir(parents=True, exist_ok=True)
     (THESIS / "composite_ablation.md").write_text("\n".join(md))
-    print("\n" + "\n".join(md[:6]))
+    print("\n" + "\n".join(md[:7]))
 
 
 if __name__ == "__main__":
