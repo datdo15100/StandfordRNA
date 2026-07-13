@@ -16,11 +16,10 @@ exact version:
 ```bash
 kaggle competitions submit -c stanford-rna-3d-folding \
   -f submission.csv \
-  -k datdo151000/rna3d-thesis-composite-baseline \
+  -k datdo151000/rna3d-thesis-composite-tbm-baseline \
   -v <VERSION> \
   -m "Temporal-safe composite TBM thesis baseline"
 ```
 
 Do not guess `<VERSION>`: use the number returned by `kaggle kernels push` and verify
 kernel status/output first.
-
