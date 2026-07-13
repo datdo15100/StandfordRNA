@@ -1,0 +1,19 @@
+{
+  "id": "datdo151000/rna3d-thesis-composite-baseline",
+  "title": "RNA3D Thesis Composite TBM Baseline",
+  "code_file": "rna3d_submission.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "datdo151000/rna3d-thesis-inference-artifacts"
+  ],
+  "competition_sources": [
+    "stanford-rna-3d-folding"
+  ],
+  "kernel_sources": [],
+  "model_sources": []
+}
