@@ -1,5 +1,7 @@
 {
-  "python.defaultInterpreterPath": "/home/datdo/miniconda3/envs/rna-fold/bin/python",
+  "python.defaultInterpreterPath": "/home/datdo/miniforge3/envs/rna-fold/bin/python",
+  "python.envFile": "${workspaceFolder}/../.env",
+  "python.terminal.useEnvFile": true,
   "python.terminal.activateEnvironment": true,
   "terminal.integrated.defaultProfile.linux": "bash",
   "python-envs.defaultEnvManager": "ms-python.python:system"

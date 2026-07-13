@@ -12,14 +12,25 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PY="${PY:-python}"
+NPROC="$(nproc)"
+# CIF parsing is both CPU- and memory-heavy.  Keep enough headroom for Windows
+# and the WSL filesystem cache on a 24 GB workstation; advanced users can still
+# opt in to more parallelism with RNA3D_WORKERS.
+if (( NPROC < 6 )); then
+  DEFAULT_WORKERS="$NPROC"
+else
+  DEFAULT_WORKERS=6
+fi
+WORKERS="${RNA3D_WORKERS:-$DEFAULT_WORKERS}"
 echo "== using python: $($PY -c 'import sys;print(sys.executable)')"
 echo "== data dir: $($PY -c 'import sys;sys.path.insert(0,"src");from rna3d.paths import comp_dir;print(comp_dir())')"
+echo "== CIF parser workers: $WORKERS (override with RNA3D_WORKERS)"
 
 echo "== [1/3] geometry priors (temporal-safe) =="
 $PY scripts/run_phase2_priors.py
 
 echo "== [2/3] template DB (parse ~8.6k CIFs; minutes on NVMe, ~35min on a slow mount) =="
-$PY scripts/build_template_db.py --workers "$(nproc)"
+$PY scripts/build_template_db.py --workers "$WORKERS"
 
 echo "== [3/4] warm the MMseqs target DB (createdb over template FASTA) =="
 $PY - <<'PYEOF'

@@ -3,10 +3,9 @@
 #     conda env create -f environment.yml
 #     conda activate rna-fold
 #
-# NOTE on PyTorch: the CUDA build is installed via pip (see the pip: section) so it
-# matches your GPU/driver. The pinned build below is CUDA 13.0 (works on RTX 3060 Ti,
-# Ampere sm_86). If your driver is older, install a matching build instead, e.g.:
-#     pip install torch --index-url https://download.pytorch.org/whl/cu121
+# NOTE on PyTorch: the pinned Linux wheel below uses CUDA 13.0 and is verified on
+# this WSL machine (RTX 3060 Ti, driver 591.59). Use a compatible official PyTorch
+# wheel instead if this environment is recreated on a machine with an older driver.
 name: rna-fold
 channels:
   - conda-forge
@@ -27,6 +26,7 @@ dependencies:
   - pip
   - pip:
       - tabulate>=0.9
-      # GPU PyTorch — pick the index matching your CUDA/driver (see note above).
-      - --extra-index-url https://download.pytorch.org/whl/cu121
-      - torch>=2.3
+      - kaggle>=2.0
+      - kagglehub>=0.3
+      - python-dotenv>=1.0
+      - torch==2.13.0
