@@ -204,7 +204,8 @@ Report paired per-target ΔTM, oracle-pool TM, selection regret, kink/clash metr
 - PyTorch CUDA, MMseqs2 and four core tests pass.
 - Clean rebuild: 23,869 chains / 10.87M residues / zero parser errors in 4.6 minutes.
 - Clean rerun reproduced dummy 0.0687, top-1 0.2983 and current pipeline 0.3072.
-- Kaggle token and CLI work; account currently has no competition submission.
+- Offline Kaggle kernel v4 completed and its exact 2,515-row output passed validation.
+- Late submission 54662648 is accepted and awaiting the hidden-set score.
 - WSL cap configured for 18 GB RAM + 8 GB swap; restart required to apply.
 
 ---
@@ -221,12 +222,11 @@ Report paired per-target ΔTM, oracle-pool TM, selection regret, kink/clash metr
 
 # Immediate next steps and decision gates
 
-1. Finish data audit and rebuild reusable template artifacts on the 3060 Ti machine.
-2. Reproduce B0 from scratch, then freeze its artifact bundle.
-3. Create and run a Kaggle baseline notebook; validate `submission.csv`; late-submit its exact version.
-4. Add DRfold2/pretrained candidates and first measure **oracle-pool TM**.
-5. Only proceed to learned fusion if the candidate pool actually improves.
-6. Implement geometry v2 and require the kink regression to disappear.
+1. Record the Kaggle baseline hidden-set score when submission 54662648 finishes.
+2. Add DRfold2/pretrained candidates and first measure **oracle-pool TM**.
+3. Only proceed to learned fusion if the candidate pool actually improves.
+4. Implement geometry v2 and require the kink regression to disappear.
+5. Run paired, family/time-aware ablations and freeze the final holdout.
 
 ---
 

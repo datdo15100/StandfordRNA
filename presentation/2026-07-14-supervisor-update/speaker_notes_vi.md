@@ -62,7 +62,7 @@ Mỗi bước trả lời một câu hỏi riêng. B1 raw union trước: nếu 
 
 ## Slide 16 — Engineering status
 
-Máy mới đã có env `rna-fold`, CUDA thấy RTX 3060 Ti, MMseqs và test pass. Data 61 GiB đã tải; clean rebuild parse 23.869 chain/10,87 triệu residue, zero error trong 4,6 phút. Fresh runs tái tạo dummy 0.0687, top-1 0.2983 và pipeline 0.3072. Kaggle API token hoạt động nhưng chưa có submission. Hai notebook cũ không còn output session qua API nên không đoán version để nộp. WSL memory setting cần `wsl --shutdown` mới có hiệu lực.
+Máy mới đã có env `rna-fold`, CUDA thấy RTX 3060 Ti, MMseqs và test pass. Data 61 GiB đã tải; clean rebuild parse 23.869 chain/10,87 triệu residue, zero error trong 4,6 phút. Fresh runs tái tạo dummy 0.0687, top-1 0.2983 và pipeline 0.3072. Artifact dataset v2 và notebook CPU-offline v4 đã chạy thành công trên Kaggle; output 2.515 dòng qua toàn bộ validation rồi mới late-submit. Submission 54662648 đang chờ Kaggle chấm hidden set. WSL memory setting cần `wsl --shutdown` mới có hiệu lực.
 
 ## Slide 17 — Compute strategy
 
@@ -70,7 +70,7 @@ Laptop 1650 không phù hợp rebuild 57 GB CIF hoặc chạy pretrained nặng.
 
 ## Slide 18 — Next steps
 
-Thứ tự có gate: data audit → reproduce B0 → Kaggle baseline → pretrained oracle pool → fusion → geometry v2. Không làm learned gate trước khi chứng minh candidate pool có complementary information. Late submission phải gắn đúng kernel slug/version đã chạy thành công và tạo output `submission.csv`.
+Ba gate đầu đã xong: data audit → reproduce B0 → Kaggle baseline. Tiếp theo là pretrained oracle pool → fusion → geometry v2. Không làm learned gate trước khi chứng minh candidate pool có complementary information. Điểm hidden-set của submission 54662648 là phép kiểm chứng ngoài, không thay thế temporal-safe local ablation.
 
 ## Slide 19 — Questions
 

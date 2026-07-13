@@ -23,3 +23,12 @@ kaggle competitions submit -c stanford-rna-3d-folding \
 
 Do not guess `<VERSION>`: use the number returned by `kaggle kernels push` and verify
 kernel status/output first.
+
+## Verified deployment
+
+- Artifact dataset: `datdo151000/rna3d-thesis-inference-artifacts`, version 2.
+- Kernel: `datdo151000/rna3d-thesis-composite-tbm-baseline`, version 4.
+- Kernel state: complete; CPU/offline runtime 119.1 seconds for 12 targets.
+- Output validation: 2,515 × 18, exact sample ID order, unique IDs, no NaNs and all
+  coordinates finite.
+- Competition submission: `54662648`, submitted 2026-07-13 22:32:44 UTC.

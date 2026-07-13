@@ -65,10 +65,19 @@ previously reused that file whenever it existed, silently omitting MMseqs querie
 remaining targets. The scripts now always materialise the exact query set before search.
 After the fix, the historical 0.2117 → 0.3072 ablation reproduced exactly.
 
+## Kaggle external validation
+
+- Private artifact dataset `datdo151000/rna3d-thesis-inference-artifacts`, version 2,
+  is ready and contains the code, temporal-safe artifacts, MMseqs runtime and offline
+  Biopython wheel.
+- Private CPU notebook `datdo151000/rna3d-thesis-composite-tbm-baseline`, version 4,
+  completed successfully without internet access.
+- The downloaded notebook output was checked against the competition sample: 2,515 × 18,
+  exact columns and ID order, unique IDs, no missing values and finite coordinates.
+- Late submission **54662648** was accepted by Kaggle at 2026-07-13 22:32:44 UTC with
+  description `Temporal-safe composite TBM thesis baseline`; scoring is currently pending.
+
 ## Still pending
 
-- No Kaggle competition submission exists yet.
-- The production notebook/artifact bundle must be created, run successfully and validated
-  before submitting its exact kernel slug/version.
+- Record the hidden-set public/private score when Kaggle finishes the late-submission run.
 - Pretrained candidate generation and GeoFuse fusion/geometry v2 are not implemented yet.
-

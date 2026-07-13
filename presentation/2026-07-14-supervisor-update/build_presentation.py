@@ -326,9 +326,10 @@ def main() -> None:
         "Four core numerical/temporal tests pass.",
         "Clean rebuild: 23,869 chains / 10.87M residues / zero parser errors in 4.6 minutes.",
         "Clean rerun: dummy 0.0687, top-1 0.2983 and current pipeline 0.3072.",
-        "Kaggle token and CLI work; the account currently has no competition submission.",
+        "Offline Kaggle kernel v4 completed; its exact 2,515-row output passed validation.",
+        "Late submission 54662648 is accepted and awaiting the hidden-set score.",
         "WSL cap configured to 18 GB RAM + 8 GB swap; restart is required to apply it.",
-    ], 16, size=20)
+    ], 16, size=19)
     deck.bullet_slide("Compute strategy and laptop handoff", [
         "RTX 3060 Ti / 8 GB: artifact builds and DRfold2/RibonanzaNet-scale experiments.",
         "GTX 1650 / 4 GB laptop: code, unit tests, cached-candidate analysis, slides and thesis writing.",
@@ -337,12 +338,11 @@ def main() -> None:
         "Cache candidate coordinates so fusion/refinement ablations remain cheap and reproducible.",
     ], 17, size=21)
     deck.bullet_slide("Immediate next steps and decision gates", [
-        "1. Finish the data audit and rebuild reusable template artifacts on the main machine.",
-        "2. Reproduce B0 from scratch and freeze its artifact bundle.",
-        "3. Run and validate a Kaggle baseline notebook; late-submit its exact successful version.",
-        "4. Add pretrained candidates and first measure oracle-pool TM.",
-        "5. Proceed to fusion only if candidate sources are complementary.",
-        "6. Require geometry v2 to eliminate the kink regression.",
+        "1. Record the Kaggle baseline hidden-set score when submission 54662648 finishes.",
+        "2. Add pretrained candidates and first measure oracle-pool TM.",
+        "3. Proceed to fusion only if candidate sources are complementary.",
+        "4. Require geometry v2 to eliminate the kink regression.",
+        "5. Run paired family/time-aware ablations and freeze the final holdout.",
     ], 18, size=20)
     deck.bullet_slide("Questions for the supervisor", [
         "Should the primary claim centre on segment fusion, with geometry v2 as projection/repair?",
