@@ -9,6 +9,8 @@ This folder is a self-contained meeting and laptop handoff package.
 - `slides.md` — editable, reviewable slide source.
 - `data_audit.md` — measured dataset inventory and EDA snapshot.
 - `current_run_status.md` — clean-machine rebuild and reproduction results.
+- `../../reports/thesis_notes/kaggle_submission_analysis.md` — exact submitted method,
+  score comparison, hybrid review and leakage audit.
 - `research_plan_review.md` — what GeoFuse adds, plus methodological corrections.
 - `sources.md` — evidence map and external references.
 - `laptop_handoff.md` — how to continue on the GTX 1650 / 16 GB Windows laptop.
@@ -30,4 +32,5 @@ The deck deliberately separates:
 3. proposed GeoFuse-RNA work that has not yet been validated.
 
 This distinction is essential: the 12 local CASP15 targets support controlled
-ablation, while a Kaggle late submission is needed to measure the hidden private set.
+ablation, while completed submission 54662648 provides one external hidden-set check
+(0.60084 public / 0.60175 private) and must not become a tuning set.

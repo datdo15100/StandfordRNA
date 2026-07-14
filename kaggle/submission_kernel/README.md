@@ -32,3 +32,4 @@ kernel status/output first.
 - Output validation: 2,515 × 18, exact sample ID order, unique IDs, no NaNs and all
   coordinates finite.
 - Competition submission: `54662648`, submitted 2026-07-13 22:32:44 UTC.
+- Final score: **0.60084 public / 0.60175 private**.

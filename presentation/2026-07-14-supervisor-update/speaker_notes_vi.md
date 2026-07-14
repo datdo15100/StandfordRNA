@@ -6,7 +6,7 @@ Mở đầu ngắn: đề tài xuất phát trực tiếp từ Stanford RNA 3D F
 
 ## Slide 2 — Executive summary
 
-Nói kết quả trước. Pipeline temporal-safe đã chạy end-to-end; điểm local mạnh nhất là 0.3072 trên 12 target CASP15. Cải thiện lớn nhất tới từ template recall. Phần refinement v1 cho một negative result hữu ích: sửa đúng metric loss nhưng tạo thêm kink. Vì vậy bước tiếp theo là GeoFuse-RNA, tập trung vào fusion theo từng vùng và geometry v2. Nhấn mạnh private leaderboard chưa có điểm; late submission là phép kiểm chứng bên ngoài sắp tới.
+Nói kết quả trước. Pipeline temporal-safe đã chạy end-to-end; điểm local mạnh nhất là 0.3072 trên 12 target CASP15. Late submission đạt 0.60084 public và 0.60175 private, cao hơn TBM-only tham chiếu 0.59298 đúng 0.00877. Đáng chú ý, local current 0.3072 cũng hơn reproduction top-1 0.2983 đúng khoảng 0.0089, nên mức tăng hợp lý chứ chưa có dấu hiệu là một cú nhảy do nhầm file. Cải thiện lớn nhất trong ablation vẫn tới từ template recall. Geometry v1 là negative result hữu ích; bước tiếp theo vẫn là fusion theo vùng và geometry v2.
 
 ## Slide 3 — Problem and benchmark
 
@@ -62,7 +62,7 @@ Mỗi bước trả lời một câu hỏi riêng. B1 raw union trước: nếu 
 
 ## Slide 16 — Engineering status
 
-Máy mới đã có env `rna-fold`, CUDA thấy RTX 3060 Ti, MMseqs và test pass. Data 61 GiB đã tải; clean rebuild parse 23.869 chain/10,87 triệu residue, zero error trong 4,6 phút. Fresh runs tái tạo dummy 0.0687, top-1 0.2983 và pipeline 0.3072. Artifact dataset v2 và notebook CPU-offline v4 đã chạy thành công trên Kaggle; output 2.515 dòng qua toàn bộ validation rồi mới late-submit. Submission 54662648 đang chờ Kaggle chấm hidden set. WSL memory setting cần `wsl --shutdown` mới có hiệu lực.
+Máy mới đã có env `rna-fold`, CUDA thấy RTX 3060 Ti, MMseqs và test pass. Data 61 GiB đã tải; clean rebuild parse 23.869 chain/10,87 triệu residue, zero error trong 4,6 phút. Fresh runs tái tạo dummy 0.0687, top-1 0.2983 và pipeline 0.3072. Artifact dataset v2 và notebook CPU-offline v4 đã chạy thành công trên Kaggle; output 2.515 dòng qua toàn bộ validation rồi mới late-submit. Submission 54662648 đã hoàn tất: 0.60084 public và 0.60175 private. WSL memory setting cần `wsl --shutdown` mới có hiệu lực.
 
 ## Slide 17 — Compute strategy
 
@@ -70,7 +70,7 @@ Laptop 1650 không phù hợp rebuild 57 GB CIF hoặc chạy pretrained nặng.
 
 ## Slide 18 — Next steps
 
-Ba gate đầu đã xong: data audit → reproduce B0 → Kaggle baseline. Tiếp theo là pretrained oracle pool → fusion → geometry v2. Không làm learned gate trước khi chứng minh candidate pool có complementary information. Điểm hidden-set của submission 54662648 là phép kiểm chứng ngoài, không thay thế temporal-safe local ablation.
+Ba gate đầu đã xong: data audit → reproduce B0 → Kaggle baseline. Trước pretrained, harden cutoff theo fail-closed và explicit self-PDB exclusion. Sau đó đi pretrained oracle pool → fusion → geometry v2. Không làm learned gate trước khi chứng minh candidate pool có complementary information. Private 0.60175 chỉ dùng làm external confirmation, không lặp submission để tune vào hidden leaderboard.
 
 ## Slide 19 — Questions
 

@@ -266,10 +266,11 @@ def main() -> None:
     deck.bullet_slide("Executive summary", [
         "Reproducible temporal-safe RNA 3D pipeline built around the Stanford Kaggle challenge.",
         "Strongest local result: 0.3072 mean best-of-5 TM on 12 CASP15 targets.",
+        "Kaggle: 0.60084 public / 0.60175 private, versus reported TBM-only 0.59298.",
         "Main empirical win: +0.0955 TM from better template recall.",
         "Geometry v1 improves clashes/backbone spacing, but is TM-neutral and increases sharp kinks.",
         "Next contribution: segment-level TBM/pretrained fusion plus motif-conditioned geometry v2.",
-    ], 2, size=21)
+    ], 2, size=19)
     deck.bullet_slide("Problem and benchmark", [
         "Input: RNA sequence, MSA, template structures and release-date metadata.",
         "Output: five C1′ coordinate structures per target, each with shape [L, 3].",
@@ -327,7 +328,7 @@ def main() -> None:
         "Clean rebuild: 23,869 chains / 10.87M residues / zero parser errors in 4.6 minutes.",
         "Clean rerun: dummy 0.0687, top-1 0.2983 and current pipeline 0.3072.",
         "Offline Kaggle kernel v4 completed; its exact 2,515-row output passed validation.",
-        "Late submission 54662648 is accepted and awaiting the hidden-set score.",
+        "Late submission 54662648 completed: 0.60084 public / 0.60175 private.",
         "WSL cap configured to 18 GB RAM + 8 GB swap; restart is required to apply it.",
     ], 16, size=19)
     deck.bullet_slide("Compute strategy and laptop handoff", [
@@ -338,7 +339,7 @@ def main() -> None:
         "Cache candidate coordinates so fusion/refinement ablations remain cheap and reproducible.",
     ], 17, size=21)
     deck.bullet_slide("Immediate next steps and decision gates", [
-        "1. Record the Kaggle baseline hidden-set score when submission 54662648 finishes.",
+        "1. Harden fail-closed cutoff parsing and explicit self-PDB exclusion.",
         "2. Add pretrained candidates and first measure oracle-pool TM.",
         "3. Proceed to fusion only if candidate sources are complementary.",
         "4. Require geometry v2 to eliminate the kink regression.",
@@ -353,12 +354,13 @@ def main() -> None:
     ], 19, size=21)
     deck.bullet_slide("Appendix: evidence map", [
         "Pipeline results: reports/thesis_notes/results_summary.md",
+        "Kaggle 0.60175 audit: reports/thesis_notes/kaggle_submission_analysis.md",
         "Composite ablation: reports/thesis_notes/composite_ablation.md",
         "Refinement truthfulness: reports/thesis_notes/refine_ablation.md",
         "Top-1 reproduction and leakage: reproduce_top1.md + leakage_demo.md",
         "Full chronology: LOG.md; extension: PLAN.md + research_plan_review.md",
         "External papers and official Kaggle workflow: sources.md",
-    ], 20, size=20)
+    ], 20, size=18)
     out = HERE / "supervisor_update.pptx"
     deck.save(out)
     print(f"wrote {out} ({len(deck.prs.slides)} slides)")

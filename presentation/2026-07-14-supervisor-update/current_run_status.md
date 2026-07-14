@@ -74,10 +74,13 @@ After the fix, the historical 0.2117 → 0.3072 ablation reproduced exactly.
   completed successfully without internet access.
 - The downloaded notebook output was checked against the competition sample: 2,515 × 18,
   exact columns and ID order, unique IDs, no missing values and finite coordinates.
-- Late submission **54662648** was accepted by Kaggle at 2026-07-13 22:32:44 UTC with
-  description `Temporal-safe composite TBM thesis baseline`; scoring is currently pending.
+- Late submission **54662648** completed with **0.60084 public / 0.60175 private**.
+  Its description is `Temporal-safe composite TBM thesis baseline`.
+- The reported TBM-only reference is 0.59298, so the private uplift is **+0.00877**.
+  This is strikingly consistent with the clean local current-vs-top-1 difference
+  (0.3072 − 0.2983 = +0.0089), although hidden per-target attribution is unavailable.
 
 ## Still pending
 
-- Record the hidden-set public/private score when Kaggle finishes the late-submission run.
 - Pretrained candidate generation and GeoFuse fusion/geometry v2 are not implemented yet.
+- Harden cutoff parsing/self-PDB exclusion before the next production submission.

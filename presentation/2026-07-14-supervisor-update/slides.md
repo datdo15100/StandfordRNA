@@ -19,10 +19,11 @@ Confidence-aware fusion and motif-conditioned geometric refinement for RNA 3D pr
 
 - Built a reproducible, temporal-safe RNA 3D evaluation pipeline around the Stanford Kaggle challenge.
 - Current strongest local result: **0.3072 mean best-of-5 TM** on 12 CASP15 targets.
+- Kaggle late submission: **0.60084 public / 0.60175 private**, versus reported TBM-only 0.59298.
 - Main empirical win is improved template recall: **+0.0955 TM** from composite search.
 - Geometry refinement v1 improves clashes/backbone spacing but is **TM-neutral** and increases sharp kinks.
 - Thesis extension: fuse TBM and pretrained predictions by residue/segment, then apply motif-conditioned geometry v2.
-- Immediate external validation: package a reproducible Kaggle notebook and make a late submission.
+- The private uplift over TBM-only (+0.00877) closely matches the clean local uplift (+0.0089).
 
 ---
 
@@ -205,7 +206,7 @@ Report paired per-target ΔTM, oracle-pool TM, selection regret, kink/clash metr
 - Clean rebuild: 23,869 chains / 10.87M residues / zero parser errors in 4.6 minutes.
 - Clean rerun reproduced dummy 0.0687, top-1 0.2983 and current pipeline 0.3072.
 - Offline Kaggle kernel v4 completed and its exact 2,515-row output passed validation.
-- Late submission 54662648 is accepted and awaiting the hidden-set score.
+- Late submission 54662648 completed: **0.60084 public / 0.60175 private**.
 - WSL cap configured for 18 GB RAM + 8 GB swap; restart required to apply.
 
 ---
@@ -222,7 +223,7 @@ Report paired per-target ΔTM, oracle-pool TM, selection regret, kink/clash metr
 
 # Immediate next steps and decision gates
 
-1. Record the Kaggle baseline hidden-set score when submission 54662648 finishes.
+1. Harden fail-closed cutoff parsing and explicit self-PDB exclusion.
 2. Add DRfold2/pretrained candidates and first measure **oracle-pool TM**.
 3. Only proceed to learned fusion if the candidate pool actually improves.
 4. Implement geometry v2 and require the kink regression to disappear.
@@ -243,6 +244,7 @@ Report paired per-target ΔTM, oracle-pool TM, selection regret, kink/clash metr
 # Appendix: evidence map
 
 - Pipeline results: `reports/thesis_notes/results_summary.md`
+- Kaggle 0.60175 analysis: `reports/thesis_notes/kaggle_submission_analysis.md`
 - Composite ablation: `reports/thesis_notes/composite_ablation.md`
 - Refinement truthfulness: `reports/thesis_notes/refine_ablation.md`
 - Top-1 reproduction: `reports/thesis_notes/reproduce_top1.md`
