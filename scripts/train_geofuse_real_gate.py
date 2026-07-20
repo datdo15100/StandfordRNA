@@ -217,10 +217,18 @@ def train(args: argparse.Namespace) -> None:
     print(f"[checkpoint] {checkpoint_path}")
 
 
-def write_report(path, manifest, counts, target_counts, calibration, validation, history, failures, args, seconds):
-    passed = validation["learned_gate_error"] < min(
-        validation["gap_rule_error"], validation["confidence_rule_error"]
+def real_gate_passed(metrics: dict) -> bool:
+    """Require improvement over both whole-source and residue-rule baselines."""
+    return metrics["learned_gate_error"] < min(
+        metrics["template_error"],
+        metrics["pretrained_error"],
+        metrics["gap_rule_error"],
+        metrics["confidence_rule_error"],
     )
+
+
+def write_report(path, manifest, counts, target_counts, calibration, validation, history, failures, args, seconds):
+    passed = real_gate_passed(validation)
     lines = [
         "# GeoFuse real-OOF confidence gate",
         "",
@@ -241,6 +249,8 @@ def write_report(path, manifest, counts, target_counts, calibration, validation,
         "",
         f"The decision threshold ({validation['decision_threshold']:.3f}) was selected only "
         f"on calibration data; its calibration gate error was {calibration['learned_gate_error']:.4f} Å.",
+        "The pass criterion requires lower held-out error than always-template, "
+        "always-pretrained, gap-rule, and confidence-rule baselines.",
         "",
         "## Training history",
         "",

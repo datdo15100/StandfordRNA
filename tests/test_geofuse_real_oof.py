@@ -16,6 +16,7 @@ from rna3d.geofuse.real_oof import (
     make_real_example,
 )
 from tests.test_geofuse_phase_d import native_chain, priors
+from scripts.train_geofuse_real_gate import real_gate_passed
 
 
 def candidate(kind: str, coords: np.ndarray, metadata: dict) -> StructureCandidate:
@@ -36,6 +37,18 @@ def candidate(kind: str, coords: np.ndarray, metadata: dict) -> StructureCandida
 
 
 class RealOOFTests(unittest.TestCase):
+    def test_gate_must_beat_whole_source_baselines(self) -> None:
+        metrics = {
+            "learned_gate_error": 7.6,
+            "template_error": 7.7,
+            "pretrained_error": 7.0,
+            "gap_rule_error": 7.9,
+            "confidence_rule_error": 7.8,
+        }
+        self.assertFalse(real_gate_passed(metrics))
+        metrics["learned_gate_error"] = 6.9
+        self.assertTrue(real_gate_passed(metrics))
+
     def test_grouped_temporal_split_keeps_families_together(self) -> None:
         frame = pd.DataFrame(
             {

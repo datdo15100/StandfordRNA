@@ -2,9 +2,8 @@
 
 ## Outcome
 
-The real-OOF training path is implemented and its 15-target pilot has a complete
-temporal-safe TBM bank. Pretrained predictions are the only missing input, so the
-gate has deliberately not been trained yet.
+The real-OOF training path and its 15-target pilot are complete. The pilot has
+temporal-safe TBM candidates plus frozen DRfold2 predictions generated on Kaggle.
 
 DRfold2's official paper states that its structural training set uses RNA
 structures released before 2024. We therefore use `2023-12-31` as the conservative
@@ -33,12 +32,12 @@ contains 45 audited TBM candidates: three per target. Its audit result is:
 
 | split | targets | valid TBM | valid pretrained | ready pairs |
 |---|---:|---:|---:|---:|
-| train | 5 | 15 | 0 | 0 |
-| calibration | 5 | 15 | 0 | 0 |
-| validation | 5 | 15 | 0 | 0 |
+| train | 5 | 15 | 10 | 5 |
+| calibration | 5 | 15 | 10 | 5 |
+| validation | 5 | 15 | 10 | 5 |
 
-This zero is expected and useful: the hard provenance gate prevents validation
-DRfold2 files or synthetic corruptions from silently entering real-OOF training.
+All 15 targets pass the provenance audit. Each DRfold2 prediction was generated
+from 20 cfg97 checkpoints, with two candidates retained by model confidence.
 
 ## Implemented safeguards
 
@@ -57,10 +56,33 @@ DRfold2 files or synthetic corruptions from silently entering real-OOF training.
 
 ## Execution path
 
-The private Kaggle GPU kernel `datdo151000/geofuse-real-oof-drfold2-pilot` is prepared
-to generate two DRfold2 candidates for each of the 15 pilot targets. It reads only
-`train_sequences.v2.csv`, never native labels. After downloading and importing its
-outputs with cutoff provenance, run the audit and then `train_geofuse_real_gate.py`.
+The private Kaggle GPU kernel `datdo151000/geofuse-real-oof-drfold2-pilot` generated
+two DRfold2 candidates for each of the 15 pilot targets. It read only
+`train_sequences.v2.csv`, never native labels. The outputs were imported with
+explicit cutoff provenance before the native-supervised trainer was run.
 
-This pilot is a pipeline and domain-transfer check. A positive pilot justifies a
-larger family-disjoint run; it is not by itself the thesis result.
+## Pilot result
+
+The synthetic-initialized gate was fine-tuned on 5 train targets, calibrated on 5,
+and evaluated once on 5 newest targets:
+
+| rule | held-out residue error (Å) |
+|---|---:|
+| oracle per-residue source | 3.2967 |
+| always DRfold2 | **6.9689** |
+| always TBM | 7.7180 |
+| learned gate | 7.6027 |
+| confidence rule | 7.8380 |
+| TBM-gap rule | 7.8783 |
+
+The learned gate beats both earlier residue heuristics but loses to always using
+DRfold2 by 0.6338 Å. Held-out ROC AUC is 0.4815. Under the strict criterion that a
+gate must beat both whole-source baselines as well as the heuristic rules, the
+pilot **fails**.
+
+This is still useful evidence: real errors differ materially from the synthetic
+corruption model, and five training targets are too few to learn robust routing.
+The failed gate must not be used in a Kaggle submission. A larger real-OOF run is
+justified only as a data-scaling experiment, not as confirmation of the method.
+
+This pilot is a pipeline and domain-transfer check, not by itself the thesis result.
