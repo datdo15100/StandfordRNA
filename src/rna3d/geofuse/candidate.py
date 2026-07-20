@@ -20,7 +20,7 @@ import numpy as np
 
 SCHEMA_VERSION = 1
 _SAFE_NAME = re.compile(r"[^A-Za-z0-9_.-]+")
-_KINDS = {"template", "pretrained", "denovo"}
+_KINDS = {"template", "pretrained", "denovo", "fused"}
 
 
 def sequence_digest(sequence: str) -> str:
