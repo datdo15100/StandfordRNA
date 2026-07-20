@@ -1,0 +1,21 @@
+{
+  "id": "datdo151000/geofuse-phase-a-boltz-candidate-for-r1138",
+  "title": "GeoFuse Phase A Boltz Candidate for R1138",
+  "code_file": "phase_a_boltz.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "youhanlee/boltz-dependencies",
+    "igorkrashenyi/fairscale-0413",
+    "ogurtsov/biopython",
+    "youhanlee/rna-prediction-boltz"
+  ],
+  "competition_sources": [
+    "stanford-rna-3d-folding"
+  ],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:d8674e13fab653bf7fb8d9a102f2ae94036771ccb5c73f51888d881421e1f937"
+}
