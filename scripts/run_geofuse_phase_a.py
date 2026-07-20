@@ -209,7 +209,10 @@ def build_parser() -> argparse.ArgumentParser:
     tbm = sub.add_parser("build-tbm", help="cache temporal-safe TBM candidates")
     add_common(tbm)
     tbm.add_argument("--max-candidates", type=int, default=10)
-    tbm.add_argument("--max-len", type=int, default=600)
+    # TBM transfer/gap filling is CPU-side and handled the 720-nt validation
+    # target safely. Keep the default above the competition range; GPU model
+    # length routing belongs in the model-specific runners instead.
+    tbm.add_argument("--max-len", type=int, default=2000)
     tbm.add_argument("--seed", type=int, default=0)
     tbm.add_argument("--refresh-search", action="store_true")
     tbm.add_argument("--overwrite", action="store_true")

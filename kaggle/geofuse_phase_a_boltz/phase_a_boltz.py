@@ -168,7 +168,9 @@ def validate_and_export(seconds: float, log_path: Path) -> dict:
 
     document = MMCIF2Dict(str(structure))
     atom_names = document.get("_atom_site.label_atom_id", [])
-    c1_count = sum(str(name).strip("'\"") in {"C1'", "C1*"} for name in atom_names)
+    # MMCIF2Dict already removes CIF quoting. Preserve the apostrophe that is
+    # part of the RNA atom name (stripping single quotes would turn C1' into C1).
+    c1_count = sum(str(name).strip('"') in {"C1'", "C1*"} for name in atom_names)
     if c1_count != EXPECTED_LENGTH:
         raise ValueError(f"expected {EXPECTED_LENGTH} C1' atoms, found {c1_count}")
     with np.load(plddt, allow_pickle=False) as payload:
