@@ -32,6 +32,7 @@ from rna3d.geofuse.phase_c import (
     select_quality_diversity,
 )
 from rna3d.geofuse.refine_v2 import GeometryV2Config, refine_structure_v2
+from rna3d.geofuse.phase_d import fuse_with_learned_gate, load_gate_checkpoint
 from rna3d.paths import cache, processed
 
 
@@ -176,8 +177,8 @@ def project_fusion(
             sequence=candidate.sequence,
             candidate_id=f"{candidate.candidate_id}__geometry_v2",
             kind="fused",
-            source="geofuse_v2",
-            model="heuristic_segment_v1_geometry_v2",
+            source=f"{candidate.source}_v2",
+            model=f"{candidate.model}_geometry_v2",
             coords=coordinates,
             confidence=candidate.confidence,
             support_mask=candidate.support_mask,
@@ -195,6 +196,7 @@ def build_fusions(
     priors_v1: dict,
     priors_v2: dict,
     args: argparse.Namespace,
+    gate_checkpoint: dict | None,
 ) -> tuple[list[StructureCandidate], int, float]:
     mixed: list[tuple[int, int, float, list[int], list[int]]] = []
     for label in np.unique(cluster_labels):
@@ -236,6 +238,27 @@ def build_fusions(
                 )
                 output.append(projected)
                 runtime += seconds
+        if gate_checkpoint is not None:
+            learned = fuse_with_learned_gate(
+                candidates[template_index],
+                candidates[pretrained_index],
+                priors_v1,
+                priors_v2,
+                gate_checkpoint,
+                device=args.device,
+            )
+            output.append(learned)
+            if not args.skip_projection:
+                projected, seconds = project_fusion(
+                    learned,
+                    priors_v1,
+                    priors_v2,
+                    steps=args.steps,
+                    device=args.device,
+                    overwrite=args.overwrite,
+                )
+                output.append(projected)
+                runtime += seconds
     return output, len(mixed), runtime
 
 
@@ -257,6 +280,18 @@ def run(args: argparse.Namespace) -> None:
     labels = io.load_labels("validation")
     priors_v1, priors_v2 = load_priors()
     store = CandidateCache(cache() / "geofuse_candidates", "validation")
+    gate_checkpoint = None
+    args.gate_checkpoint_digest = "not_used"
+    if not args.skip_learned:
+        gate_path = Path(args.gate_checkpoint)
+        if not gate_path.exists():
+            raise FileNotFoundError(
+                f"learned gate checkpoint not found: {gate_path}; run "
+                "scripts/train_geofuse_phase_d.py or pass --skip-learned"
+            )
+        gate_checkpoint = load_gate_checkpoint(str(gate_path))
+        args.gate_checkpoint_digest = hashlib.sha256(gate_path.read_bytes()).hexdigest()[:16]
+        print(f"[gate] frozen checkpoint {gate_path} ({args.gate_checkpoint_digest})")
     target_rows: list[dict] = []
     candidate_rows: list[dict] = []
 
@@ -272,7 +307,13 @@ def run(args: argparse.Namespace) -> None:
         ]
         raw_quality = native_blind_quality_scores(raw, raw_features)
         fusions, mixed_cluster_count, refinement_seconds = build_fusions(
-            raw, raw_clusters, raw_quality, priors_v1, priors_v2, args
+            raw,
+            raw_clusters,
+            raw_quality,
+            priors_v1,
+            priors_v2,
+            args,
+            gate_checkpoint,
         )
         augmented = raw + fusions
         augmented_similarity = (
@@ -336,6 +377,24 @@ def run(args: argparse.Namespace) -> None:
             "fusion_oracle_tm": float(native_scores[len(raw) :].max())
             if fusions
             else np.nan,
+            "heuristic_fusion_oracle_tm": float(
+                max(
+                    native_scores[index]
+                    for index, candidate in enumerate(augmented)
+                    if index >= len(raw) and "learned" not in candidate.source
+                )
+            )
+            if any("learned" not in candidate.source for candidate in fusions)
+            else np.nan,
+            "learned_fusion_oracle_tm": float(
+                max(
+                    native_scores[index]
+                    for index, candidate in enumerate(augmented)
+                    if index >= len(raw) and "learned" in candidate.source
+                )
+            )
+            if any("learned" in candidate.source for candidate in fusions)
+            else np.nan,
             "refinement_seconds": refinement_seconds,
         }
         for name, (indices, matrix) in methods.items():
@@ -351,13 +410,20 @@ def run(args: argparse.Namespace) -> None:
         target_rows.append(row)
 
         for index, (candidate, features) in enumerate(zip(augmented, augmented_features)):
-            pool = (
-                "raw"
-                if index < len(raw)
-                else "fusion_v2"
-                if candidate.source == "geofuse_v2"
-                else "fusion_raw"
-            )
+            if index < len(raw):
+                pool = "raw"
+            elif "learned" in candidate.source:
+                pool = (
+                    "fusion_learned_v2"
+                    if candidate.source.endswith("_v2")
+                    else "fusion_learned_raw"
+                )
+            else:
+                pool = (
+                    "fusion_heuristic_v2"
+                    if candidate.source.endswith("_v2")
+                    else "fusion_heuristic_raw"
+                )
             candidate_rows.append(
                 {
                     "target_id": target.target_id,
@@ -394,6 +460,8 @@ def _summary(frame: pd.DataFrame) -> pd.Series:
         "cluster_augmented_tm",
         "raw_oracle_tm",
         "augmented_oracle_tm",
+        "heuristic_fusion_oracle_tm",
+        "learned_fusion_oracle_tm",
         "augmented_oracle_gain",
         "augmented_selection_regret",
         "source_balanced_raw_self_tm",
@@ -424,14 +492,28 @@ def write_report(
     target_delta = targets["cluster_augmented_tm"] - targets["source_balanced_raw_tm"]
     worst_target = str(targets.loc[target_delta.idxmin(), "target_id"])
     worst_delta = float(target_delta.min())
+    worst_line = (
+        f"- The largest selected-set regression is {worst_target} "
+        f"({worst_delta:+.4f} TM), showing that the hand-built cross-source "
+        "confidence score is not calibrated."
+        if worst_delta < -1e-8
+        else "- The selected set did not regress on this target subset; fusion quality is "
+        "assessed separately by its oracle ceiling."
+    )
     gate = selector_gain > 0 and full["augmented_oracle_gain"] > 0
     sensitivity_gate = sensitivity_gain > 0 and sensitivity["augmented_oracle_gain"] > 0
+    learned_transfer_available = np.isfinite(full["learned_fusion_oracle_tm"])
+    learned_transfer_delta = (
+        full["learned_fusion_oracle_tm"] - full["heuristic_fusion_oracle_tm"]
+        if learned_transfer_available
+        else np.nan
+    )
     fused = candidates[candidates["pool"] != "raw"]
     selected_fusion_targets = int(
         targets["cluster_augmented_ids"].str.contains("fused__", regex=False).sum()
     )
     lines = [
-        "# GeoFuse Phase C — fold clustering and heuristic fusion",
+        f"# {args.title}",
         "",
         "All clustering, fusion weights, geometry quality scores, and final-five choices "
         "are fixed before native labels are read. Native TM is joined only post hoc.",
@@ -467,10 +549,23 @@ def write_report(
         "fold hypothesis; selected scores measure the native-blind routing problem.",
         f"- Heuristic fusion did not raise oracle TM. It should remain an experimental "
         f"candidate generator, not replace either parent source.",
-        f"- The largest selected-set regression is {worst_target} ({worst_delta:+.4f} TM), "
-        "showing that the hand-built cross-source confidence score is not calibrated.",
-        "- The next justified step is a leakage-safe learned confidence gate. Further "
-        "weight tuning on these 12 native-scored targets would overfit the development set.",
+        worst_line,
+        (
+            "- The next justified step is real out-of-fold gate supervision from homolog "
+            "pairs/model predictions. Further synthetic or heuristic tuning on these native-"
+            "scored targets would overfit the development set."
+            if learned_transfer_available
+            else "- The next justified step is a leakage-safe learned confidence gate. "
+            "Further weight tuning on these 12 native-scored targets would overfit the "
+            "development set."
+        ),
+        (
+            f"- Frozen learned-vs-heuristic fusion oracle delta: "
+            f"{learned_transfer_delta:+.4f} TM. A negative value is evidence that the "
+            "synthetic gate did not transfer to real candidate errors."
+            if learned_transfer_available
+            else "- No learned-gate checkpoint was evaluated in this run."
+        ),
         "- Lower selected self-TM means more fold diversity. Diversity is useful only if "
         "the selected best-of-five TM is preserved or improved.",
         "- This is development-set evidence. R1128 is reported separately because of the "
@@ -483,6 +578,7 @@ def write_report(
         f"- Geometry projection steps: {args.steps}",
         f"- Fusion config: `{json.dumps(asdict(FusionConfig()), sort_keys=True)}`",
         f"- Selection config: `{json.dumps(asdict(SelectionConfig()), sort_keys=True)}`",
+        f"- Learned gate checkpoint digest: `{args.gate_checkpoint_digest}`",
         "- The 0.35 threshold was chosen from a native-blind cross-source self-TM audit "
         "on the pilot targets; it was not selected from fusion/native TM outcomes.",
         "",
@@ -507,6 +603,9 @@ def write_report(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target-ids", help="comma-separated validation targets")
+    parser.add_argument(
+        "--title", default="GeoFuse Phase C — fold clustering and heuristic fusion"
+    )
     parser.add_argument("--limit", type=int)
     parser.add_argument("--fold-threshold", type=float, default=0.35)
     parser.add_argument("--max-fusions", type=int, default=3)
@@ -514,6 +613,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--steps", type=int, default=300)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--skip-projection", action="store_true")
+    parser.add_argument("--skip-learned", action="store_true")
+    parser.add_argument(
+        "--gate-checkpoint",
+        default=processed() / "geofuse_confidence_gate_v1.pt",
+    )
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--sensitivity-exclude", default="R1128")
     parser.add_argument(
