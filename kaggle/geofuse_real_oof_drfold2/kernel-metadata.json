@@ -1,0 +1,18 @@
+{
+  "id": "datdo151000/geofuse-real-oof-drfold2-pilot",
+  "title": "GeoFuse Real OOF DRfold2 Pilot",
+  "code_file": "phase_e_drfold2.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "jaejohn/drfold2-repo",
+    "jaejohn/drfold2"
+  ],
+  "competition_sources": [
+    "stanford-rna-3d-folding"
+  ]
+}

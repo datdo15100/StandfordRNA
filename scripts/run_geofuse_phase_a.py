@@ -40,8 +40,16 @@ def guess_pdb_ids(all_sequences: str | float) -> tuple[str, ...]:
 
 def selected_sequences(args: argparse.Namespace) -> pd.DataFrame:
     sequences = io.load_sequences(args.split)
+    requested: set[str] = set()
     if getattr(args, "target_ids", None):
-        requested = {item.strip() for item in args.target_ids.split(",") if item.strip()}
+        requested.update(item.strip() for item in args.target_ids.split(",") if item.strip())
+    if getattr(args, "target_file", None):
+        requested.update(
+            line.strip().split(",", 1)[0]
+            for line in Path(args.target_file).read_text().splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+    if requested:
         missing = requested - set(sequences["target_id"])
         if missing:
             raise KeyError(f"unknown target IDs for {args.split}: {sorted(missing)}")
@@ -141,6 +149,11 @@ def cmd_import(args: argparse.Namespace) -> None:
                     source=args.source,
                     model=args.model,
                     default_confidence=args.default_confidence,
+                    provenance={
+                        "model_training_cutoff": args.model_training_cutoff,
+                        "model_training_data": args.model_training_data,
+                        "oof_exclusion_manifest": args.oof_exclusion_manifest,
+                    },
                 )
                 store.save(candidate, overwrite=args.overwrite)
                 imported += 1
@@ -198,6 +211,7 @@ def cmd_status(args: argparse.Namespace) -> None:
 def add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--split", default="validation", choices=["train", "train_v2", "validation"])
     parser.add_argument("--target-ids", help="comma-separated target IDs")
+    parser.add_argument("--target-file", help="one target ID per line (or first CSV field)")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--cache-root", help="default: data/cache/geofuse_candidates")
 
@@ -228,6 +242,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     imported.add_argument("--max-candidates", type=int, default=10)
     imported.add_argument("--default-confidence", type=float, default=0.5)
+    imported.add_argument(
+        "--model-training-cutoff",
+        help="last structural-training date for OOF auditing (YYYY-MM-DD)",
+    )
+    imported.add_argument(
+        "--model-training-data",
+        help="human-readable checkpoint/training-set provenance",
+    )
+    imported.add_argument(
+        "--oof-exclusion-manifest",
+        help="optional target/family exclusion manifest used to train this checkpoint",
+    )
     imported.add_argument("--overwrite", action="store_true")
     imported.add_argument("--fail-fast", action="store_true")
     imported.set_defaults(func=cmd_import)

@@ -55,14 +55,15 @@ def build_tbm_candidates(
     meta_idx = meta.set_index("chain_key")
     scored: list[dict] = []
 
-    def _add_template(key, pdb_id, tmpl, source):
+    def _add_template(key, pdb_id, tmpl, source, release_date=None):
         tr = align_and_transfer(target_seq, tmpl, key)
         if tr.coverage <= 0:
             return False
         completeness = tr.template_resolved / max(tr.template_len, 1)
         conf = template_confidence(tr.identity, tr.coverage, completeness)
         scored.append({"chain_key": key, "pdb_id": pdb_id, "transfer": tr,
-                       "confidence": conf, "completeness": completeness, "source": source})
+                       "confidence": conf, "completeness": completeness, "source": source,
+                       "release_date": None if release_date is None else str(release_date)})
         return True
 
     # ---- primary: MMseqs prefilter hits, best first ----
@@ -78,7 +79,13 @@ def build_tbm_candidates(
                 continue
             if str(row["pdb_id"]).upper() in exclude_pdb_ids:
                 continue
-            if _add_template(key, str(row["pdb_id"]).upper(), db.get_chain(key), "mmseqs"):
+            if _add_template(
+                key,
+                str(row["pdb_id"]).upper(),
+                db.get_chain(key),
+                "mmseqs",
+                row["release_date"],
+            ):
                 seen += 1
                 if seen >= realign_topk:
                     break
@@ -97,8 +104,11 @@ def build_tbm_candidates(
                                              top_n=max_candidates + 3):
                 if c["chain_key"] in existing:
                     continue
-                _add_template(c["chain_key"], c["pdb_id"],
-                              {"seq": c["seq"], "coords": c["coords"]}, "composite")
+                _add_template(
+                    c["chain_key"], c["pdb_id"],
+                    {"seq": c["seq"], "coords": c["coords"]}, "composite",
+                    c["release_date"],
+                )
         except FileNotFoundError:
             pass  # composite library not built yet — skip gracefully
 
@@ -132,6 +142,7 @@ def build_tbm_candidates(
             coords=filled, conf_residue=conf_res, mask=tr.mask,
             confidence=s["confidence"], identity=tr.identity, coverage=tr.coverage,
             meta={"pdb_id": s["pdb_id"], "completeness": s["completeness"],
-                  "template_len": tr.template_len, "source": s.get("source", "tbm")},
+                  "template_len": tr.template_len, "source": s.get("source", "tbm"),
+                  "release_date": s.get("release_date")},
         ))
     return candidates

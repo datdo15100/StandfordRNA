@@ -277,7 +277,12 @@ def collate_examples(examples: list[dict]) -> dict[str, torch.Tensor]:
             "confidence_rule",
         ):
             output[name][row, :size] = torch.from_numpy(example[name])
-        output["mask"][row, :size] = True
+        if "resolved_mask" in example:
+            output["mask"][row, :size] = torch.from_numpy(
+                np.asarray(example["resolved_mask"], dtype=bool)
+            )
+        else:
+            output["mask"][row, :size] = True
     return output
 
 

@@ -151,6 +151,7 @@ def import_structure(
     model: str,
     default_confidence: float = 0.5,
     priors: dict[str, np.ndarray] | None = None,
+    provenance: dict | None = None,
 ) -> StructureCandidate:
     """Normalize one trusted model output structure and its available confidence."""
     path = Path(path)
@@ -163,6 +164,7 @@ def import_structure(
         "raw_structure_format": path.suffix.lower().lstrip("."),
         "chain_id": chain_id,
         **confidence_meta,
+        **(provenance or {}),
     }
     return StructureCandidate(
         target_id=target_id,
