@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from ..data import io
+from ..eval.local_metrics import c1_lddt, sliding_window_c1_rmsd
 from .candidate import StructureCandidate
 from .phase_c import robust_superpose
 from .phase_d import pair_gate_features
@@ -175,14 +176,41 @@ def make_real_example(
         template_error = _aligned_error(template.coords, native)
         pretrained_error = _aligned_error(pretrained.coords, native)
         joint = float(np.nanmean(np.minimum(template_error, pretrained_error)))
-        choices.append((joint, template_error, pretrained_error))
+        choices.append((joint, template_error, pretrained_error, native))
     if not choices:
         raise ValueError(f"{template.target_id}: no usable native conformation")
-    _, template_error, pretrained_error = min(choices, key=lambda item: item[0])
+    _, template_error, pretrained_error, native = min(
+        choices, key=lambda item: item[0]
+    )
+    # Use the same chosen native conformation for every supervision ablation.
+    template_lddt = c1_lddt(template.coords, native)["per_residue"]
+    pretrained_lddt = c1_lddt(pretrained.coords, native)["per_residue"]
+    template_window = sliding_window_c1_rmsd(
+        template.coords, native, window=15
+    )["per_residue"]
+    pretrained_window = sliding_window_c1_rmsd(
+        pretrained.coords, native, window=15
+    )["per_residue"]
     resolved = np.isfinite(template_error) & np.isfinite(pretrained_error)
     difference = np.nan_to_num(template_error - pretrained_error)
     target = 1.0 / (1.0 + np.exp(-np.clip(difference / 1.5, -12.0, 12.0)))
     weight = (0.25 + np.clip(np.abs(difference) / 5.0, 0.0, 1.0)) * resolved
+    lddt_resolved = np.isfinite(template_lddt) & np.isfinite(pretrained_lddt)
+    lddt_difference = np.nan_to_num(pretrained_lddt - template_lddt)
+    lddt_target = 1.0 / (
+        1.0 + np.exp(-np.clip(lddt_difference / 0.05, -12.0, 12.0))
+    )
+    lddt_weight = (
+        0.25 + np.clip(np.abs(lddt_difference) / 0.25, 0.0, 1.0)
+    ) * lddt_resolved
+    window_resolved = np.isfinite(template_window) & np.isfinite(pretrained_window)
+    window_difference = np.nan_to_num(template_window - pretrained_window)
+    window_target = 1.0 / (
+        1.0 + np.exp(-np.clip(window_difference / 1.5, -12.0, 12.0))
+    )
+    window_weight = (
+        0.25 + np.clip(np.abs(window_difference) / 5.0, 0.0, 1.0)
+    ) * window_resolved
     return {
         "target_id": template.target_id,
         "pair_id": f"{template.candidate_id}::{pretrained.candidate_id}",
@@ -191,6 +219,18 @@ def make_real_example(
         "weight": weight.astype(np.float32),
         "template_error": np.nan_to_num(template_error).astype(np.float32),
         "pretrained_error": np.nan_to_num(pretrained_error).astype(np.float32),
+        "aligned_template_error": np.nan_to_num(template_error).astype(np.float32),
+        "aligned_pretrained_error": np.nan_to_num(pretrained_error).astype(np.float32),
+        "template_lddt": np.nan_to_num(template_lddt).astype(np.float32),
+        "pretrained_lddt": np.nan_to_num(pretrained_lddt).astype(np.float32),
+        "lddt_target": lddt_target.astype(np.float32),
+        "lddt_weight": lddt_weight.astype(np.float32),
+        "lddt_resolved_mask": lddt_resolved,
+        "template_window_rmsd": np.nan_to_num(template_window).astype(np.float32),
+        "pretrained_window_rmsd": np.nan_to_num(pretrained_window).astype(np.float32),
+        "window_target": window_target.astype(np.float32),
+        "window_weight": window_weight.astype(np.float32),
+        "window_resolved_mask": window_resolved,
         "gap_rule": (~template.support_mask).astype(np.float32),
         "confidence_rule": (pretrained.confidence > template.confidence).astype(np.float32),
         "resolved_mask": resolved,

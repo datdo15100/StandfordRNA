@@ -103,6 +103,11 @@ class RealOOFTests(unittest.TestCase):
         self.assertFalse(example["resolved_mask"][10])
         self.assertEqual(int(example["resolved_mask"].sum()), 39)
         self.assertTrue(np.isfinite(example["target"]).all())
+        self.assertFalse(example["lddt_resolved_mask"][10])
+        self.assertTrue(np.isfinite(example["lddt_target"]).all())
+        self.assertTrue(np.isfinite(example["window_target"]).all())
+        self.assertEqual(example["template_lddt"].shape, (40,))
+        self.assertEqual(example["pretrained_window_rmsd"].shape, (40,))
 
 
 if __name__ == "__main__":

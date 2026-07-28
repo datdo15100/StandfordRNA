@@ -223,6 +223,52 @@ def cmd_audit(args: argparse.Namespace) -> None:
     print(f"[audit] {output}")
 
 
+def cmd_select(args: argparse.Namespace) -> None:
+    """Freeze a deterministic medium-size subset without reading native scores."""
+    manifest = pd.read_csv(args.manifest, dtype={"target_id": str})
+    requested = {
+        "train": args.train_targets,
+        "calibration": args.calibration_targets,
+        "validation": args.validation_targets,
+    }
+    parts = []
+    for split, count in requested.items():
+        subset = manifest[
+            (manifest["split"] == split) & (manifest["seq_len"] <= args.max_len)
+        ].sort_values(["date", "seq_len", "target_id"])
+        if len(subset) < count:
+            raise ValueError(
+                f"{split}: requested {count} targets but only {len(subset)} have "
+                f"length <= {args.max_len}"
+            )
+        # Equal spacing covers the entire chronological band and is deterministic.
+        indices = np.linspace(0, len(subset) - 1, count).round().astype(int)
+        selected = subset.iloc[indices]
+        if selected["target_id"].nunique() != count:
+            raise RuntimeError(f"{split}: deterministic selection produced duplicates")
+        parts.append(selected)
+    medium = pd.concat(parts).sort_values(["split", "date", "target_id"])
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    medium.to_csv(output, index=False)
+    prefix = output.with_suffix("")
+    (prefix.parent / f"{prefix.name}_targets.txt").write_text(
+        "\n".join(medium["target_id"]) + "\n"
+    )
+    _write_fasta(medium, prefix.parent / f"{prefix.name}.fasta")
+    summary = medium.groupby("split").agg(
+        targets=("target_id", "size"),
+        min_len=("seq_len", "min"),
+        median_len=("seq_len", "median"),
+        max_len=("seq_len", "max"),
+        first_date=("date", "min"),
+        last_date=("date", "max"),
+        families=("family_group", "nunique"),
+    )
+    print(summary.to_string())
+    print(f"[medium manifest] {output}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -246,6 +292,23 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--cache-root", default=str(cache() / "geofuse_candidates"))
     audit.add_argument("--output", default=str(cache() / "geofuse_real_oof_audit.csv"))
     audit.set_defaults(func=cmd_audit)
+
+    select = sub.add_parser(
+        "select", help="freeze a deterministic 60/20/20-scale OOF subset"
+    )
+    select.add_argument(
+        "--manifest",
+        default=str(processed() / "geofuse_real_oof" / "manifest.csv"),
+    )
+    select.add_argument(
+        "--output",
+        default=str(processed() / "geofuse_real_oof" / "medium_manifest.csv"),
+    )
+    select.add_argument("--train-targets", type=int, default=60)
+    select.add_argument("--calibration-targets", type=int, default=20)
+    select.add_argument("--validation-targets", type=int, default=20)
+    select.add_argument("--max-len", type=int, default=100)
+    select.set_defaults(func=cmd_select)
     return parser
 
 
