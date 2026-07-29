@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="840" viewBox="0 0 1400 840">
+  <style>.title{font:700 30px 'DejaVu Sans',Arial;fill:#102a56}.h{font:700 18px 'DejaVu Sans',Arial;fill:#17345f}.t{font:15px 'DejaVu Sans',Arial;fill:#26364e}.s{font:13px 'DejaVu Sans',Arial;fill:#526176}.native{stroke:#2563eb;stroke-width:6;fill:none}.pred{stroke:#dc2626;stroke-width:6;fill:none}.guide{stroke:#94a3b8;stroke-width:1.5;stroke-dasharray:5 5}</style>
+  <rect width="1400" height="840" fill="#f8fafc"/>
+  <text x="700" y="45" text-anchor="middle" class="title">TM-score: “sai cục bộ” và “sai toàn cục” nhìn thấy bằng số</text>
+
+  <text x="230" y="95" text-anchor="middle" class="h">Native R1108 (minh họa)</text>
+  <path d="M70 220 C120 100 210 310 275 160 S405 105 450 235" class="native"/>
+  <circle cx="70" cy="220" r="7" fill="#2563eb"/><circle cx="450" cy="235" r="7" fill="#2563eb"/>
+
+  <text x="700" y="95" text-anchor="middle" class="h">Sai cục bộ: 5/69 residue dịch 8 Å</text>
+  <path d="M540 220 C590 100 680 310 745 160 S875 105 920 235" class="native"/>
+  <path d="M540 220 C590 100 650 290 700 145" class="pred"/>
+  <path d="M700 145 C730 70 770 65 800 145" class="pred"/>
+  <path d="M800 145 C845 120 875 105 920 235" class="pred"/>
+  <line x1="745" y1="160" x2="745" y2="85" class="guide"/>
+  <text x="755" y="78" class="s">local residual ≈ 8 Å</text>
+  <text x="730" y="280" text-anchor="middle" class="t">TM = 0.93382; C1′-lDDT = 0.92514</text>
+
+  <text x="1165" y="95" text-anchor="middle" class="h">Sai toàn cục: extended chain</text>
+  <path d="M1005 220 C1055 100 1145 310 1210 160 S1340 105 1370 235" class="native"/>
+  <path d="M1015 290 L1360 290" class="pred"/>
+  <text x="1190" y="330" text-anchor="middle" class="t">TM = 0.08075; C1′-lDDT = 0.29790</text>
+
+  <rect x="70" y="390" width="1260" height="355" rx="15" fill="#fff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="700" y="425" text-anchor="middle" class="h">Mỗi residue đóng góp: w(d) = 1 / [1 + (d/d₀)²], với R1108 d₀ = 2.47 Å</text>
+
+  <line x1="170" y1="675" x2="1240" y2="675" stroke="#64748b" stroke-width="1.5"/>
+  <line x1="170" y1="485" x2="170" y2="675" stroke="#64748b" stroke-width="1.5"/>
+  <line x1="170" y1="580" x2="1240" y2="580" class="guide"/>
+  <text x="150" y="490" text-anchor="end" class="s">1.0</text><text x="150" y="585" text-anchor="end" class="s">0.5</text><text x="150" y="680" text-anchor="end" class="s">0.0</text>
+  <polyline points="170,485 197,493 224,512 278,560 386,623 602,658 1240,672" fill="none" stroke="#2563eb" stroke-width="4"/>
+  <g fill="#2563eb">
+    <circle cx="170" cy="485" r="6"/><circle cx="197" cy="493" r="6"/><circle cx="224" cy="512" r="6"/>
+    <circle cx="278" cy="560" r="6"/><circle cx="386" cy="623" r="6"/><circle cx="602" cy="658" r="6"/><circle cx="1240" cy="672" r="6"/>
+  </g>
+  <g class="s">
+    <text x="170" y="702" text-anchor="middle">0 Å</text><text x="197" y="720" text-anchor="middle">0.5</text>
+    <text x="224" y="702" text-anchor="middle">1</text><text x="278" y="702" text-anchor="middle">2</text>
+    <text x="386" y="702" text-anchor="middle">4</text><text x="602" y="702" text-anchor="middle">8</text>
+    <text x="1240" y="702" text-anchor="middle">20 Å</text>
+  </g>
+  <g class="t">
+    <text x="185" y="468">1.000</text><text x="215" y="495">0.961</text><text x="242" y="522">0.859</text>
+    <text x="292" y="565">0.603</text><text x="400" y="628">0.275</text><text x="616" y="663">0.087</text>
+    <text x="1190" y="658">0.015</text>
+  </g>
+  <text x="700" y="785" text-anchor="middle" class="s">64 residue đúng + 5 residue sai 8 Å: (64×1 + 5×0.0868)/69 = 0.9338. Sai ít điểm nên tổng vẫn cao; lDDT/window RMSD chỉ ra vùng lỗi.</text>
+</svg>

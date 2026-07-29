@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="840" viewBox="0 0 1400 840">
+  <style>.title{font:700 30px 'DejaVu Sans',Arial;fill:#102a56}.h{font:700 18px 'DejaVu Sans',Arial;fill:#17345f}.t{font:15px 'DejaVu Sans',Arial;fill:#26364e}.s{font:13px 'DejaVu Sans',Arial;fill:#526176}.axis{stroke:#64748b;stroke-width:1.5}.grid{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:4 5}</style>
+  <rect width="1400" height="840" fill="#f8fafc"/>
+  <text x="700" y="45" text-anchor="middle" class="title">Bằng chứng score: chỉ so các thanh có cùng protocol</text>
+
+  <text x="70" y="95" class="h">A. Ablation temporal-safe trên cùng 12 CASP15 targets</text>
+  <line x1="330" y1="285" x2="1250" y2="285" class="axis"/>
+  <line x1="330" y1="125" x2="330" y2="285" class="axis"/>
+  <g class="s">
+    <text x="330" y="310" text-anchor="middle">0.00</text><text x="560" y="310" text-anchor="middle">0.10</text>
+    <text x="790" y="310" text-anchor="middle">0.20</text><text x="1020" y="310" text-anchor="middle">0.30</text>
+    <text x="1250" y="310" text-anchor="middle">0.40 TM</text>
+  </g>
+  <g class="grid"><line x1="560" y1="125" x2="560" y2="285"/><line x1="790" y1="125" x2="790" y2="285"/><line x1="1020" y1="125" x2="1020" y2="285"/><line x1="1250" y1="125" x2="1250" y2="285"/></g>
+  <text x="315" y="167" text-anchor="end" class="t">Ours: MMseq only</text>
+  <rect x="330" y="143" width="487" height="34" fill="#60a5fa"/><text x="829" y="166" class="t">0.2117</text>
+  <text x="315" y="222" text-anchor="end" class="t">Ours: + composite</text>
+  <rect x="330" y="198" width="487" height="34" fill="#60a5fa"/>
+  <rect x="817" y="198" width="220" height="34" fill="#2563eb"/><text x="1049" y="221" class="t">0.3072 (+0.0955)</text>
+  <text x="315" y="272" text-anchor="end" class="t">Top-1 TBM reproduced</text>
+  <rect x="330" y="248" width="686" height="34" fill="#94a3b8"/><text x="1028" y="271" class="t">0.2983</text>
+
+  <text x="70" y="370" class="h">B. Kaggle late submission (hidden set; không dùng để chia attribution nội bộ)</text>
+  <line x1="330" y1="555" x2="1250" y2="555" class="axis"/>
+  <line x1="330" y1="405" x2="330" y2="555" class="axis"/>
+  <g class="s">
+    <text x="330" y="580" text-anchor="middle">0.00</text><text x="560" y="580" text-anchor="middle">0.15</text>
+    <text x="790" y="580" text-anchor="middle">0.30</text><text x="1020" y="580" text-anchor="middle">0.45</text>
+    <text x="1250" y="580" text-anchor="middle">0.60 TM</text>
+  </g>
+  <g class="grid"><line x1="560" y1="405" x2="560" y2="555"/><line x1="790" y1="405" x2="790" y2="555"/><line x1="1020" y1="405" x2="1020" y2="555"/><line x1="1250" y1="405" x2="1250" y2="555"/></g>
+  <text x="315" y="447" text-anchor="end" class="t">Ours TBM-only private</text>
+  <rect x="330" y="423" width="923" height="34" fill="#2563eb"/><text x="1263" y="446" class="t">0.60175</text>
+  <text x="315" y="502" text-anchor="end" class="t">Top-1 TBM notebook</text>
+  <rect x="330" y="478" width="909" height="34" fill="#64748b"/><text x="1249" y="501" class="t">0.59298</text>
+  <text x="315" y="547" text-anchor="end" class="t">Top-1 hybrid V4</text>
+  <rect x="330" y="523" width="884" height="28" fill="#a78bfa"/><text x="1224" y="544" class="t">0.57631</text>
+
+  <text x="70" y="640" class="h">C. Candidate diversity và Geometry v2 (12-target local protocol)</text>
+  <text x="90" y="685" class="t">TBM oracle</text><rect x="260" y="662" width="330" height="32" fill="#60a5fa"/><text x="530" y="685" text-anchor="end" class="t" style="fill:#fff">0.3143</text>
+  <text x="90" y="730" class="t">Union oracle</text><rect x="260" y="707" width="538" height="32" fill="#7c3aed"/><text x="785" y="730" text-anchor="end" class="t" style="fill:#fff">0.5123 (+0.1981)</text>
+  <text x="850" y="685" class="t">Raw C1′-lDDT</text><rect x="1040" y="662" width="236" height="32" fill="#86efac"/><text x="1263" y="685" text-anchor="end" class="t">0.4721</text>
+  <text x="850" y="730" class="t">Geometry v2</text><rect x="1040" y="707" width="241" height="32" fill="#16a34a"/><text x="1268" y="730" text-anchor="end" class="t" style="fill:#fff">0.4818</text>
+  <text x="700" y="795" text-anchor="middle" class="s">Geometry v2: ΔC1′-lDDT +0.0097; best-of-5 TM 0.471268 → 0.471308 (giữ nguyên trong sai số).</text>
+</svg>

@@ -18,16 +18,16 @@ CHROME = Path("/mnt/c/Program Files/Google/Chrome/Application/chrome.exe")
 
 DOCUMENTS = [
     {
-        "source": ROOT / "reports/thesis_notes/end_to_end_flow_explained.md",
+        "source": ROOT / "reports/thesis_notes/final_pipeline_whitebox_vi.md",
         "output": OUTPUT_DIR / "01_RNA3D_End_to_End_Flow_VI.pdf",
-        "title": "RNA 3D: Từ sequence đến prediction",
-        "subtitle": "Bản giải thích workflow ngắn, có ví dụ xuyên suốt",
+        "title": "RNA 3D Final Pipeline — White-box",
+        "subtitle": "TBM, pretrained, Geometry v2, GeoFuse và submission qua ví dụ thật",
     },
     {
-        "source": ROOT / "reports/thesis_notes/thesis_defense_explanation_vi.md",
+        "source": ROOT / "reports/thesis_notes/tm_score_defense_whitebox_vi.md",
         "output": OUTPUT_DIR / "02_RNA3D_Thesis_Defense_Guide_VI.pdf",
-        "title": "RNA 3D Thesis Defense Guide",
-        "subtitle": "Method, workflow, ablation, results và câu hỏi phản biện",
+        "title": "TM-score & Thesis Defense Evidence",
+        "subtitle": "Công thức, ví dụ số, independent metrics, ablation và sanity-check",
     },
 ]
 
@@ -157,6 +157,29 @@ table {
   font-size: 8.25pt;
   margin: 4mm 0 6mm;
   width: 100%;
+}
+.equation {
+  background: #f8fafc;
+  border: 0.8px solid #cbd5e1;
+  border-left: 4px solid #2563eb;
+  border-radius: 4px;
+  color: #102a56;
+  font-family: "DejaVu Serif", serif;
+  font-size: 11.2pt;
+  margin: 4mm auto 5mm;
+  max-width: 96%;
+  padding: 3mm 4mm;
+  text-align: center;
+  break-inside: avoid;
+}
+img {
+  display: block;
+  height: auto;
+  margin: 5mm auto 7mm;
+  max-height: 225mm;
+  max-width: 100%;
+  object-fit: contain;
+  break-inside: avoid;
 }
 thead { display: table-header-group; }
 tr { break-inside: avoid; }

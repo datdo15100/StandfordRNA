@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker>
+    <style>.title{font:700 30px 'DejaVu Sans',Arial;fill:#102a56}.h{font:700 19px 'DejaVu Sans',Arial;fill:#17345f}.t{font:15px 'DejaVu Sans',Arial;fill:#26364e}.s{font:13px 'DejaVu Sans',Arial;fill:#526176}.b{stroke-width:2;rx:14;ry:14}.a{stroke:#475569;stroke-width:2.3;fill:none;marker-end:url(#a)}</style>
+  </defs>
+  <rect width="1400" height="940" fill="#f8fafc"/>
+  <text x="700" y="46" text-anchor="middle" class="title">Pretrained + Geometry v2 + GeoFuse: dự đoán, kiểm tra, rồi mới ghép</text>
+
+  <rect x="55" y="95" width="210" height="105" class="b" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="160" y="130" text-anchor="middle" class="h">SEQUENCE</text>
+  <text x="160" y="160" text-anchor="middle" class="t">FASTA của target</text>
+  <text x="160" y="184" text-anchor="middle" class="s">không có native</text>
+  <path d="M265 148 H335" class="a"/>
+
+  <rect x="335" y="75" width="270" height="145" class="b" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="470" y="110" text-anchor="middle" class="h">DRfold2 CHECKPOINTS</text>
+  <text x="470" y="142" text-anchor="middle" class="t">neural network đã train sẵn</text>
+  <text x="470" y="169" text-anchor="middle" class="t">sequence → distance/orientation priors</text>
+  <text x="470" y="196" text-anchor="middle" class="s">frozen: thesis không train lại model lớn</text>
+  <path d="M605 148 H675" class="a"/>
+
+  <rect x="675" y="75" width="270" height="145" class="b" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="810" y="110" text-anchor="middle" class="h">SELECTION + FOLDING</text>
+  <text x="810" y="142" text-anchor="middle" class="t">gộp 20 checkpoint cfg97</text>
+  <text x="810" y="169" text-anchor="middle" class="t">optimize learned potentials</text>
+  <text x="810" y="196" text-anchor="middle" class="s">Arena dựng PDB hoàn chỉnh</text>
+  <path d="M945 148 H1015" class="a"/>
+
+  <circle cx="1085" cy="130" r="52" fill="#fff" stroke="#7c3aed" stroke-width="3"/>
+  <text x="1085" y="126" text-anchor="middle" class="h">P1</text>
+  <text x="1085" y="151" text-anchor="middle" class="s">L × 3</text>
+  <circle cx="1235" cy="165" r="52" fill="#fff" stroke="#7c3aed" stroke-width="3"/>
+  <text x="1235" y="161" text-anchor="middle" class="h">P2</text>
+  <text x="1235" y="186" text-anchor="middle" class="s">L × 3</text>
+
+  <rect x="80" y="285" width="1240" height="155" class="b" fill="#fff" stroke="#94a3b8"/>
+  <text x="700" y="320" text-anchor="middle" class="h">Ví dụ R1108: confidence không phải accuracy</text>
+  <text x="120" y="360" class="t">P1: confidence 0.3545 → TM 0.60192</text>
+  <text x="120" y="394" class="t">P2: confidence 0.3241 → TM 0.53589</text>
+  <text x="700" y="360" class="t">P4: confidence 0.3059 → TM 0.54627</text>
+  <text x="700" y="394" class="t">P5: confidence 0.2983 → TM 0.55306</text>
+  <text x="700" y="426" text-anchor="middle" class="s">P5 confidence thấp hơn P2/P4 nhưng TM cao hơn: không được coi confidence là “đáp án”.</text>
+
+  <path d="M700 440 V495" class="a"/>
+  <rect x="475" y="495" width="450" height="160" class="b" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="700" y="530" text-anchor="middle" class="h">GEOMETRY v2: PROJECTION, KHÔNG RE-FOLD</text>
+  <text x="700" y="562" text-anchor="middle" class="t">giữ gần source bằng confidence-weighted anchor</text>
+  <text x="700" y="590" text-anchor="middle" class="t">sửa backbone / clash / Rg / angle / torsion</text>
+  <text x="700" y="618" text-anchor="middle" class="t">kink guard ngăn tạo góc gãy mới</text>
+  <text x="700" y="642" text-anchor="middle" class="s">raw parent vẫn được giữ để có đường lui an toàn</text>
+
+  <path d="M475 575 H370" class="a"/>
+  <circle cx="305" cy="575" r="58" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+  <text x="305" y="571" text-anchor="middle" class="h">T1</text>
+  <text x="305" y="598" text-anchor="middle" class="s">TBM parent</text>
+  <path d="M925 575 H1030" class="a"/>
+  <circle cx="1095" cy="575" r="58" fill="#fff" stroke="#7c3aed" stroke-width="3"/>
+  <text x="1095" y="571" text-anchor="middle" class="h">P1</text>
+  <text x="1095" y="598" text-anchor="middle" class="s">model parent</text>
+
+  <path d="M305 633 C305 690 515 680 545 720" class="a"/>
+  <path d="M1095 633 C1095 690 885 680 855 720" class="a"/>
+  <polygon points="700,675 855,770 700,865 545,770" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="700" y="725" text-anchor="middle" class="h">GEOFUSE ROUTER</text>
+  <text x="700" y="755" text-anchor="middle" class="t">self-TM: cùng fold?</text>
+  <text x="700" y="783" text-anchor="middle" class="t">local disagreement 0.5–12 Å?</text>
+  <text x="700" y="811" text-anchor="middle" class="t">P(pretrained tốt) ≥ 0.90</text>
+  <text x="700" y="839" text-anchor="middle" class="t">liên tục ≥ 7 residue?</text>
+
+  <path d="M545 770 H390" class="a"/>
+  <rect x="75" y="705" width="315" height="135" class="b" fill="#fee2e2" stroke="#dc2626"/>
+  <text x="232" y="741" text-anchor="middle" class="h">KHÔNG: ABSTAIN</text>
+  <text x="232" y="773" text-anchor="middle" class="t">giữ T1 và P1 riêng</text>
+  <text x="232" y="801" text-anchor="middle" class="t">không tạo chimera thiếu bằng chứng</text>
+  <text x="232" y="826" text-anchor="middle" class="s">đây là hành vi deployable hiện tại</text>
+
+  <path d="M855 770 H1010" class="a"/>
+  <rect x="1010" y="705" width="315" height="135" class="b" fill="#fef9c3" stroke="#ca8a04"/>
+  <text x="1167" y="741" text-anchor="middle" class="h">CÓ: FUSE SEGMENT</text>
+  <text x="1167" y="773" text-anchor="middle" class="t">align P1 lên T1</text>
+  <text x="1167" y="801" text-anchor="middle" class="t">blend bằng alpha đã smooth</text>
+  <text x="1167" y="826" text-anchor="middle" class="s">parents vẫn ở trong bank</text>
+
+  <text x="700" y="912" text-anchor="middle" class="s">8K0Y_A: mean router probability = 0.7218; không có segment qua ngưỡng 0.90 → abstain đúng thiết kế.</text>
+</svg>

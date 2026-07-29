@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="920" viewBox="0 0 1400 920">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker>
+    <style>
+      .title{font:700 30px 'DejaVu Sans',Arial;fill:#102a56}.h{font:700 19px 'DejaVu Sans',Arial;fill:#17345f}
+      .t{font:15px 'DejaVu Sans',Arial;fill:#26364e}.s{font:13px 'DejaVu Sans',Arial;fill:#526176}
+      .b{stroke-width:2;rx:14;ry:14}.a{stroke:#475569;stroke-width:2.3;fill:none;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="1400" height="920" fill="#f8fafc"/>
+  <text x="700" y="46" text-anchor="middle" class="title">TBM white-box: R1108 đi từ sequence tới một cấu trúc C1′ hoàn chỉnh</text>
+
+  <rect x="45" y="95" width="280" height="120" class="b" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="185" y="128" text-anchor="middle" class="h">R1108</text>
+  <text x="185" y="158" text-anchor="middle" class="t">69 nucleotide</text>
+  <text x="185" y="184" text-anchor="middle" class="t">cutoff = 2022-05-27</text>
+  <text x="185" y="204" text-anchor="middle" class="s">chỉ sequence, chưa thấy native</text>
+
+  <path d="M325 155 H390" class="a"/>
+  <rect x="390" y="75" width="285" height="160" class="b" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="532" y="108" text-anchor="middle" class="h">NHÁNH 1: MMseqs</text>
+  <text x="532" y="138" text-anchor="middle" class="t">prefilter bằng seed k=13</text>
+  <text x="532" y="165" text-anchor="middle" class="t">sensitivity 7.5; max 300 hit</text>
+  <text x="532" y="192" text-anchor="middle" class="t">bit score / E-value / local match</text>
+  <text x="532" y="218" text-anchor="middle" class="s">nhanh, tìm homolog rõ</text>
+
+  <path d="M325 155 C355 155 350 345 390 345" class="a"/>
+  <rect x="390" y="270" width="285" height="170" class="b" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="532" y="303" text-anchor="middle" class="h">NHÁNH 2: EXHAUSTIVE</text>
+  <text x="532" y="333" text-anchor="middle" class="t">quét đủ 7,155 unique sequence</text>
+  <text x="532" y="360" text-anchor="middle" class="t">0.4 global + 0.3 local</text>
+  <text x="532" y="387" text-anchor="middle" class="t">+ 0.2 RNA features + 0.1 3-mer</text>
+  <text x="532" y="414" text-anchor="middle" class="s">chậm hơn, tăng recall</text>
+
+  <path d="M675 155 H750" class="a"/>
+  <path d="M675 355 H750" class="a"/>
+  <polygon points="850,95 950,195 850,295 750,195" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="850" y="150" text-anchor="middle" class="h">FILTER</text>
+  <text x="850" y="180" text-anchor="middle" class="t">release &lt; cutoff?</text>
+  <text x="850" y="208" text-anchor="middle" class="t">khác native PDB?</text>
+  <text x="850" y="236" text-anchor="middle" class="s">không → loại</text>
+
+  <path d="M950 195 H1025" class="a"/>
+  <rect x="1025" y="105" width="320" height="180" class="b" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="1185" y="138" text-anchor="middle" class="h">MERGE + REALIGN + RANK</text>
+  <text x="1185" y="170" text-anchor="middle" class="t">global alignment lại mọi hit</text>
+  <text x="1185" y="198" text-anchor="middle" class="t">identity × coverage × completeness</text>
+  <text x="1185" y="226" text-anchor="middle" class="t">ưu tiên PDB khác nhau</text>
+  <text x="1185" y="254" text-anchor="middle" class="s">không dùng native TM để chọn</text>
+
+  <path d="M1185 285 V355" class="a"/>
+  <rect x="1005" y="355" width="360" height="165" class="b" fill="#ecfeff" stroke="#0891b2"/>
+  <text x="1185" y="390" text-anchor="middle" class="h">VÍ DỤ TEMPLATE 1DRZ_B</text>
+  <text x="1185" y="421" text-anchor="middle" class="t">release 1999-02-16 ✓</text>
+  <text x="1185" y="449" text-anchor="middle" class="t">identity 0.6471; coverage 68/69</text>
+  <text x="1185" y="477" text-anchor="middle" class="t">confidence = 0.63768</text>
+  <text x="1185" y="504" text-anchor="middle" class="s">TM = 0.49384 chỉ biết sau evaluation</text>
+
+  <path d="M1005 438 H930" class="a"/>
+  <rect x="650" y="355" width="280" height="165" class="b" fill="#e0f2fe" stroke="#0284c7"/>
+  <text x="790" y="390" text-anchor="middle" class="h">ALIGN + TRANSFER</text>
+  <text x="790" y="421" text-anchor="middle" class="t">target i ↔ template j</text>
+  <text x="790" y="449" text-anchor="middle" class="t">copy C1′(j) → C1′(i)</text>
+  <text x="790" y="477" text-anchor="middle" class="t">mask = true nếu copy thật</text>
+  <text x="790" y="504" text-anchor="middle" class="s">residue 69 không được transfer</text>
+
+  <path d="M650 438 H575" class="a"/>
+  <rect x="315" y="355" width="260" height="165" class="b" fill="#fef9c3" stroke="#ca8a04"/>
+  <text x="445" y="390" text-anchor="middle" class="h">GAP FILL</text>
+  <text x="445" y="421" text-anchor="middle" class="t">nội suy gap ngắn</text>
+  <text x="445" y="449" text-anchor="middle" class="t">curve cho gap dài</text>
+  <text x="445" y="477" text-anchor="middle" class="t">extend gap ở đầu/cuối</text>
+  <text x="445" y="504" text-anchor="middle" class="s">tọa độ có, confidence thấp</text>
+
+  <path d="M315 438 H240" class="a"/>
+  <circle cx="155" cy="438" r="75" fill="#fff" stroke="#2563eb" stroke-width="3"/>
+  <text x="155" y="420" text-anchor="middle" class="h">T1</text>
+  <text x="155" y="449" text-anchor="middle" class="t">69 × 3</text>
+  <text x="155" y="475" text-anchor="middle" class="s">finite C1′</text>
+
+  <rect x="80" y="595" width="1240" height="250" class="b" fill="#fff" stroke="#94a3b8"/>
+  <text x="700" y="630" text-anchor="middle" class="h">R1108: vì sao phải chạy cả hai nhánh?</text>
+  <text x="115" y="675" class="t">MMseqs hit hợp lệ 1U6B_B:</text>
+  <text x="400" y="675" class="t">24 residue local match, pident 95.8%, bit score 40</text>
+  <text x="115" y="710" class="s">“95.8%” chỉ đúng trên đoạn 24 residue, không phải toàn chuỗi 69 residue.</text>
+  <text x="115" y="755" class="t">Composite tìm 1DRZ_B:</text>
+  <text x="400" y="755" class="t">global 0.4696; local 0.5500; feature 0.9954; 3-mer 0.6170</text>
+  <text x="400" y="790" class="t">weighted score = 0.6136 → candidate tốt nhất của nhánh TBM</text>
+  <text x="115" y="825" class="s">Ablation 12 target: MMseq-only 0.2117 → thêm composite 0.3072, Δ = +0.0955 TM.</text>
+</svg>
