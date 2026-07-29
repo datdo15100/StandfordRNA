@@ -161,6 +161,8 @@ và GeoFuse cố sửa hoặc chọn **local regions**.
               ▼                                ▼
         TBM branch                       pretrained branch
  search past structures                 run frozen DRfold2
+                                        (Boltz fallback was tested
+                                         separately for long RNA)
  align sequence                         20 checkpoint outputs
  transfer C1′                           confidence ranking
  fill unsupported gaps                 retain top 2
@@ -614,6 +616,51 @@ model đã thấy structure lúc pretraining
 
 Đây không phải proof tuyệt đối về toàn bộ training provenance của external model,
 nhưng là boundary audit tốt nhất có thể thực hiện với thông tin/checkpoint hiện có.
+
+## 8.5 Boltz-1 đã được dùng ở đâu?
+
+Boltz-1 có được chạy, nhưng phạm vi khác DRfold2:
+
+- trong preliminary Phase-A candidate-diversity experiment;
+- chỉ cho validation target `R1138`, dài 720 nt;
+- DRfold2 đã hết 16 GB VRAM trên target này;
+- runner vì vậy tái hiện top-1-style long-RNA fallback bằng Boltz-1;
+- dùng một diffusion sample, 10 recycling steps, 500 sampling steps và seed 42.
+
+Kết quả riêng `R1138`:
+
+```text
+TBM oracle TM:       0.2243
+Boltz-1 candidate:   0.2751
+oracle gain:        +0.0508
+```
+
+Temporal sensitivity giữ target này vì Boltz-1 báo training cutoff `2021-09-30`,
+trong khi structures `7PTK/7PTL` được release `2022-10-05`.
+
+Boltz không xuất hiện trong confirmatory 100-target experiment vì cohort đó:
+
+- giới hạn sequence length ở 100 nt để tạo đủ 60/20/20 targets;
+- dùng một frozen pretrained generator thống nhất là DRfold2;
+- cần cùng provenance, confidence/features và candidate count trên mọi target;
+- được thiết kế để đánh giá router, không phải benchmark nhiều pretrained models.
+
+Do đó có ba phát biểu khác nhau:
+
+```text
+Phase A:
+    DRfold2 cho phần lớn targets + 1 Boltz candidate cho long target R1138
+
+confirmatory real-OOF:
+    3 TBM + 2 DRfold2 trên 100 targets, không Boltz
+
+current Kaggle submission 0.60175:
+    TBM-only, không DRfold2 và không Boltz
+```
+
+Trong future production hybrid, Boltz vẫn có thể là fallback cho RNA rất dài hoặc một
+additional diversity source. Nhưng thesis hiện chưa có đủ Boltz OOF targets để train
+hoặc claim một Boltz-aware local router.
 
 ---
 
