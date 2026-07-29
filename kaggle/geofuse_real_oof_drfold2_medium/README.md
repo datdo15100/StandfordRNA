@@ -22,3 +22,12 @@ python scripts/run_geofuse_phase_a.py import \
 ```
 
 The target IDs are frozen from `medium_manifest.csv` before the kernel is launched.
+
+Version 2 is a one-target repair for `8YUR_X`: neural inference succeeded in version 1,
+but Arena segfaulted on the highest-confidence checkpoint output. The repair keeps the
+same model/checkpoints and deterministically tries the next confidence-ranked output
+when Arena fails; it does not inspect native coordinates.
+
+Arena failed for all 20 outputs of `8YUR_X` in version 2. Before any native scoring,
+version 3 therefore predicts `9EY0_T`, the first unused later target in the same frozen
+train-split ordering. This is a logged technical replacement, not score-based selection.

@@ -4,6 +4,7 @@ from __future__ import annotations
 import unittest
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,7 @@ from rna3d.geofuse.real_oof import (
     make_real_example,
 )
 from tests.test_geofuse_phase_d import native_chain, priors
+from scripts.run_geofuse_real_oof import cmd_replace_failed
 from scripts.train_geofuse_real_gate import real_gate_passed
 
 
@@ -104,10 +106,49 @@ class RealOOFTests(unittest.TestCase):
         self.assertEqual(int(example["resolved_mask"].sum()), 39)
         self.assertTrue(np.isfinite(example["target"]).all())
         self.assertFalse(example["lddt_resolved_mask"][10])
+        self.assertFalse(example["window_resolved_mask"][10])
         self.assertTrue(np.isfinite(example["lddt_target"]).all())
         self.assertTrue(np.isfinite(example["window_target"]).all())
         self.assertEqual(example["template_lddt"].shape, (40,))
         self.assertEqual(example["pretrained_window_rmsd"].shape, (40,))
+
+    def test_failed_target_replacement_uses_first_unused_later_reserve(self) -> None:
+        full = pd.DataFrame(
+            {
+                "target_id": ["A", "B", "C", "D", "E"],
+                "sequence": ["ACGU"] * 5,
+                "seq_len": [4] * 5,
+                "date": pd.date_range("2024-01-01", periods=5).astype(str),
+                "split": ["train", "train", "train", "train", "calibration"],
+                "sequence_group": ["sa", "sb", "sc", "sd", "se"],
+                "family_group": ["fa", "fb", "fc", "fd", "fe"],
+                "excluded_pdb_ids": [""] * 5,
+                "model_training_cutoff": ["2023-12-31"] * 5,
+                "model_training_data": ["frozen"] * 5,
+            }
+        )
+        cohort = full[full["target_id"].isin(["A", "B", "D", "E"])]
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            full_path = directory / "manifest.csv"
+            cohort_path = directory / "medium_manifest.csv"
+            output_path = directory / "repaired.csv"
+            full.to_csv(full_path, index=False)
+            cohort.to_csv(cohort_path, index=False)
+            cmd_replace_failed(
+                SimpleNamespace(
+                    manifest=full_path,
+                    cohort=cohort_path,
+                    failed_target="B",
+                    max_len=100,
+                    output=output_path,
+                )
+            )
+            repaired = pd.read_csv(output_path)
+            self.assertEqual(set(repaired["target_id"]), {"A", "C", "D", "E"})
+            self.assertNotIn("B", repaired["target_id"].tolist())
+            self.assertTrue((directory / "repaired_targets.txt").exists())
+            self.assertTrue((directory / "repaired.fasta").exists())
 
 
 if __name__ == "__main__":

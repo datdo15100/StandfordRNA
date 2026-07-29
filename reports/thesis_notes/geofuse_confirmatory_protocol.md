@@ -1,10 +1,15 @@
 # GeoFuse confirmatory protocol (frozen before the new results)
 
-Protocol version: 1.0
+Protocol version: 1.1
 Frozen: 2026-07-28
 Random seed: 2025
 Scope: phases 1–7. Phase 8 (all-atom INF/DI/MolProbity validation) is excluded at
 the author's request.
+
+Version 1.1 amendment (before the 100-target pretrained output and final E12–E14
+results): F4 wording now distinguishes an exact per-residue parent-selection error
+bound from native-guided fused coordinates, which are not a mathematical TM upper
+bound. No data split, metric, pass criterion or deployable method changed.
 
 ## Research question
 
@@ -146,7 +151,10 @@ Variants:
 - F1: existing heuristic fusion;
 - F2: quality-gated fusion;
 - F3: F2 followed by geometry v2 projection;
-- F4: native oracle upper bound, never deployable.
+- F4: native-guided fusion diagnostic plus the exact per-residue parent-selection
+  oracle reported by the quality benchmark; never deployable. The parent-selection
+  oracle is an error lower bound, while the constructed fused coordinates are not
+  assumed to be a mathematical upper bound on TM-score.
 
 Fusion is allowed only for parents in the same global cluster. Switching requires a
 calibrated quality margin, persists for a contiguous segment of at least seven
@@ -158,7 +166,8 @@ Fusion pass criterion:
 - augmented oracle increases over raw oracle;
 - native-blind selected best-of-five TM and C1′-lDDT do not regress;
 - no material target regression is hidden by an aggregate mean;
-- F4 is labelled only as headroom, never as a method result.
+- F4 and the per-residue oracle are labelled only as headroom/diagnostics, never as
+  method results.
 
 ## Statistical reporting
 

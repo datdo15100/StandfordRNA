@@ -225,7 +225,7 @@ def _target_threshold(
     heuristic: list[StructureCandidate] = []
     selective: list[StructureCandidate] = []
     projected: list[StructureCandidate] = []
-    oracle: list[StructureCandidate] = []
+    oracle_pairs: list[tuple[StructureCandidate, StructureCandidate]] = []
     disagreements = []
     for template, pretrained, cluster in pairs[: args.max_fusions]:
         _, window_disagreement, alignment = local_source_disagreement(
@@ -275,8 +275,13 @@ def _target_threshold(
                 overwrite=False,
             )
             projected.append(refined)
-        oracle.append(_oracle_for_pair(template, pretrained, references))
+        oracle_pairs.append((template, pretrained))
 
+    # Native coordinates enter only after all deployable variants are complete.
+    oracle = [
+        _oracle_for_pair(template, pretrained, references)
+        for template, pretrained in oracle_pairs
+    ]
     banks = {
         "F0_raw": raw,
         "F1_heuristic": raw + heuristic,
@@ -417,6 +422,9 @@ def run(args: argparse.Namespace) -> None:
     target_pivot_lddt = validation_frame.pivot(
         index="target_id", columns="variant", values="selected_lddt"
     )
+    target_pivot_oracle_tm = validation_frame.pivot(
+        index="target_id", columns="variant", values="oracle_tm"
+    )
     tm_bootstrap = paired_target_summary(
         target_pivot_tm["F0_raw"].to_numpy(),
         target_pivot_tm[selected_variant].to_numpy(),
@@ -427,6 +435,23 @@ def run(args: argparse.Namespace) -> None:
         target_pivot_lddt[selected_variant].to_numpy(),
         higher_is_better=True,
     )
+    heuristic_bootstraps = {
+        "selected_tm": paired_target_summary(
+            target_pivot_tm["F0_raw"].to_numpy(),
+            target_pivot_tm["F1_heuristic"].to_numpy(),
+            higher_is_better=True,
+        ),
+        "selected_lddt": paired_target_summary(
+            target_pivot_lddt["F0_raw"].to_numpy(),
+            target_pivot_lddt["F1_heuristic"].to_numpy(),
+            higher_is_better=True,
+        ),
+        "oracle_tm": paired_target_summary(
+            target_pivot_oracle_tm["F0_raw"].to_numpy(),
+            target_pivot_oracle_tm["F1_heuristic"].to_numpy(),
+            higher_is_better=True,
+        ),
+    }
     validation_lookup = validation_summary.set_index("variant")
     oracle_gain = (
         validation_lookup.loc[selected_variant, "oracle_tm"]
@@ -493,7 +518,8 @@ def run(args: argparse.Namespace) -> None:
         "",
         "F0 is raw parents; F1 is the old heuristic; F2 is quality-gated fusion with "
         "abstention; F3 projects F2 with geometry v2; F4 reads native local lDDT and "
-        "is a non-deployable upper bound.",
+        "is a non-deployable native-guided diagnostic. The exact source-selection "
+        "error lower bound is the `oracle_residue` row in E12.",
         "",
         f"- Selected TM delta over F0: {selected_tm_delta:+.6f}",
         f"- Selected C1′-lDDT delta over F0: {selected_lddt_delta:+.6f}",
@@ -509,13 +535,40 @@ def run(args: argparse.Namespace) -> None:
         "",
         pd.Series(lddt_bootstrap, name="value").to_frame().round(6).to_markdown(),
         "",
+        "## Supporting F1 heuristic diagnostic",
+        "",
+        "F1 was not the calibration-selected confirmatory method. These paired "
+        "target summaries are descriptive and show whether its extra candidates "
+        "created headroom that native-blind final-five selection could realize.",
+        "",
+        "### F1 selected TM versus F0",
+        "",
+        pd.Series(heuristic_bootstraps["selected_tm"], name="value")
+        .to_frame()
+        .round(6)
+        .to_markdown(),
+        "",
+        "### F1 selected C1′-lDDT versus F0",
+        "",
+        pd.Series(heuristic_bootstraps["selected_lddt"], name="value")
+        .to_frame()
+        .round(6)
+        .to_markdown(),
+        "",
+        "### F1 oracle TM versus F0",
+        "",
+        pd.Series(heuristic_bootstraps["oracle_tm"], name="value")
+        .to_frame()
+        .round(6)
+        .to_markdown(),
+        "",
         "## Interpretation",
         "",
         (
             "- Selective fusion passes the frozen gate."
             if passed
             else "- Selective fusion fails the frozen gate. Raw parents remain the "
-            "deployable choice; F4 quantifies headroom but is not a method."
+            "deployable choice; F4 is diagnostic headroom but is not a method."
         ),
         "- Local disagreement is descriptive and native-blind. A same-fold cluster "
         "does not imply that either source is locally correct.",

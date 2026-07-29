@@ -37,11 +37,14 @@ TARGET_IDS = {
     "8WFA_B", "8Z8Q_B", "8Z9K_B", "9B0S_Et", "9N2C_Pt", "9B2K_B",
     "9DCF_C", "9E2Z_F",
 }
+# Version 3 predicts the deterministic same-split reserve after Arena failed for all
+# 20 checkpoint structures of 8YUR_X. Kaggle history retains versions 1 and 2.
+RUN_TARGET_IDS = {"9EY0_T"}
 N_CANDIDATES = 2
 CFG = "cfg_97"
 INPUT = Path("/kaggle/input")
 TEMP = Path("/kaggle/temp/geofuse_real_oof")
-OUTPUT = Path("/kaggle/working/geofuse_drfold2_real_oof")
+OUTPUT = Path("/kaggle/working/geofuse_drfold2_real_oof_repair")
 
 
 def find_unique(paths: list[Path], description: str) -> Path:
@@ -114,14 +117,21 @@ def run_target(repo: Path, target_id: str, sequence: str) -> dict:
     candidate_dir = target_output / "e2e_relax"
     candidate_dir.mkdir(parents=True, exist_ok=True)
     manifest = []
-    for rank, (score, ret_path) in enumerate(ranked[:N_CANDIDATES], start=1):
+    arena_failures = []
+    for score, ret_path in ranked:
+        rank = len(manifest) + 1
         with ret_path.open("rb") as handle:
             payload = pickle.load(handle)
         model_path = candidate_dir / f"model_{rank}.pdb"
-        subprocess.run(
+        completed_arena = subprocess.run(
             [str(repo / "Arena" / "Arena"), str(ret_path.with_suffix(".pdb")), str(model_path), "7"],
-            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT,
+            check=False, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT,
         )
+        if completed_arena.returncode != 0:
+            arena_failures.append(
+                {"ret": ret_path.name, "returncode": completed_arena.returncode}
+            )
+            continue
         np.savez_compressed(
             candidate_dir / f"plddt_model_{rank}.npz",
             plddt=residue_confidence(payload["plddt"]),
@@ -132,10 +142,19 @@ def run_target(repo: Path, target_id: str, sequence: str) -> dict:
         }
         np.savez_compressed(candidate_dir / f"priors_model_{rank}.npz", **priors)
         manifest.append({"rank": rank, "ret": ret_path.name, "confidence": score})
+        if len(manifest) == N_CANDIDATES:
+            break
+    if len(manifest) < N_CANDIDATES:
+        return {
+            "status": "failed_arena",
+            "models": len(manifest),
+            "arena_failures": arena_failures,
+        }
     (candidate_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return {
         "status": "complete", "length": len(sequence), "ret_files": len(ret_paths),
-        "models": len(manifest), "seconds": round(time.time() - started, 1),
+        "models": len(manifest), "arena_failures": arena_failures,
+        "seconds": round(time.time() - started, 1),
     }
 
 
@@ -149,8 +168,8 @@ def main() -> None:
         "competition train_sequences.v2.csv",
     )
     sequences = pd.read_csv(sequence_file, dtype=str)
-    sequences = sequences[sequences["target_id"].isin(TARGET_IDS)].copy()
-    missing = TARGET_IDS - set(sequences["target_id"])
+    sequences = sequences[sequences["target_id"].isin(RUN_TARGET_IDS)].copy()
+    missing = RUN_TARGET_IDS - set(sequences["target_id"])
     if missing:
         raise KeyError(f"missing frozen medium targets: {sorted(missing)}")
     status = {}
@@ -164,7 +183,7 @@ def main() -> None:
         print(f"[{row.target_id}] {status[row.target_id]}", flush=True)
         torch.cuda.empty_cache()
     shutil.make_archive(
-        "/kaggle/working/geofuse_drfold2_real_oof_medium", "zip", root_dir=OUTPUT
+        "/kaggle/working/geofuse_drfold2_real_oof_repair", "zip", root_dir=OUTPUT
     )
 
 

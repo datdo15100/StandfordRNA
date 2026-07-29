@@ -53,6 +53,8 @@ class C1MetricTests(unittest.TestCase):
         exact = c1_lddt(self.reference, reference)
         self.assertTrue(np.isnan(exact["per_residue"][0]))
         self.assertAlmostEqual(exact["score"], 1.0)
+        local = sliding_window_c1_rmsd(self.reference, reference, window=9)
+        self.assertTrue(np.isnan(local["per_residue"][0]))
 
         prediction = self.reference.copy()
         prediction[10] = np.nan

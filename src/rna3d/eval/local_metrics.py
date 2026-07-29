@@ -161,7 +161,9 @@ def sliding_window_c1_rmsd(
             per_count[start:stop] += 1
 
     per_residue = np.full(length, np.nan, dtype=float)
-    valid = per_count > 0
+    # A valid neighbouring window does not make an unresolved centre residue a
+    # supervised observation.
+    valid = (per_count > 0) & shared_finite_mask(prediction, reference)
     per_residue[valid] = per_sum[valid] / per_count[valid]
     finite_values = values[np.isfinite(values)]
     return {

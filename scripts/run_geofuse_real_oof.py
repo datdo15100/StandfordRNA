@@ -269,6 +269,68 @@ def cmd_select(args: argparse.Namespace) -> None:
     print(f"[medium manifest] {output}")
 
 
+def cmd_replace_failed(args: argparse.Namespace) -> None:
+    """Replace a technical predictor failure by the next deterministic reserve."""
+    full = pd.read_csv(args.manifest, dtype={"target_id": str})
+    cohort = pd.read_csv(args.cohort, dtype={"target_id": str})
+    failed = cohort[cohort["target_id"] == args.failed_target]
+    if len(failed) != 1:
+        raise ValueError(
+            f"expected exactly one failed cohort target {args.failed_target!r}"
+        )
+    failed_row = failed.iloc[0]
+    eligible = full[
+        (full["split"] == failed_row["split"])
+        & (full["seq_len"] <= args.max_len)
+    ].sort_values(["date", "seq_len", "target_id"]).reset_index(drop=True)
+    matches = eligible.index[eligible["target_id"] == args.failed_target].tolist()
+    if len(matches) != 1:
+        raise ValueError("failed target is not unique in the eligible reserve ordering")
+    position = matches[0]
+    used = set(cohort["target_id"])
+    reserve = None
+    # Frozen rule: first unused later target; fall back to nearest earlier target.
+    for index in list(range(position + 1, len(eligible))) + list(
+        range(position - 1, -1, -1)
+    ):
+        candidate = eligible.iloc[index]
+        if candidate["target_id"] not in used:
+            reserve = candidate
+            break
+    if reserve is None:
+        raise RuntimeError("no unused same-split reserve target is available")
+    repaired = pd.concat(
+        [
+            cohort[cohort["target_id"] != args.failed_target],
+            reserve.to_frame().T[cohort.columns],
+        ],
+        ignore_index=True,
+    ).sort_values(["split", "date", "target_id"])
+    if (repaired.groupby("family_group")["split"].nunique() > 1).any():
+        raise RuntimeError("replacement would make a family cross split boundaries")
+    output = Path(args.output or args.cohort)
+    repaired.to_csv(output, index=False)
+    prefix = output.with_suffix("")
+    (prefix.parent / f"{prefix.name}_targets.txt").write_text(
+        "\n".join(repaired["target_id"]) + "\n"
+    )
+    _write_fasta(repaired, prefix.parent / f"{prefix.name}.fasta")
+    print(
+        json.dumps(
+            {
+                "failed_target": args.failed_target,
+                "replacement_target": reserve["target_id"],
+                "split": reserve["split"],
+                "date": str(reserve["date"]),
+                "seq_len": int(reserve["seq_len"]),
+                "rule": "first_unused_later_same_split_then_nearest_earlier",
+            },
+            indent=2,
+        )
+    )
+    print(f"[repaired cohort] {output}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -309,6 +371,23 @@ def build_parser() -> argparse.ArgumentParser:
     select.add_argument("--validation-targets", type=int, default=20)
     select.add_argument("--max-len", type=int, default=100)
     select.set_defaults(func=cmd_select)
+
+    replace = sub.add_parser(
+        "replace-failed",
+        help="replace one technical failure with the next deterministic reserve",
+    )
+    replace.add_argument(
+        "--manifest",
+        default=str(processed() / "geofuse_real_oof" / "manifest.csv"),
+    )
+    replace.add_argument(
+        "--cohort",
+        default=str(processed() / "geofuse_real_oof" / "medium_manifest.csv"),
+    )
+    replace.add_argument("--failed-target", required=True)
+    replace.add_argument("--max-len", type=int, default=100)
+    replace.add_argument("--output")
+    replace.set_defaults(func=cmd_replace_failed)
     return parser
 
 

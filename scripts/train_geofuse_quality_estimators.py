@@ -368,7 +368,11 @@ def run(args: argparse.Namespace) -> None:
     for values in grouped.values():
         configure_supervision(values, args.supervision)
     counts = {split: len({x["target_id"] for x in values}) for split, values in grouped.items()}
-    expected = {"train": 60, "calibration": 20, "validation": 20}
+    expected = {
+        "train": args.expected_train_targets,
+        "calibration": args.expected_calibration_targets,
+        "validation": args.expected_validation_targets,
+    }
     if counts != expected:
         raise RuntimeError(f"frozen target counts not ready: {counts}, expected {expected}")
 
@@ -383,7 +387,14 @@ def run(args: argparse.Namespace) -> None:
     validation_flat = flatten_examples(validation_examples)
     learning_rows = []
     full_models = {}
-    sizes = [size for size in (10, 25, 40, 60) if size <= len(train_order)]
+    requested_sizes = sorted(
+        {
+            min(size, len(train_order))
+            for size in (10, 25, 40, 60)
+            if min(size, len(train_order)) > 0
+        }
+    )
+    sizes = requested_sizes
     for size in sizes:
         chosen = set(train_order[:size])
         train_examples = subset_targets(grouped["train"], chosen)
@@ -413,7 +424,7 @@ def run(args: argparse.Namespace) -> None:
                     "config": json.dumps(result["config"], sort_keys=True),
                 }
             )
-        if size == 60:
+        if size == len(train_order):
             full_models = fitted
 
     calibration_baselines, calibration_baseline_targets = fixed_rule_metrics(
@@ -607,6 +618,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cache-root", default=cache() / "geofuse_candidates")
     parser.add_argument("--max-templates", type=int, default=2)
     parser.add_argument("--max-pretrained", type=int, default=2)
+    parser.add_argument("--expected-train-targets", type=int, default=60)
+    parser.add_argument("--expected-calibration-targets", type=int, default=20)
+    parser.add_argument("--expected-validation-targets", type=int, default=20)
     parser.add_argument(
         "--supervision", choices=sorted(SUPERVISION), default="c1_lddt"
     )
