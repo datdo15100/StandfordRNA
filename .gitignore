@@ -30,6 +30,12 @@ data/stanford-rna-3d-folding/
 # Reports artifacts
 reports/figures/
 reports/tables/
+reports/thesis_v1/*.aux
+reports/thesis_v1/*.lof
+reports/thesis_v1/*.log
+reports/thesis_v1/*.lot
+reports/thesis_v1/*.out
+reports/thesis_v1/*.toc
 
 # External binaries / models
 external/binaries/USalign

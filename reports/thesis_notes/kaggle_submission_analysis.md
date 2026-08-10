@@ -86,6 +86,39 @@ Thus the reported hybrid V4 score 0.57631 being below both TBM-only 0.59298 and 
 0.60175 is consistent with its implemented selection/fusion logic; it is not evidence
 that pretrained models are generally inferior.
 
+## Frozen TBM + DRfold2 + Geometry v2 late submission
+
+Submission `55393315` used kernel
+`datdo151000/rna3d-thesis-hybrid-geometry-v2`, version 10. It completed with:
+
+| method | public TM | private TM |
+|---|---:|---:|
+| temporal-safe composite TBM (`54662648`) | 0.60084 | 0.60175 |
+| 3 TBM + 2 DRfold2 + Geometry v2 (`55393315`) | **0.62809** | **0.61390** |
+| absolute delta | **+0.02725** | **+0.01215** |
+
+The public execution manifest provides the deployment sanity check. DRfold2 produced
+two candidates for 11 of the 12 public targets; the 720-nt target was skipped by the
+frozen 600-nt resource limit and retained five TBM candidates. Geometry v2 completed
+for all 60 final candidates. The output had exactly 2,515 rows and 18 columns, exact
+sample-ID order, unique IDs and finite coordinates. The manifest explicitly records
+`native_labels_used: false`. Its final CSV SHA-256 was
+`54fe6e6598a1c2924ef7cbf03482f7ecf3c2e52e8726a1609569f777b1ac8c9a`.
+
+The fixed final bank was three highest-ranked TBM candidates plus the two DRfold2
+candidates with highest DRfold model confidence when DRfold2 was feasible; otherwise
+TBM filled the unused slots. Geometry v2 then projected every candidate for 300 steps.
+There was no GeoFuse, native-guided router, Boltz candidate or hidden-label access.
+
+This is a pipeline-level ablation, not an isolated DRfold2 or Geometry v2 ablation:
+the Kaggle delta shows that replacing two TBM slots with DRfold2 candidates and then
+applying Geometry v2 improved the hidden best-of-five score, but it cannot identify how
+much of the gain came from candidate diversity versus refinement. The frozen 12-target
+local rule scored 0.46450 and was worse than the local TBM bank, whereas the Kaggle
+private score improved by 0.01215. This split-dependent reversal is evidence against
+tuning the mixture on one small cohort and supports reporting both evaluations rather
+than presenting either as universally representative.
+
 ## Leakage audit
 
 Evidence against accidental label leakage in the submitted artifact:
@@ -109,9 +142,9 @@ fully audited:
 - parse the target's declared PDB/reference IDs, when present, into an explicit self-PDB
   exclusion list in addition to the date gate.
 
-Do not tune repeated variants against the private leaderboard. Attribute improvements
-with the frozen temporal/family-aware local set, and use the 0.60175 private score once as
-external confirmation.
+Do not tune repeated variants against the private leaderboard. Attribute component-level
+effects with the frozen temporal/family-aware local set, and use the two frozen private
+scores, 0.60175 for TBM and 0.61390 for the hybrid, as external pipeline-level checks.
 
 ## Score references supplied with the comparison
 

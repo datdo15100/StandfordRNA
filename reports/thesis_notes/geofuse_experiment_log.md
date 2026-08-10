@@ -239,3 +239,28 @@ final validation.
   useful Cartesian fusion. Under the frozen conservative rule, the scientifically
   correct behavior is abstention and retention of raw parents. The heuristic's small
   TM gain trades against local accuracy and is not a robust confirmatory win.
+
+## E15 — external check of the pre-GeoFuse hybrid pipeline
+
+- **Hypothesis:** a deployable best-of-five bank with three temporal-safe composite-TBM
+  candidates, two DRfold2 candidates and Geometry v2 can improve the Kaggle hidden score
+  without using native structures or GeoFuse.
+- **Frozen implementation:** Kaggle kernel
+  `datdo151000/rna3d-thesis-hybrid-geometry-v2`, version 10; DRfold2 is used only up to
+  600 nt, missing pretrained slots fall back to TBM, and Geometry v2 runs for 300 steps
+  on all five candidates. No native labels, GeoFuse or Boltz are present.
+- **Deployment sanity check:** on the public execution, DRfold2 completed with two
+  candidates on 11/12 targets; the 720-nt target used five TBM candidates. Geometry v2
+  completed on 60/60 candidates. The 2,515-by-18 output matched the sample IDs exactly,
+  contained unique IDs and finite coordinates, and had SHA-256
+  `54fe6e6598a1c2924ef7cbf03482f7ecf3c2e52e8726a1609569f777b1ac8c9a`.
+- **Kaggle result:** late submission `55393315` completed at public/private
+  **0.62809/0.61390**, versus **0.60084/0.60175** for the frozen TBM-only submission
+  `54662648`. Absolute gains were **+0.02725 public** and **+0.01215 private**.
+- **Local result:** the same fixed 3+2 rule scored 0.46450 on the 12-target local cohort
+  and was worse than the local TBM bank. The local-to-hidden reversal shows substantial
+  target-distribution dependence.
+- **Conclusion:** the pre-GeoFuse hybrid is deployable and improves the one-shot Kaggle
+  external check. This comparison changes both candidate composition and refinement,
+  so it supports a pipeline-level claim only; it does not isolate DRfold2 from Geometry
+  v2 and does not rescue the separate GeoFuse coordinate-fusion claim.
