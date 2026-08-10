@@ -151,6 +151,45 @@ class GeometryV2RefinementTests(unittest.TestCase):
         self.assertTrue(np.isfinite(result).all())
         self.assertEqual(len(info["history"]), 2)
 
+    def test_adaptive_strength_can_be_ablated_without_changing_default(self) -> None:
+        sequence = "AAAAA"
+        coords = np.array(
+            [[0.0, 0, 0], [6.0, 0, 0], [11.0, 2, 0], [16.0, 4, 1], [21.0, 5, 3]],
+            dtype=np.float32,
+        )
+        v1 = {
+            "adjacent_c1": {"mean": 6.0, "std": 1.0},
+            "clash": {"r_min": 4.0},
+            "rg_powerlaw": {"a": 2.0, "b": 0.5},
+        }
+        contexts = {
+            name: {
+                "angle": flat_prior(0.0, np.pi),
+                "torsion": flat_prior(-np.pi, np.pi, periodic=True),
+            }
+            for name in ("pair_like", "unpaired")
+        }
+        _, adaptive = refine_structure_v2(
+            coords,
+            sequence,
+            v1,
+            {"contexts": contexts},
+            global_confidence=0.25,
+            cfg=GeometryV2Config(steps=1),
+        )
+        _, fixed = refine_structure_v2(
+            coords,
+            sequence,
+            v1,
+            {"contexts": contexts},
+            global_confidence=0.25,
+            cfg=GeometryV2Config(
+                steps=1, adaptive_strength=False, fixed_strength=0.37
+            ),
+        )
+        self.assertAlmostEqual(adaptive["strength"], 0.8)
+        self.assertAlmostEqual(fixed["strength"], 0.37)
+
 
 if __name__ == "__main__":
     unittest.main()

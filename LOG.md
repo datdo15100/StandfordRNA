@@ -284,3 +284,40 @@ Adversarial test of our own contribution on the NEW pipeline (`scripts/run_refin
 2. **Clash/backbone gains are real but not free**: gradient cuts clashes −42 % and backbone −47 % (beats rule), **but the independent sharp-kink rate nearly doubles** (0.054→0.102). The v1 energy constrains distances (adjacent + clash) with **no angle term**, so it satisfies them by bending the chain more sharply — **trading distance error for angle error**, not uniformly improving geometry.
 
 So "refinement improves physical validity" is only defensible **scoped to clash + backbone spacing**, and must be reported with the kink regression. **v2 fix**: add a soft pseudo-bond-angle/curvature penalty so it can't buy distance compliance with kinks; expected to push clash+backbone down *and* keep kinks ≤ no-refine, truthfully, at unchanged TM. Artifacts: `reports/tables/refine_ablation.csv`, `reports/thesis_notes/refine_ablation.md`.
+
+---
+
+## 2026-08-10 — Comment revision: thesis core frozen around TBM, DRfold2, Geometry v2
+
+Implemented the confirmatory programme requested in `reports/thesis_v1/comment.md`.
+GeoFuse is frozen and removed from the thesis core; it remains only as an exploratory
+appendix with a negative result. The final research path is time-safe TBM → a fixed bank
+of 3 TBM + 2 DRfold2 candidates → conservative Geometry v2 → submission.
+
+The 100-RNA cohort now has explicit roles: 60 temporally earliest/family-separated RNA
+estimate priors, 20 calibration RNA select a pre-declared configuration, and 20 newest
+RNA are held out for a single confirmatory read. The executable audit reports zero
+sequence groups and zero family groups crossing splits. Calibration froze `source_1p5`.
+
+Held-out Geometry result: best-of-5 TM 0.588304 → 0.587197 (delta -0.001107,
+95% CI [-0.002809, 0.000418]); C1′-lDDT 0.659836 → 0.666496 (delta +0.006660,
+CI [0.000933, 0.013093]); SW-RMSD9 improves 0.040386 Å, CI
+[0.029354, 0.052090], on 19/20 RNA. Full Geometry does not beat the simple
+source+backbone baseline on lDDT, but improves SW-RMSD9 by another 0.030585 Å and avoids
+that baseline's kink/angle/torsion regressions. The defensible claim is a balanced local
+C1′ projection with preserved global fold, not a TM-score improvement.
+
+Hybrid complementarity result: 3-TBM oracle 0.565183, 2-DRfold2 oracle 0.502627, union
+3T+2D 0.588304; DRfold2 wins on 8/20 targets. Fixed-N=2 replacement gives +0.030546 TM,
+CI [0.002949, 0.068185]. Geometry has a small negative TM effect in the fixed-N hybrid
+factorial, so the Kaggle private gain 0.60175 → 0.61390 is attributed to the complete
+hybrid pipeline rather than Geometry alone.
+
+TBM white-box result: MMseqs2 has 40% availability; composite reaches 100%; union reaches
+100% and mean best-of-5 0.389705 on the calibration cohort. Composite score weights are
+heuristic, coverage is the most useful reranking factor in this cohort, completeness is
+inactive, and curved gap filling has independent evidence only for 9--20 nt gaps.
+
+Artifacts and all caveats are consolidated in
+`reports/thesis_notes/comment_revision_report.md`. All 55 tests pass and the revised
+Vietnamese thesis compiles to a 56-page PDF.

@@ -1,0 +1,1930 @@
+% !TeX program = xelatex
+% BẢN THẢO V1 — nội dung được tổng hợp từ mã nguồn và báo cáo thí nghiệm trong repo.
+% TODO trước khi nộp: thay thông tin trường, tác giả, giảng viên hướng dẫn và chuẩn trích dẫn.
+
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T5]{fontenc}
+  \usepackage[vietnamese]{babel}
+\else
+  \usepackage{fontspec}
+  \setmainfont{Times New Roman}
+  \setsansfont{Arial}
+  \setmonofont{Consolas}
+\fi
+
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3.2cm,right=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,longtable,tabularx,array,multirow}
+\usepackage{graphicx,float}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{url}
+\usepackage[hidelinks,unicode]{hyperref}
+
+\definecolor{lightgray}{RGB}{245,245,245}
+\definecolor{darkred}{RGB}{150,35,35}
+
+\hypersetup{
+  pdftitle={Mô hình lai dựa trên khuôn mẫu và học sâu cho dự đoán cấu trúc ba chiều RNA},
+  pdfauthor={TODO: Họ tên học viên},
+  pdfsubject={Bản thảo luận văn thạc sĩ V1},
+  pdfkeywords={RNA 3D, TBM, DRfold2, Geometry v2, temporal safety, TM-score}
+}
+
+\setstretch{1.35}
+\setlength{\parindent}{1.2cm}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{topsep=0.3em,itemsep=0.2em}
+\setlist[enumerate]{topsep=0.3em,itemsep=0.2em}
+\renewcommand{\arraystretch}{1.18}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Bản thảo luận văn V1}
+\fancyhead[R]{\small Mô hình lai dự đoán cấu trúc ba chiều RNA}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{15pt}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{lightgray},
+  frame=single,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false
+}
+
+\newcommand{\cprime}{C1$^{\prime}$}
+\newcommand{\angstrom}{\text{\AA}}
+\newcommand{\TODO}[1]{\textcolor{darkred}{\textbf{TODO: #1}}}
+
+\begin{document}
+
+% -----------------------------------------------------------------------------
+% TITLE PAGE
+% -----------------------------------------------------------------------------
+\begin{titlepage}
+\begin{center}
+  {\large \TODO{UNIVERSITY OF SCIENCE AND TECHNOLOGY OF HANOI}}\\[0.3cm]
+  {\large \TODO{ICT LAB}}\\[2.0cm]
+
+  {\Large\bfseries \TODO{ĐỖ THÀNH ĐẠT}}\\[1.5cm]
+
+  {\LARGE\bfseries
+  MÔ HÌNH LAI DỰA TRÊN KHUÔN MẪU\\
+  VÀ HỌC SÂU CHO DỰ ĐOÁN CẤU TRÚC\\
+  BA CHIỀU RNA VỚI KIỂM SOÁT RÒ RỈ\\
+  THỜI GIAN VÀ TINH CHỈNH HÌNH HỌC
+  }\\[1.0cm]
+
+  {\large\itshape
+  A Hybrid Template-Based and Deep-Learning Framework for RNA Three-Dimensional
+  Structure Prediction with Temporal Leakage Control and Conservative Geometric Refinement
+  }\\[1.5cm]
+
+  {\large LUẬN VĂN THẠC SĨ}\\[0.4cm]
+  {\large \TODO{DATA SCIENCE}}\\[1.6cm]
+
+  \begin{tabular}{ll}
+  Giảng viên hướng dẫn: & \TODO{NGUYỄN MINH HƯƠNG + NGUYỄN CẨM LINH}\\
+  Mã số học viên:       & \TODO{2440059}
+  \end{tabular}
+
+  \vfill
+  {\large \TODO{HÀ NỘI}, 2026}
+\end{center}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+% -----------------------------------------------------------------------------
+% FRONT MATTER
+% -----------------------------------------------------------------------------
+\chapter*{Lời cam đoan}
+\addcontentsline{toc}{chapter}{Lời cam đoan}
+\TODO{Bổ sung lời cam đoan theo mẫu chính thức của trường.}
+
+\chapter*{Lời cảm ơn}
+\addcontentsline{toc}{chapter}{Lời cảm ơn}
+\TODO{Bổ sung lời cảm ơn giảng viên hướng dẫn, đơn vị đào tạo, đồng nghiệp và gia đình.}
+
+\chapter*{Tóm tắt}
+\addcontentsline{toc}{chapter}{Tóm tắt}
+
+Dự đoán cấu trúc ba chiều RNA từ trình tự vẫn khó do dữ liệu thực nghiệm ít, RNA linh
+động và một trình tự có thể có nhiều cấu dạng. Luận văn nghiên cứu một quy trình dự
+đoán ở mức nguyên tử \cprime{} gồm mô hình hóa dựa trên khuôn mẫu (TBM), ứng viên từ
+mô hình học sâu DRfold2 và một phép tinh chỉnh bảo thủ tên Geometry v2. Mục tiêu chính
+là sinh năm giả thuyết có TM-score cao; câu hỏi phương pháp là liệu sửa hình học cục bộ
+có tăng độ đúng cục bộ mà không làm hỏng nếp gấp tổng thể hay không.
+
+Mọi khuôn mẫu được lọc theo nguyên tắc phát hành trước đối tượng dự đoán và loại PDB của
+chính đối tượng. Phân tích TBM cho thấy MMseqs2 chỉ tìm được khuôn ở 8/20 RNA hiệu chỉnh,
+trong khi tìm kiếm composite tạo ứng viên cho 20/20. Xếp hạng bằng identity nhân coverage
+tăng best-of-five TM trung bình 0.01566 so với identity đơn lẻ, còn thành phần
+completeness và luật distinct-PDB không tăng TM trên cohort này. Công thức composite
+$0.4G+0.3L+0.2F+0.1K_3$ ổn định trước thay đổi trọng số nhưng không tốt hơn rõ ràng
+so với chỉ dùng căn chỉnh toàn cục; do đó luận văn xem nó là heuristic tăng recall,
+không khẳng định tối ưu. Bỏ lọc thời gian làm điểm tăng lạc quan khoảng 0.02696.
+
+Nhánh TBM đạt 0.60084 công khai và 0.60175 riêng tư trên Kaggle. Quy trình ba TBM, hai
+DRfold2 và Geometry v2 đạt 0.62809/0.61390. Trên 20 RNA mới nhất, TBM oracle đạt
+0.565183, DRfold2 oracle 0.502627, nhưng hợp hai nguồn đạt 0.588304: DRfold2 thắng TBM
+ở 8/20 RNA và bổ sung nếp gấp thay vì thay thế TBM. Với cùng ba vị trí dự đoán, thay một
+TBM bằng một DRfold2 tăng TM trung bình 0.016012 nhưng khoảng tin cậy còn chứa 0.
+
+Đánh giá Geometry v2 dùng giao thức thời gian và họ trình tự 60/20/20: 60 RNA ước lượng
+phân bố hình học, 20 RNA chọn tham số, rồi cấu hình được khóa trước khi mở 20 RNA mới
+nhất. Trên tập xác nhận, \cprime{}-lDDT tăng từ 0.659836 lên 0.666496
+($\Delta=+0.006660$, khoảng tin cậy 95\% $[+0.000933,+0.013093]$); RMSD cửa sổ 9 và
+15 giảm lần lượt 0.040386 và 0.017257~\angstrom. TM-score thay đổi từ 0.588304 xuống
+0.587197 ($\Delta=-0.001107$, khoảng tin cậy chứa 0), nằm trong biên bảo toàn 0.005.
+Đối chứng chỉ giữ nguồn và khoảng cách backbone tăng lDDT tương đương, nhưng Geometry
+v2 cải thiện mạnh hơn RMSD cửa sổ 9, giảm va chạm, NLL góc và NLL góc xoắn, đồng thời
+không làm tăng góc gập sắc. Lợi ích lDDT tập trung ở ứng viên ban đầu yếu; nhóm chất
+lượng cao không có bằng chứng cải thiện.
+
+Kết luận chính là: tìm kiếm composite mở rộng độ phủ khuôn; TBM và DRfold2 có tính bổ
+sung; Geometry v2 tạo cải thiện cục bộ nhỏ nhưng có ý nghĩa thống kê trong khi bảo toàn
+nếp gấp tổng thể theo biên định trước. GeoFuse được giữ như thí nghiệm khám phá trong
+phụ lục và không được xem là đóng góp lõi vì chưa tạo cải thiện khái quát.
+
+\noindent\textbf{Từ khóa:} cấu trúc ba chiều RNA, mô hình hóa dựa trên khuôn mẫu,
+DRfold2, TM-score, \cprime{}-lDDT, an toàn thời gian, tinh chỉnh hình học.
+
+\tableofcontents
+\listoftables
+\listoffigures
+\clearpage
+\pagenumbering{arabic}
+
+% -----------------------------------------------------------------------------
+% CHAPTER 1
+% -----------------------------------------------------------------------------
+\chapter{Giới thiệu}
+
+\section{Bối cảnh và động lực nghiên cứu}
+
+RNA tham gia nhiều quá trình sinh học như điều hòa biểu hiện gene, xúc tác, nhận diện
+phân tử và hình thành các phức hợp ribonucleoprotein. Những chức năng này không chỉ phụ
+thuộc vào trình tự A, C, G và U mà còn phụ thuộc vào cách chuỗi RNA tổ chức thành cấu
+trúc bậc hai và cấu trúc ba chiều. Cấu trúc bậc hai mô tả chủ yếu các cặp base nitơ và
+các mô-típ như thân xoắn hoặc vòng; cấu trúc bậc ba xác định cách các mô-típ đó sắp xếp,
+tiếp xúc và xoắn
+trong không gian. Vì vậy, khả năng suy ra cấu trúc ba chiều từ trình tự có ý nghĩa đối
+với nghiên cứu chức năng RNA và thiết kế các phân tử tác động lên RNA.
+
+Cấu trúc RNA có thể được xác định bằng tinh thể học tia X, cộng hưởng từ hạt nhân hoặc
+kính hiển vi điện tử nghiệm lạnh. Tuy nhiên, các quy trình này thường đòi hỏi nhiều thời
+gian, chi phí và không phải RNA nào cũng phù hợp để đo. So với protein, số lượng cấu trúc
+RNA thực nghiệm còn hạn chế; hơn nữa RNA có độ linh động cao, nhiều tương tác không chuẩn
+Watson--Crick và các motif bậc ba phụ thuộc mạnh vào môi trường. Những đặc điểm đó khiến
+dự đoán RNA 3D vẫn là một bài toán chưa được giải quyết hoàn toàn
+\cite{rna_puzzles,rna_progress_review,state_of_rnart}.
+
+Các phương pháp tính toán hiện nay có thể được nhìn theo ba nhóm chính. Phương pháp dựa
+trên vật lý tìm cấu hình có năng lượng thuận lợi nhưng phải đối mặt với không gian tìm
+kiếm rất lớn. Phương pháp dựa trên tri thức hoặc khuôn mẫu tái sử dụng motif và cấu trúc
+đã biết; nhóm này thường chính xác khi có khuôn mẫu phù hợp nhưng suy giảm khi gặp nếp
+gấp mới. Phương pháp học sâu học mối liên hệ giữa trình tự và hình học từ dữ liệu; chúng
+có thể tạo dự đoán không phụ thuộc trực tiếp vào một khuôn mẫu gần, nhưng bị giới hạn
+bởi lượng dữ liệu RNA, độ lệch phân bố và khó khăn trong ước lượng độ chính xác của từng
+dự đoán \cite{drfold,rhofoldplus,drfold2,ares}.
+
+Như vậy, không có một nguồn dự đoán đơn lẻ nào luôn chiếm ưu thế. Khuôn mẫu thường mạnh
+khi có họ hàng gần; mô hình học sâu có thể bổ sung nếp gấp khi khuôn yếu. Luận văn trước
+hết hỏi từng nguồn làm tăng độ phủ nếp gấp ở đâu, sau đó tập trung vào một câu hỏi hẹp
+hơn: khi nếp gấp ban đầu đã có, liệu có thể sửa quan hệ \cprime{} cục bộ mà không làm
+dịch chuyển bố cục toàn phân tử hay không?
+
+Động lực trung tâm vì vậy là xây dựng một pipeline RNA 3D an toàn theo thời gian, phân
+tích định lượng thành phần TBM và tính bổ sung TBM--DRfold2, rồi kiểm chứng Geometry v2
+bằng ablation và tập xác nhận mới nhất. Luận văn không lấy ước lượng chất lượng cục bộ
+hay hợp nhất tọa độ làm contribution lõi; GeoFuse chỉ còn là thí nghiệm khám phá ở phụ
+lục vì chưa cho thấy cải thiện khái quát.
+
+\section{Bối cảnh bài toán thực nghiệm}
+
+Cuộc thi Stanford RNA 3D Folding \cite{kaggle_competition} được sử dụng như bối cảnh triển khai và đánh giá bên
+ngoài. Với mỗi RNA, hệ thống phải xuất năm cấu trúc, mỗi nucleotide được biểu diễn bằng
+tọa độ nguyên tử \cprime{}. Chất lượng được đánh giá bằng TM-score tốt nhất trong năm
+dự đoán. Thiết lập này phản ánh hai đặc điểm thực tế: dự đoán cấu trúc có tính bất định,
+và khả năng sinh một tập giả thuyết đa dạng có thể quan trọng không kém việc tối ưu một
+dự đoán duy nhất.
+
+Các mã nguồn dạng sổ tay tính toán của nhóm đứng đầu cuộc thi cho thấy mô hình hóa dựa trên khuôn mẫu và mô hình học
+sâu có thể kết hợp hiệu quả ở cấp độ hệ thống. Tuy nhiên, một giải pháp thi đấu chủ yếu
+tối ưu điểm số và thời gian chạy, trong khi một luận văn cần tách rõ dữ liệu nào được
+sử dụng, thành phần nào tạo ra cải thiện, kết quả có tổng quát hay không và giới hạn
+sinh học của biểu diễn \cprime{}. Do đó luận văn không xem bảng xếp hạng là bằng chứng
+duy nhất, mà xây dựng các tập phát triển và xác nhận riêng với kiểm soát thời gian, họ
+trình tự và thống kê theo đối tượng RNA.
+
+\section{Phát biểu bài toán}
+
+Cho một RNA cần dự đoán có trình tự
+
+\begin{equation}
+S=(s_1,s_2,\ldots,s_L),\qquad s_i\in\{A,C,G,U\},
+\end{equation}
+
+và mốc thời gian $t_{cutoff}$, hệ thống phải sinh năm cấu trúc ứng viên
+
+\begin{equation}
+\mathcal{X}=\{X^{(1)},\ldots,X^{(5)}\},\qquad
+X^{(k)}\in\mathbb{R}^{L\times 3},
+\end{equation}
+
+trong đó hàng thứ $i$ của $X^{(k)}$ là tọa độ $(x_i,y_i,z_i)$ của nguyên tử
+\cprime{} đại diện cho nucleotide thứ $i$. Cấu trúc thực nghiệm của RNA không được sử
+dụng khi suy luận. Mọi khuôn mẫu phải có ngày phát hành nhỏ hơn $t_{cutoff}$.
+
+Mục tiêu theo thiết lập của cuộc thi là tối đa hóa
+
+\begin{equation}
+\frac{1}{N}\sum_{n=1}^{N}
+\max_{k\in\{1,\ldots,5\}}
+\mathrm{TM}\!\left(X_n^{(k)},Y_n\right),
+\end{equation}
+
+với $Y_n$ là cấu trúc thực nghiệm chỉ được sử dụng khi đánh giá.
+
+Ngoài mục tiêu toàn cục trên, luận văn xét thêm độ chính xác cục bộ. Điều này xuất phát
+từ nhận xét rằng một dự đoán có nếp gấp đúng vẫn có thể chứa khoảng cách hoặc góc cục
+bộ chưa chính xác, trong khi một cấu trúc có hình học trơn tru chưa chắc thuộc đúng nếp
+gấp. Hai loại chất lượng này cần được đo bằng các chỉ số bổ sung thay vì quy về một số
+duy nhất.
+
+\section{Khoảng trống nghiên cứu và giả thuyết}
+
+Ba khoảng trống được xét. Thứ nhất, điểm toàn hệ thống không cho biết thành phần nào của
+TBM tạo recall, precision hay đa dạng. Thứ hai, mức tăng của pipeline lai có thể bị
+nhiễu giữa số lượng candidate, nguồn DRfold2 và Geometry. Thứ ba, các chỉ số hình học
+nội bộ không đủ chứng minh cấu trúc gần native hơn vì chúng cũng là mục tiêu được tối ưu.
+
+Ba giả thuyết tương ứng là: tìm kiếm composite tăng độ phủ khi MMseqs2 không có hit;
+DRfold2 bổ sung chứ không thay thế ứng viên TBM; và Geometry v2 có thể cải thiện các chỉ
+số native độc lập ở quy mô cục bộ trong khi giữ TM-score trong biên suy giảm 0.005.
+
+\section{Câu hỏi nghiên cứu}
+
+Luận văn trả lời ba nhóm câu hỏi:
+
+\begin{description}[leftmargin=2.2cm,style=nextline]
+\item[RQ1.] Việc kết hợp truy hồi nhanh với tìm kiếm tương đồng mở rộng có cải thiện
+khả năng tìm khuôn mẫu trong điều kiện an toàn theo thời gian hay không?
+
+\item[RQ2.] DRfold2 có bổ sung nếp gấp mà TBM bỏ lỡ hay không; hiệu ứng nguồn còn tồn
+tại khi giữ cố định số lượng cấu trúc dự đoán hay không?
+
+\item[RQ3a.] Geometry v2 có cải thiện độ chính xác cục bộ theo \cprime{}-lDDT và RMSD
+cửa sổ, đồng thời bảo toàn TM-score hay không?
+\item[RQ3b.] Thành phần source, backbone, angle, torsion, clash/Rg, kink guard và adaptive
+strength đóng vai trò gì so với một đối chứng source--backbone đơn giản?
+\item[RQ3c.] Hiệu ứng có khái quát sang 20 RNA mới nhất tách theo thời gian/họ và thay
+đổi theo nguồn, chất lượng ban đầu, độ dài hay độ phủ như thế nào?
+\end{description}
+
+\section{Mục tiêu}
+
+\subsection{Mục tiêu tổng quát}
+
+Xây dựng và đánh giá một pipeline lai dự đoán RNA 3D mức \cprime{} có thể tái lập và an
+toàn theo thời gian; đồng thời kiểm chứng liệu tinh chỉnh hình học bảo thủ có cải thiện
+độ đúng cục bộ mà không phá nếp gấp toàn cục hay không.
+
+\subsection{Mục tiêu cụ thể}
+
+\begin{enumerate}
+  \item Xây dựng thư viện khuôn mẫu RNA từ PDB/mmCIF và kiểm tra ngày công bố.
+  \item Kết hợp MMseqs2 với tìm kiếm tương đồng mở rộng để tăng khả năng truy hồi khuôn mẫu.
+  \item Chuẩn hóa đầu ra TBM và DRfold2 thành một biểu diễn ứng viên thống nhất; Boltz
+  chỉ được ghi nhận như feasibility case cho RNA dài.
+  \item Thiết kế Geometry v2 với các phân bố hình học thực nghiệm và ràng buộc nguồn
+  thích nghi theo độ tin cậy.
+  \item Phân rã ảnh hưởng của retrieval, reranking, distinct-PDB, gap filling và phân
+  bổ TBM--DRfold2 bằng các ablation giữ biến còn lại cố định khi có thể.
+  \item Đánh giá Geometry v2 bằng protocol 60 train--20 calibration--20 validation,
+  chỉ số native độc lập và bootstrap theo đối tượng RNA.
+\end{enumerate}
+
+\section{Đóng góp}
+
+Luận văn có một đóng góp phương pháp và hai đóng góp thực nghiệm chính.
+
+\begin{enumerate}
+  \item \textbf{Pipeline TBM an toàn theo thời gian và phân tích white-box.} Luận văn
+  kết hợp MMseqs2 với tìm kiếm composite, lọc theo ngày/PDB, căn chỉnh, reranking,
+  distinct-PDB và gap filling; mỗi component được gắn với giả thuyết và ablation.
+
+  \item \textbf{Bằng chứng thực nghiệm về tính bổ sung TBM--DRfold2.} Các allocation
+  fixed-size tách lợi ích nguồn khỏi lợi thế có thêm prediction slot. Kết quả cho thấy
+  DRfold2 yếu hơn TBM trung bình nhưng thắng trên 8/20 RNA và tăng union oracle.
+
+  \item \textbf{Geometry v2 và kiểm chứng confirmatory.} Phương pháp kết hợp source
+  restraint, backbone, clash/Rg, angle/torsion empirical NLL, kink guard và adaptive
+  strength. Priors chỉ học từ 60 RNA sớm; tham số chọn trên 20 calibration; hiệu quả
+  chấm đúng một lần trên 20 RNA mới nhất bằng lDDT/RMSD cửa sổ/TM độc lập.
+\end{enumerate}
+
+GeoFuse không còn là contribution: kết quả âm được rút khỏi mạch lập luận chính và chỉ
+giữ ở phụ lục như một hướng khám phá đã đóng băng.
+
+\section{Phạm vi}
+
+Luận văn dự đoán đường \cprime{}, không phải cấu trúc RNA toàn nguyên tử. Vì vậy nghiên
+cứu có thể kết luận về nếp gấp tổng thể, tọa độ \cprime{}, khả năng bảo toàn khoảng cách
+cục bộ và hình học thô; không kết luận trực tiếp về liên kết hydro, xếp chồng base nitơ, cấu
+hình đường, hóa học lập thể của phosphate, năng lượng tự do hay độ ổn định trong mô
+phỏng động lực học phân tử.
+
+\section{Cấu trúc luận văn}
+
+Chương 2 trình bày nền tảng và tổng quan công trình liên quan. Chương 3 mô tả dữ liệu,
+kiểm soát rò rỉ và quy trình đánh giá. Chương 4 trình bày phương pháp lai đề xuất.
+Chương 5 mô tả thiết kế thí nghiệm. Chương 6 lần lượt trả lời ba nhóm câu hỏi nghiên cứu.
+Chương 7 diễn giải ý nghĩa của các kết quả, giới hạn và quan hệ với công trình trước.
+Chương 8 kết luận và đề xuất hướng phát triển.
+
+% -----------------------------------------------------------------------------
+% CHAPTER 2
+% -----------------------------------------------------------------------------
+\chapter{Kiến thức nền và tổng quan công trình liên quan}
+
+\section{Từ trình tự đến cấu trúc ba chiều RNA}
+
+Cấu trúc RNA thường được mô tả theo một hệ phân cấp. Cấu trúc bậc một là trình tự
+nucleotide. Cấu trúc bậc hai mô tả các cặp base nitơ và các phần tử như thân xoắn
+(stem), vòng kẹp tóc (hairpin), chỗ phình (bulge) hay vòng trong (internal loop). Cấu
+trúc bậc ba xác định cách những phần tử đó sắp xếp và tương tác
+trong không gian. Phân cấp này giúp thu hẹp bài toán nhưng không làm nó đơn giản: hai
+mô hình có thể dự đoán đúng phần lớn cặp base nitơ mà vẫn đặt sai tương quan giữa các miền
+hoặc junction. RNA-Puzzles ghi nhận rằng một cấu trúc giữ đúng cấu trúc bậc hai vẫn có
+thể lệch đáng kể khỏi cấu trúc thực nghiệm ở cấp ba chiều
+\cite{rna_puzzles,rna_puzzles_toolkit}.
+
+RNA còn có nhiều tương tác không chuẩn Watson--Crick, pseudoknot và chuyển động giữa
+các trạng thái cấu dạng. Vì thế, trình tự giống nhau là bằng chứng có giá trị nhưng
+không quyết định duy nhất cấu trúc; tương tự, một phân bố hình học phổ biến không thể thay
+thế hoàn toàn thông tin về tiếp xúc xa và tổ chức miền. Các tổng quan gần đây thường
+chia phương pháp dự đoán RNA 3D thành ba họ: mô phỏng dựa trên vật lý, lắp ráp dựa trên
+tri thức/khuôn mẫu, và phương pháp học máy hoặc học sâu
+\cite{rna_progress_review,state_of_rnart,computational_rna_review}.
+
+\section{Biểu diễn cấu trúc và tính bất biến hình học}
+
+Một nucleotide gồm base nitơ, đường ribose và nhóm phosphate. Nguyên tử \cprime{} nằm trong
+đường ribose và cung cấp một điểm đại diện cho mỗi nucleotide. Khi chỉ giữ \cprime{},
+một RNA dài $L$ trở thành ma trận $X\in\mathbb{R}^{L\times3}$. Đây là biểu diễn đầu ra
+của cuộc thi và là mức biểu diễn chính của luận văn.
+
+Tọa độ tuyệt đối không có ý nghĩa: cùng một cấu trúc có thể được xoay hoặc tịnh tiến mà
+không thay đổi hình dạng. Do đó, phép so sánh cấu trúc phải bất biến đối với nhóm biến
+đổi cứng trong không gian, thường ký hiệu là SE(3), gồm phép xoay và tịnh tiến. Kabsch
+là thuật toán tìm phép xoay và tịnh tiến làm sai số bình phương nhỏ nhất giữa hai tập
+điểm tương ứng. Phép chồng khít Kabsch, RMSD sau căn chỉnh và TM-score xử lý tính bất
+biến này bằng cách tìm phép chồng khít cứng tối ưu. lDDT tránh căn chỉnh toàn cục bằng
+cách so sánh trực tiếp các khoảng cách nội tại.
+
+Biểu diễn \cprime{} làm giảm chi phí và phù hợp mục tiêu dự đoán nếp gấp, nhưng không
+chứa hướng quay đầy đủ của base nitơ, liên kết hydro, xếp chồng base nitơ, cấu hình đường hoặc va
+chạm toàn nguyên tử. Vì vậy một đánh giá hợp lý phải phân biệt ``độ chính xác đường
+\cprime{}'' với ``tính hợp lý vật lý toàn nguyên tử''.
+
+\section{Mô hình hóa dựa trên khuôn mẫu}
+
+Mô hình hóa dựa trên khuôn mẫu (template-based modeling, TBM) tận dụng quan sát rằng các
+RNA có quan hệ trình tự hoặc motif tương tự có thể chia sẻ một phần cấu trúc. Quy trình
+TBM gồm bốn nhiệm vụ: nhận diện khuôn mẫu, căn chỉnh trình tự, chuyển thông tin hình học
+và xây các vùng không được khuôn mẫu hỗ trợ. Các công cụ như ModeRNA và RNAComposer cho
+thấy khả năng lắp ráp cấu trúc RNA từ khuôn mẫu hoặc đoạn cấu trúc đã biết
+\cite{rna_composer,rna_puzzles}.
+
+Điểm mạnh của TBM là truyền trực tiếp nếp gấp thực nghiệm, nhờ đó không phải tìm kiếm
+toàn bộ không gian cấu dạng. Điểm yếu nằm ở chính giả định đó. Nếu thư viện không có
+khuôn mẫu gần, nếu chỉ một motif ngắn tương đồng, hoặc nếu căn chỉnh sai tại insertion,
+tọa độ được chuyển có thể thiếu hoặc sai. Các bộ đánh giá chuẩn RNA 3D cũng ghi nhận việc nhận
+diện đúng khuôn mẫu là yếu tố quyết định đối với mô hình so sánh
+\cite{state_of_rnart,rna_progress_review}.
+
+\subsection{Truy hồi trình tự và nhận diện tương đồng xa}
+
+Công cụ truy hồi nhanh thường dùng các đoạn con liên tiếp ($k$-mer) làm hạt giống để
+loại phần lớn thư viện trước khi căn chỉnh chính xác. Lựa chọn $k$ tạo ra đánh đổi giữa
+độ nhạy và chi phí: hạt giống dài giảm nhiễu nhưng dễ bỏ lỡ quan hệ xa. Vì cấu trúc có
+thể được bảo tồn lâu hơn trình tự, chỉ một cơ chế tìm kiếm nhanh theo trình tự có thể
+không đủ để phát hiện khuôn mẫu cấu trúc tiềm năng. Đây là lý do luận văn bổ sung một
+điểm tương đồng tổng hợp, kết hợp căn chỉnh toàn cục, căn chỉnh cục bộ, thành phần trình
+tự và mức trùng lặp của 3-mer.
+
+\subsection{Căn chỉnh và chuyển tọa độ}
+
+Căn chỉnh toàn cục phù hợp khi hai trình tự tương đồng trên phần lớn chiều dài; căn chỉnh
+cục bộ tìm một miền hoặc motif bảo tồn. Kết quả căn chỉnh ánh xạ nucleotide thứ $i$ của
+đối tượng sang nucleotide thứ $j$ của khuôn mẫu. Chỉ những vị trí có ánh xạ và có tọa
+độ hợp lệ mới được sao chép trực tiếp. Những vị trí còn lại tạo thành khoảng trống và
+cần được dựng bằng hình học, đoạn cấu trúc khác hoặc một mô hình dự đoán bổ sung. Sai lệch
+ở bước căn chỉnh có thể truyền thành sai lệch hình học, vì vậy độ tương đồng trình tự,
+độ phủ và độ đầy đủ tọa độ đều cần tham gia xếp hạng.
+
+\section{Dự đoán dựa trên học sâu}
+
+Sự phát triển của mô hình attention, biểu diễn ngôn ngữ và học hình học đã tạo ra nhiều
+phương pháp RNA 3D mới. DRfold kết hợp học end-to-end về khung tọa độ cục bộ với các thế
+năng hình học để hướng dẫn lắp ráp cấu trúc \cite{drfold}. RhoFold+ tận dụng một mô hình
+ngôn ngữ RNA tiền huấn luyện trên tập trình tự lớn cùng thông tin tiến hóa để dự đoán
+cấu trúc đơn chuỗi \cite{rhofoldplus}. DRfold2 thay đổi đáng kể kiến trúc tiền nhiệm bằng
+mô hình ngôn ngữ RNA tổng hợp, module cấu trúc khử nhiễu và quy trình lựa chọn--tinh
+chỉnh cấu dạng \cite{drfold2}. Boltz-1 là mô hình mở cho dự đoán cấu trúc và tương tác
+phân tử, được dùng trong luận văn như một phương án khả thi cho RNA dài
+\cite{boltz1}.
+
+So với TBM, mô hình học sâu có thể sinh một giả thuyết ngay cả khi không có khuôn mẫu
+gần trong thư viện truy vấn. Tuy nhiên, chúng vẫn học từ một tập cấu trúc thực nghiệm
+hữu hạn. Độ chính xác có thể giảm khi chiều dài, họ RNA hoặc loại tương tác khác với
+dữ liệu huấn luyện; hơn nữa một số phương pháp phụ thuộc vào MSA hoặc có giới hạn tài
+nguyên. Vì vậy, kết quả từ mô hình học sâu cần được kiểm tra trùng lặp trình tự và mốc
+thời gian huấn luyện trước khi diễn giải như bằng chứng tổng quát.
+
+\section{Tinh chỉnh cấu trúc}
+
+Cấu trúc sinh bởi TBM, lắp ráp đoạn cấu trúc hoặc học sâu có thể chứa khoảng cách bất
+thường trên đường trục phân tử, va chạm, vùng thiếu hoặc lỗi hình học tại chỗ nối. Các phương pháp tinh chỉnh
+dùng trường lực, thế năng thống kê, ràng buộc thực nghiệm hoặc tối ưu hình học để giảm
+những lỗi đó. Các tổng quan về RNA 3D ghi nhận rằng refinement có thể sửa khuyết tật
+cục bộ, nhưng mức cải thiện toàn cục phụ thuộc mạnh vào chất lượng cấu trúc ban đầu và
+thông tin tiếp xúc xa \cite{rna_progress_review}.
+
+Điểm cần phân biệt là ``làm cấu trúc hợp lý hơn theo hàm năng lượng'' và ``làm cấu trúc
+gần thực nghiệm hơn''. Nếu một phương pháp được tối ưu trực tiếp để giảm va chạm hoặc
+độ lệch góc, việc các đại lượng đó giảm chỉ chứng minh bộ tối ưu hoạt động theo mục tiêu
+đã đặt. Để kết luận về độ chính xác, cần chỉ số độc lập như lDDT hoặc RMSD cục bộ. Đây
+là nguyên tắc dẫn tới thiết kế đánh giá Geometry v2.
+
+\section{Ước lượng chất lượng cấu trúc}
+
+Sinh được một tập cấu trúc tốt chưa đồng nghĩa chọn được cấu trúc tốt. ARES cho thấy một
+mạng học hình học có thể xếp hạng cấu trúc RNA từ tọa độ và cải thiện khả năng nhận diện
+mô hình gần thực nghiệm \cite{ares}. Các hệ thống đánh giá RNA truyền thống và gần đây
+cũng sử dụng thế năng thống kê, bản đồ tiếp xúc, đặc trưng nguyên tử hoặc dự đoán lDDT để
+ước lượng chất lượng \cite{rnassess,ares}.
+
+Trong pipeline cuối, độ tin cậy chỉ dùng để xếp hạng trong từng nguồn và điều chỉnh
+cường độ Geometry; nó không được xem là xác suất đúng đã hiệu chỉnh giữa hai nguồn.
+Một thí nghiệm khám phá về quality routing được trình bày ở phụ lục, nhưng kết quả đó
+không tham gia contribution hay pipeline cuối.
+
+\section{Độ tin cậy, hiệu chỉnh và cơ chế từ chối}
+
+Độ tin cậy là đầu ra nội bộ của một mô hình, còn độ chính xác là quan hệ với cấu trúc
+thực nghiệm. Hai khái niệm chỉ tương ứng chặt khi đã hiệu chỉnh. Giá trị 0.8 của TBM và
+0.8 của DRfold2 không mặc nhiên cùng ý nghĩa; vì vậy pipeline không trộn hai thang điểm
+thành một ranking toàn bank. Adaptive strength được ablate với fixed strength để kiểm
+tra trực tiếp liệu việc dùng confidence có tạo giá trị hay không.
+
+\section{Đánh giá chất lượng cấu trúc}
+
+Không có một chỉ số duy nhất phản ánh đầy đủ mọi khía cạnh của RNA 3D. RNA-Puzzles và
+các bộ công cụ đánh giá sử dụng nhiều chỉ số bổ sung cho nhau ở cấp độ toàn cục, cục bộ
+và mạng tương tác \cite{rna_puzzles,rna_puzzles_toolkit,rnassess}. Vì luận văn chỉ có
+đường \cprime{}, bốn nhóm chỉ số sau được chọn.
+
+\subsection{TM-score và chất lượng nếp gấp tổng thể}
+
+TM-score đo độ giống nếp gấp sau phép chồng khít cứng và chuẩn hóa theo chiều dài cấu
+trúc tham chiếu \cite{tm_score}. Dạng trực giác:
+
+\begin{equation}
+\mathrm{TM} = \max_{R,t}\frac{1}{L}
+\sum_{i=1}^{L}\frac{1}{1+(d_i/d_0(L))^2},
+\end{equation}
+
+trong đó $R,t$ là phép xoay và tịnh tiến, $d_i$ là khoảng cách sau căn chỉnh và $d_0(L)$
+phụ thuộc chiều dài. Khoảng cách nhỏ đóng góp gần 1; khoảng cách lớn nhanh chóng bị giảm
+trọng số. Luận văn dùng US-align để tính TM-score \cite{usalign}. Với năm cấu trúc có
+TM lần lượt 0.42, 0.61, 0.38, 0.55 và 0.47, điểm của đối tượng là 0.61; ví dụ này giải
+thích tại sao độ đa dạng của năm dự đoán có ý nghĩa.
+
+\subsection{RMSD và sai lệch tọa độ}
+
+Sau phép chồng khít cứng tối ưu:
+
+\begin{equation}
+\mathrm{RMSD}=\sqrt{\frac{1}{L}\sum_{i=1}^{L}
+\left\|\hat{x}_i-y_i\right\|_2^2}.
+\end{equation}
+
+RMSD thấp hơn là tốt hơn, nhưng một miền đặt sai xa có thể chi phối toàn bộ giá trị.
+
+\subsection{\texorpdfstring{\cprime{}-lDDT}{C1-prime-lDDT} và độ chính xác cục bộ}
+
+lDDT đo khả năng bảo toàn các khoảng cách lân cận mà không cần căn chỉnh toàn cục
+\cite{lddt}. Bản thích nghi của luận văn dùng một atom \cprime{} mỗi nucleotide, bán
+kính xét cặp 15~\angstrom{} và các ngưỡng sai lệch 0.5, 1, 2 và 4~\angstrom{}. Do không
+dùng đầy đủ nguyên tử, tên chính xác là \cprime{}-lDDT, không phải lDDT toàn nguyên tử.
+
+\subsection{RMSD theo cửa sổ trượt}
+
+RMSD được tính lại sau khi căn chỉnh riêng từng đoạn liên tiếp dài 9, 15 và 31
+nucleotide. Cửa sổ ngắn nhạy với hình học tại chỗ; cửa sổ dài hơn bắt đầu phản ánh tổ
+chức rộng. Ba kích thước này là quy mô phân tích được xác định trước, không phải hằng số
+sinh học phổ quát.
+
+\section{Khoảng trống mà luận văn giải quyết}
+
+Các công trình trước cho thấy TBM mạnh khi nhận đúng khuôn, còn học sâu có thể tạo nếp
+gấp bổ sung. Khoảng trống của luận văn là thiếu phân rã white-box dưới kiểm soát thời
+gian và thiếu bằng chứng độc lập rằng một refiner hình học coarse-grained làm cấu trúc
+gần native hơn, thay vì chỉ giảm chính loss đã đặt. Geometry v2 vì vậy được đánh giá
+bằng lDDT, RMSD cửa sổ và TM trên split 60/20/20, kèm đối chứng và component ablation.
+
+% -----------------------------------------------------------------------------
+% CHAPTER 3
+% -----------------------------------------------------------------------------
+\chapter{Dữ liệu và quy trình đánh giá}
+
+\section{Các nhóm dữ liệu}
+
+\begin{longtable}{p{0.24\textwidth}p{0.29\textwidth}p{0.36\textwidth}}
+\toprule
+Nhóm & Nội dung & Vai trò\\
+\midrule
+\endhead
+Bảng trình tự & mã đối tượng, trình tự, mô tả, mốc thời gian & Đầu vào và siêu dữ liệu cho các tập huấn luyện, hiệu chỉnh và đánh giá.\\
+Bảng nhãn & tọa độ thực nghiệm \cprime{} & Học prior trên 60 RNA; calibration tham số; đánh giá một lần sau khi đóng băng phương pháp.\\
+\texttt{PDB\_RNA/*.cif} & chuỗi RNA, nguyên tử, nucleotide biến đổi, ngày công bố & Thư viện khuôn mẫu chính.\\
+MSA & các trình tự họ hàng đã căn chỉnh & Đầu vào tiềm năng cho mô hình học sâu; nhánh TBM hiện tại không phụ thuộc MSA.\\
+Dữ liệu mô hình học sâu & bộ trọng số đã huấn luyện và cấu trúc DRfold2/Boltz & Nguồn giả thuyết nếp gấp bổ sung.\\
+\bottomrule
+\end{longtable}
+
+\section{Thư viện khuôn mẫu}
+
+Phiên bản dữ liệu được phân tích bằng Gemmi gồm 8,670 tệp CIF, tạo 23,869 chuỗi RNA
+hoặc chuỗi lai RNA--DNA với khoảng 10.86 triệu nucleotide. Khoảng 99.9\% nucleotide có
+\cprime{} được mô hình hóa. Nucleotide biến đổi được ánh xạ về A/C/G/U khi có quy tắc;
+tọa độ thiếu được giữ là NaN để bước dựng khoảng trống xử lý, thay vì nội suy âm thầm
+trong lúc đọc dữ liệu.
+
+Hai thư viện tìm kiếm được xây:
+
+\begin{itemize}
+  \item khoảng 20,844 chuỗi hợp lệ trong cơ sở dữ liệu MMseqs2;
+  \item 7,155 trình tự duy nhất trong thư viện tìm kiếm mở rộng, giữ đại diện tọa độ
+  có ngày công bố sớm nhất.
+\end{itemize}
+
+\section{Tập phát triển CASP15}
+
+Tập phát triển cục bộ gồm 12 đối tượng: R1107, R1108, R1116, R1117v2, R1126, R1128,
+R1136, R1138, R1149, R1156, R1189 và R1190, chiều dài từ 30 đến 720 nucleotide. Tập
+này được dùng để đánh giá việc tìm khuôn mẫu, độ đa dạng của nguồn dự đoán và Geometry
+v2. Vì chỉ có 12 RNA độc lập, thống kê được lấy mẫu lại theo RNA, không coi hàng nghìn
+nucleotide trong cùng phân tử là các mẫu độc lập.
+
+\section{Tập 60/20/20 cho Geometry v2 và phân tích lai}
+
+Một trăm RNA dài tối đa 100 nucleotide được sắp theo thời gian và gom nhóm họ trình tự.
+Tập này không còn phục vụ mô hình GeoFuse trong mạch chính; nó được chuyển đúng vai trò
+train--calibration--validation cho Geometry v2:
+
+\begin{table}[H]
+\centering
+\caption{Phân chia thời gian/họ cho đánh giá Geometry v2}
+\begin{tabular}{lrrlll}
+\toprule
+Tập & Số RNA & Số họ & Khoảng ngày & TBM & DRfold2\\
+\midrule
+Huấn luyện prior & 60 & 54 & 2024-01-10--2024-12-04 & 180 & 120\\
+Hiệu chỉnh & 20 & 17 & 2024-12-11--2025-01-08 & 60 & 40\\
+Xác nhận mới nhất & 20 & 16 & 2025-01-15--2025-03-26 & 60 & 40\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Không có họ hoặc nhóm trình tự trùng hoàn toàn xuất hiện ở nhiều tập. Mỗi RNA có đúng ba
+ứng viên TBM và hai DRfold2 hữu hạn. Sáu mươi RNA đầu chỉ ước lượng prior hình học; 20
+RNA hiệu chỉnh chọn cấu hình trong một danh sách khai báo trước; cấu hình và checksum
+được khóa trước khi mở 20 RNA xác nhận. Một đối tượng lỗi kỹ thuật được thay theo thứ tự
+dự phòng định trước, không dựa trên độ chính xác.
+
+\section{Kiểm tra trùng lặp và mốc huấn luyện của mô hình học sâu}
+
+R1128 có trình tự trùng hoàn toàn với một mục trong FASTA huấn luyện DRfold2 và tạo
+TM-score rất cao. Vì vậy, kết quả về khả năng bổ sung nếp gấp được báo cáo theo hai cách:
+đủ 12 đối tượng theo thiết lập cuộc thi và phân tích độ nhạy loại R1128. R1138 dùng Boltz
+có mốc dữ liệu huấn luyện được công bố sớm hơn ngày phát hành cấu trúc đích. Việc kiểm
+tra này giảm nguy cơ diễn giải ghi nhớ dữ liệu thành khả năng khái quát.
+
+\section{Kiểm soát rò rỉ theo thời gian}
+
+Với R1107 có mốc 2022-05-28, cấu trúc 7QR4 phát hành ngày 2022-10-26 phải bị loại khỏi
+thư viện khuôn mẫu dù có trình tự rất gần. Một phép tái tạo cho phép rò rỉ đạt TM 0.9355,
+trong khi phiên bản an toàn theo thời gian đạt 0.2983. Chênh lệch này cho thấy bộ lọc
+ngày công bố là điều kiện trung tâm để kết quả có giá trị khoa học.
+
+Ngoài ngày công bố, quy trình còn loại PDB của chính đối tượng, kiểm tra trùng trình tự,
+gom nhóm theo họ và xem xét mốc dữ liệu huấn luyện của mô hình tiền huấn luyện. Những
+kiểm tra này không bảo đảm tuyệt đối rằng mọi quan hệ tiến hóa xa đã được loại, nhưng
+giảm đáng kể các hình thức rò rỉ có thể quan sát và tái lập.
+
+\section{Quy trình sử dụng nhãn}
+
+Cấu trúc thực nghiệm xuất hiện ở ba vai trò tách biệt. Nhãn của 60 RNA đầu chỉ dùng để
+ước lượng phân bố khoảng cách, kích thước, góc và góc xoắn. Tập hiệu chỉnh được dùng để
+chọn source restraint, adaptive strength, learning rate và số bước trong các giá trị
+khai báo trước. Tập xác nhận mới nhất chỉ được mở sau khi ghi cấu hình đóng băng; tham
+số không được thay đổi theo kết quả này. Đối với Kaggle, cấu trúc thực nghiệm của tập
+ẩn hoàn toàn không có sẵn.
+
+Khái niệm ngoài nếp gấp (out-of-fold, OOF) bảo đảm ứng viên của một RNA không được tạo
+bởi một mô hình huấn luyện trên chính RNA hoặc họ của nó. Ngoài OOF theo mô hình, thứ tự
+thời gian giữa ba tập tạo một phép kiểm tra triển vọng: prior luôn đến trước calibration,
+và calibration luôn đến trước validation.
+
+\section{Chỉ số và đơn vị phân tích}
+
+TM-score tốt nhất trong năm cấu trúc là chỉ số chính cho chất lượng nếp gấp. Geometry
+v2 được đánh giá thêm bằng \cprime{} RMSD, \cprime{}-lDDT và RMSD cửa sổ 9, 15, 31
+nucleotide. Clash proxy, sharp-kink, bán kính quán tính và NLL góc/góc xoắn chỉ là
+diagnostic của objective; chúng không thay thế các chỉ số native độc lập.
+
+Mỗi RNA có trọng số bằng nhau trong giá trị trung bình. So sánh theo cặp sử dụng
+lấy mẫu lại 10,000 lần ở cấp RNA với hạt giống ngẫu nhiên 2025 để tạo khoảng tin cậy
+95\%. Cách làm này
+tránh ngụy lặp, tức là coi nhiều nucleotide tương quan trong một RNA như nhiều thí
+nghiệm độc lập.
+
+% -----------------------------------------------------------------------------
+% CHAPTER 4
+% -----------------------------------------------------------------------------
+\chapter{Khung dự đoán lai đề xuất}
+
+\section{Tổng quan}
+
+\begin{figure}[H]
+\centering
+\fbox{\begin{minipage}{0.91\textwidth}
+\centering
+\textbf{Đầu vào: trình tự + mốc thời gian}\\[0.2cm]
+$\downarrow$\\
+\begin{tabular}{c@{\hspace{1.3cm}}c}
+\textbf{Dựa trên khuôn mẫu} & \textbf{Dựa trên học sâu}\\
+MMseqs2 + tìm kiếm mở rộng & DRfold2 / Boltz cho RNA dài\\
+lọc $\rightarrow$ căn chỉnh $\rightarrow$ chuyển tọa độ & bộ trọng số cố định $\rightarrow$ cấu trúc\\
+\end{tabular}\\[0.25cm]
+$\downarrow$\\
+Tập cấu trúc ban đầu: T1, T2, T3, P1, P2\\
+$\downarrow$\\
+Tinh chỉnh bảo thủ Geometry v2 trên từng ứng viên\\
+$\downarrow$\\
+Phân bổ cố định 3 TBM + 2 DRfold2 (fallback về TBM nếu cần)\\
+$\downarrow$\\
+\textbf{Năm cấu trúc \cprime{} và tệp \texttt{submission.csv}}
+\end{minipage}}
+\caption{Khung dự đoán tổng thể. Cấu trúc thực nghiệm chỉ xuất hiện trong huấn luyện và đánh giá, không xuất hiện khi suy luận.}
+\label{fig:pipeline}
+\end{figure}
+
+\section{Sinh cấu trúc từ khuôn mẫu}
+
+\subsection{Truy hồi nhanh bằng MMseqs2}
+
+Trình tự cần dự đoán được truy vấn trong khoảng 20,844 chuỗi bằng MMseqs2 với $k=13$.
+Nhánh này nhanh và hiệu quả khi có quan hệ tương đồng rõ. Kết quả ở giai đoạn này chỉ
+là danh sách khuôn mẫu tiềm năng và căn chỉnh sơ bộ; chưa có tọa độ nào được sao chép.
+
+\subsection{Tìm kiếm tương đồng mở rộng}
+
+Song song với MMseqs2, phương pháp quét 7,155 trình tự khuôn mẫu duy nhất. Điểm tương
+đồng tổng hợp được tính bởi:
+
+\begin{equation}
+C(S,T)=0.4G(S,T)+0.3L(S,T)+0.2F(S,T)+0.1K_3(S,T),
+\end{equation}
+
+với $G$ là độ tương đồng căn chỉnh toàn cục, $L$ là độ tương đồng căn chỉnh cục bộ,
+$F$ tổng hợp thành phần base nitơ, hàm lượng GC, cặp nucleotide liên tiếp, entropy, đoạn
+lặp và chiều dài;
+$K_3$ là tỷ lệ 3-mer chung. ``Mở rộng'' ở đây nghĩa là đánh giá toàn bộ thư viện trình
+tự hợp lệ thay vì chỉ các kết quả MMseqs2; không phải vét cạn không gian cấu hình 3D.
+
+\subsection{Hợp nhất kết quả, lọc và xếp hạng}
+
+Hai danh sách kết quả được hợp nhất. Mỗi khuôn mẫu phải thỏa:
+
+\begin{equation}
+t_{release}(T)<t_{cutoff}(S),
+\end{equation}
+
+và không thuộc PDB tham chiếu của chính đối tượng. Các cặp được căn chỉnh lại toàn cục
+và xếp hạng theo tích của mức đồng nhất trình tự, độ phủ đối tượng và độ đầy đủ tọa độ
+khuôn mẫu. Phương pháp ưu tiên các PDB khác nhau để tránh năm dự đoán cùng một nguồn.
+
+\subsection{Chuyển tọa độ}
+
+Phép căn chỉnh tạo ánh xạ $m(i)$ từ nucleotide $i$ của đối tượng tới nucleotide $j$
+của khuôn mẫu. Nếu $m(i)=j$ và khuôn mẫu có \cprime{} hữu hạn:
+
+\begin{equation}
+x_i^{TBM}=x_j^{template},\qquad support_i=1.
+\end{equation}
+
+Nếu nucleotide không được ánh xạ, $support_i=0$ và tọa độ được dựng ở bước lấp khoảng
+trống. Mặt nạ hỗ trợ phân biệt tọa độ sao chép trực tiếp với tọa độ suy dựng.
+
+\subsection{Lấp khoảng trống và gán độ tin cậy}
+
+Khoảng trống ngắn ở giữa được nội suy giữa hai điểm neo. Khoảng trống dài kết hợp nội
+suy với độ cong vuông góc để tránh đường thẳng co cụm. Phần thiếu ở đầu hoặc cuối chuỗi
+được kéo dài theo hướng backbone gần nhất. Nếu không có khuôn mẫu, một phương án dựng
+thô sinh nhiều đường \cprime{} dựa trên thân xoắn và vòng. Nucleotide được chuyển trực tiếp
+có độ tin cậy cao hơn; độ tin cậy trong vùng suy dựng giảm theo khoảng cách tới điểm neo.
+
+\section{Sinh cấu trúc bằng mô hình học sâu}
+
+\subsection{DRfold2}
+
+Chương trình ghi trình tự thành FASTA, chạy 20 bộ trọng số đã huấn luyện của cấu hình \texttt{cfg97},
+dự đoán các ràng buộc/thế năng hình học, dùng PotentialFold tối ưu cấu trúc thô và Arena
+tạo PDB trước khi trích \cprime{}. Nhiều bộ trọng số tạo nhiều giả thuyết. Các cấu trúc
+được xếp hạng theo tiêu chí nội bộ của mô hình, nhưng độ tin cậy thô không được xem là
+độ chính xác so với thực nghiệm.
+
+\subsection{Boltz cho RNA dài}
+
+Boltz được kiểm tra cho R1138 dài 720 nucleotide khi DRfold2 vượt giới hạn GPU 16 GB.
+Do tập xác nhận giới hạn chiều dài $\le100$, DRfold2 được dùng thống nhất trong thí
+nghiệm lựa chọn nguồn. Boltz vì vậy cung cấp bằng chứng khả thi và phương án cho RNA
+dài, không phải bộ sinh mặc định trong thí nghiệm xác nhận cuối.
+
+\subsection{Biểu diễn ứng viên thống nhất}
+
+Hai nguồn được chuẩn hóa thành một cấu trúc dữ liệu chung:
+
+\begin{lstlisting}
+target_id, sequence
+coords:        [L, 3]
+confidence:    [L]
+support_mask:  [L]
+source, model, checkpoint, template_id, cutoff provenance
+\end{lstlisting}
+
+Biểu diễn này cho phép Geometry v2 xử lý hai nguồn bằng cùng một giao diện, đồng thời
+giữ nguồn gốc và phân biệt nucleotide được khuôn hỗ trợ với nucleotide do gap-fill dựng.
+
+\section{Geometry v2}
+
+\subsection{Mục tiêu thiết kế}
+
+Geometry v2 không dự đoán lại nếp gấp từ đầu. Phương pháp tìm cấu trúc $X$ có hình học
+\cprime{} cục bộ hợp lý hơn nhưng vẫn gần cấu trúc nguồn $X_0$. Cấu trúc ban đầu luôn
+được giữ trong tập ứng viên để tinh chỉnh không loại bỏ một dự đoán vốn đã tốt.
+
+\subsection{Các phân bố hình học thực nghiệm}
+
+Từ các cấu trúc thực nghiệm cũ hợp lệ theo thời gian, phương pháp đo:
+
+\begin{itemize}
+  \item khoảng cách \cprime{} liên tiếp;
+  \item pseudo-angle từ ba \cprime{} liên tiếp;
+  \item góc xoắn giả có dấu từ bốn \cprime{} liên tiếp;
+  \item bán kính quán tính theo chiều dài;
+  \item khoảng cách tới láng giềng không kề nhau, chỉ dùng để ước lượng ngưỡng clash;
+  \item chỉ dấu pair-like, chỉ dùng để chọn prior angle/torsion theo ngữ cảnh.
+\end{itemize}
+
+Góc phẳng và góc xoắn được chia thành 72 khoảng, làm trơn bằng nhân có trọng số
+\begin{equation}
+(1,2,3,4,3,2,1),
+\end{equation}
+thêm
+một lượng đếm nhỏ để tránh xác suất bằng 0 rồi đổi sang âm log-xác suất (NLL). NLL thấp
+nghĩa là hình học thuộc vùng thường gặp hơn trong dữ liệu dùng để xây phân bố.
+
+Chỉ dấu ``có dạng cặp'' (pair-like) là một đại lượng gần đúng chỉ dựa trên thông tin có
+ở thời điểm suy luận. Một cặp được cân nhắc nếu base nitơ thuộc AU, UA, GC, CG, GU hoặc
+UG, cách nhau ít nhất bốn vị
+trí trên trình tự và có khoảng cách \cprime{} quanh
+$10.5\pm2.5$~\angstrom. Các cặp được chọn tuần tự theo độ gần mục tiêu, mỗi nucleotide
+tối đa một cặp; các cặp giao nhau được phép để không loại nút giả (pseudoknot). Chỉ dấu
+này không phải nhãn cặp base nitơ thực nghiệm và không tạo một loss pair-like riêng;
+nó chỉ chọn histogram angle/torsion tương ứng cho từng vị trí.
+
+\subsection{Hàm mục tiêu}
+
+\begin{align}
+\mathcal{L}(X)={}&1.5\mathcal{L}_{source}
++s\big(1.0\mathcal{L}_{backbone}
++0.3\mathcal{L}_{clash}
++0.02\mathcal{L}_{Rg}\nonumber\\
+&\qquad +0.30\mathcal{L}_{angle}
++0.15\mathcal{L}_{torsion}
++20.0\mathcal{L}_{kink}\big),\\
+s={}&0.2+0.8(1-c_{global}).
+\end{align}
+
+$\mathcal{L}_{source}$ là khoảng cách Huber về $X_0$, có trọng số theo độ tin cậy.
+$\mathcal{L}_{backbone}$ phạt khoảng cách nucleotide liên tiếp lệch khỏi phân bố thực nghiệm.
+$\mathcal{L}_{clash}$ phạt \cprime{} không kề nhau quá gần.
+$\mathcal{L}_{Rg}$ giữ kích thước tổng thể hợp lý theo chiều dài.
+$\mathcal{L}_{angle}$ và $\mathcal{L}_{torsion}$ phạt vùng có âm log-xác suất (NLL) cao.
+$\mathcal{L}_{kink}$ ngăn tạo hoặc làm xấu góc gập sắc.
+
+Trọng số source 1.5 được chọn trên 20 RNA hiệu chỉnh từ các giá trị 1.5, 3.0 và 6.0;
+mọi thành phần còn lại giữ cấu hình khai báo trước. Một góc gập sắc được ghi nhận khi pseudo-angle nhỏ hơn $70^\circ$. Bộ tối ưu dùng biên
+bảo vệ $75^\circ$: nếu góc của cấu trúc nguồn vốn lớn hơn biên, góc sau tinh chỉnh không
+nên rơi xuống dưới; nếu góc nguồn đã nhỏ, cận dưới là chính góc đó để không làm gập sắc
+hơn. Tọa độ được tối ưu bằng Adam trong 300 bước, tốc độ học 0.04 và giới hạn chuẩn
+gradient ở 10.
+
+\iffalse
+\section{GeoFuse}
+
+\subsection{Bài toán lựa chọn nguồn}
+
+Ý tưởng giữ vùng tốt từ TBM và thay vùng còn lại bằng mô hình học sâu chỉ có ý nghĩa
+nếu có thể ước lượng vùng nào tốt mà không nhìn cấu trúc thực nghiệm. GeoFuse tách vấn
+đề thành hai tầng: trước hết học một mô hình phân loại nguồn tốt hơn theo nucleotide;
+sau đó áp dụng một quy tắc bảo thủ để quyết định có tạo cấu trúc hợp nhất hay không.
+
+\subsection{Phân cụm theo nếp gấp tổng thể}
+
+Phương pháp tính self-TM đối xứng giữa mọi cặp cấu trúc, chuyển thành khoảng cách
+$d=1-\mathrm{TM}$ và phân cụm phân cấp theo liên kết đầy đủ (complete-link): khoảng
+cách giữa hai cụm được lấy bằng cặp phần tử xa nhau nhất. Ngưỡng 0.35 được chọn trên
+tập hiệu chỉnh. Chỉ một cấu trúc khuôn mẫu và một cấu trúc học sâu trong cùng cụm mới
+được ghép cặp. Điều này tránh lấy trung bình hai nếp gấp tổng thể khác nhau.
+
+\subsection{Chồng khít bền vững trước ngoại lệ}
+
+Cấu trúc học sâu được chồng khít cứng lên cấu trúc khuôn mẫu bằng phép xoay và tịnh tiến
+Kabsch. Vị trí dùng để khớp phải hữu hạn ở hai bên, được khuôn mẫu hỗ trợ và có độ tin
+cậy khuôn mẫu ít nhất 0.25. Sau mỗi vòng, 80\% sai số dư thấp nhất được giữ lại và 20\%
+điểm ngoại lệ tạm thời bị loại; quá trình lặp ba lần. Phép biến đổi không kéo giãn hay
+bẻ cong cấu trúc.
+
+Sau khi chồng khít:
+
+\begin{equation}
+d_i=\left\|\widehat{x}_i^{P}-x_i^{T}\right\|_2,
+\end{equation}
+
+Độ bất đồng $d_i$ được làm trơn bằng cửa sổ 15 nucleotide. Đại lượng này chỉ cho biết
+hai nguồn khác nhau bao nhiêu, không cho biết nguồn nào đúng.
+
+\subsection{Đặc trưng và mô hình lựa chọn nguồn}
+
+Mỗi nucleotide có 22 đặc trưng: độ tin cậy của hai nguồn; thứ hạng độ tin cậy trong
+chuỗi; trạng thái hỗ trợ của khuôn mẫu và độ sâu trong vùng được hỗ trợ; độ bất đồng giữa
+hai nguồn; năm đặc trưng hình học cục bộ cho mỗi nguồn (độ lệch đường trục, NLL góc, NLL
+góc xoắn, góc gập sắc và chỉ dấu có dạng cặp); mã hóa nhị phân một-trong-bốn cho A/C/G/U;
+và logarit chiều dài chuỗi.
+
+Đặc trưng được chuẩn hóa bằng trung bình và độ lệch chuẩn của tập huấn luyện. Mô hình
+gồm hai lớp tích chập một chiều (Conv1D) 32 kênh, nhân rộng 5 vị trí, hàm kích hoạt
+SiLU và tỷ lệ bỏ nút (dropout) 0.05, sau đó một lớp Conv1D trả một điểm chưa chuẩn hóa
+(logit). Hai lớp với nhân rộng 5 vị trí cho vùng quan sát xấp xỉ 9 nucleotide. Hàm
+sigmoid biến điểm này về khoảng từ 0 đến 1 và trả:
+
+\begin{equation}
+p_i=P(\text{DRfold2 tốt hơn TBM tại nucleotide }i).
+\end{equation}
+
+Trong huấn luyện, nhãn chính so sánh \cprime{}-lDDT theo nucleotide của hai nguồn với
+cấu trúc thực nghiệm. Khi suy luận, cấu trúc thực nghiệm và mọi đặc trưng suy ra từ nhãn
+hoàn toàn vắng mặt.
+
+\subsection{Hợp nhất có chọn lọc và cơ chế từ chối}
+
+Tập hiệu chỉnh chọn ngưỡng quyết định 0.75; biên an toàn 0.15 tạo ngưỡng thực tế
+$p_i\ge0.90$. Một nucleotide chỉ được chọn nếu đồng thời:
+
+\begin{equation}
+p_i\ge0.90,\qquad 0.5\le d_i\le12~\angstrom.
+\end{equation}
+
+Phải tồn tại ít nhất 7 nucleotide liên tục. Mặt nạ nhị phân được làm trơn bằng bộ lọc
+Gauss, tạo
+$\alpha_i\in[0,1]$:
+
+\begin{equation}
+x_i^{fused}=(1-\alpha_i)x_i^{T}+\alpha_i\widehat{x}_i^{P}.
+\end{equation}
+
+Nếu không có đoạn liên tục đạt điều kiện, phương pháp không tạo cấu trúc hợp nhất. Đây
+là cơ chế từ chối hợp nhất có chủ đích. Các cấu trúc cha luôn còn trong tập ứng viên.
+Geometry v2 có thể tinh chỉnh cấu trúc hợp nhất để giảm sai lệch tại đường nối nhưng
+không thay thế cấu trúc cha.
+
+\section{Lựa chọn năm cấu trúc cuối}
+
+Tập ứng viên gồm cấu trúc TBM và học sâu ban đầu, các cấu trúc sau Geometry v2 và cấu
+trúc hợp nhất nếu có. Bộ chọn sử dụng điểm chất lượng không dựa trên cấu trúc thực
+nghiệm, với trọng số độ tin cậy nguồn 0.25, tỷ lệ được khuôn mẫu hỗ trợ 0.20, tỷ lệ
+chỉ dấu có dạng cặp 0.10, NLL góc phẳng 0.15, NLL góc xoắn 0.10, số va chạm trên
+nucleotide 0.07, độ lệch đường trục 0.08 và góc gập sắc 0.05. Chỉ số có chiều
+``thấp hơn là tốt hơn'' được
+đảo thứ hạng trước khi cộng.
+
+Quá trình lựa chọn còn có trọng số đa dạng 0.25, thưởng cho cụm nếp gấp mới 0.20 và mức
+ủng hộ của cụm 0.10. Mục tiêu là tránh năm cấu trúc đều thuộc cùng một nếp gấp hoặc một
+nguồn. TM-score thực nghiệm chỉ được tính sau khi danh sách năm cấu trúc đã được cố định.
+
+\section{Ghi tệp nộp bài}
+
+Mỗi nucleotide là một dòng:
+
+\begin{lstlisting}
+ID,resname,resid,x_1,y_1,z_1,...,x_5,y_5,z_5
+\end{lstlisting}
+
+Các bước kiểm tra gồm đúng ID và thứ tự mẫu, nucleotide khớp trình tự, đủ năm cấu dạng,
+kích thước mảng đúng, tọa độ hữu hạn và không có ID trùng.
+
+\section{Mã giả đầy đủ}
+
+\begin{lstlisting}
+for target in test_sequences:
+    hits = mmseqs_search(target.sequence, k=13)
+    hits += exhaustive_composite_search(target.sequence)
+    hits = temporal_and_self_filter(hits, target)
+
+    tbm = []
+    for template in realign_rank_distinct(hits):
+        coords, support = transfer_C1prime(template, target)
+        coords, confidence = geometry_gap_fill(coords, support)
+        tbm.append(candidate(coords, confidence, support))
+    tbm = top3_distinct_PDB(tbm)
+
+    pretrained = DRfold2_frozen(target.sequence, top2=True)
+    raw = normalize(tbm + pretrained)
+    augmented = raw + geometry_v2(raw)
+
+    clusters = self_TM_complete_link(raw, threshold=0.35)
+    for template, pretrained in same_fold_mixed_pairs(clusters):
+        P = quality_router(template, pretrained)
+        segment = contiguous_run(
+            (P >= 0.90) & (disagreement >= 0.5)
+                        & (disagreement <= 12.0),
+            minimum_length=7)
+        if segment exists:
+            fused = gaussian_smooth_fusion(template, pretrained, segment)
+            augmented += [fused, geometry_v2(fused)]
+        else:
+            abstain
+
+    final5 = native_blind_quality_diversity_select(augmented)
+    write_submission_rows(target, final5)
+\end{lstlisting}
+
+\fi
+
+\section{Phân bổ năm cấu trúc cuối và ghi tệp}
+
+Pipeline cuối không ghép tọa độ giữa hai nguồn. Với RNA không quá 600 nucleotide, hệ
+thống giữ ba ứng viên TBM xếp hạng cao nhất và hai ứng viên DRfold2; nếu DRfold2 lỗi
+hoặc vượt giới hạn tài nguyên, vị trí đó quay về TBM. Geometry v2 tinh chỉnh từng ứng
+viên độc lập. Phân bổ cố định này không cần nhãn native khi suy luận và phản ánh đúng
+notebook Kaggle đã được chấm.
+
+Mỗi nucleotide là một dòng \texttt{ID,resname,resid,x\_1,y\_1,z\_1,...,x\_5,y\_5,z\_5}.
+Kiểm tra cuối bảo đảm đúng ID/thứ tự mẫu, đúng nucleotide, đủ năm cấu dạng, tọa độ hữu
+hạn và không có ID trùng.
+
+\begin{lstlisting}
+for target in test_sequences:
+    hits = mmseqs_search(target.sequence, k=13)
+    hits += exhaustive_composite_search(target.sequence)
+    hits = temporal_and_self_filter(hits, target)
+    tbm = transfer_rank_distinct_and_gap_fill(hits, top=3)
+    deep = DRfold2_frozen(target.sequence, top=2)
+    raw5 = tbm + deep if deep succeeds else tbm_fallback_to_five
+    final5 = [geometry_v2(candidate) for candidate in raw5]
+    validate_and_write_submission(target, final5)
+\end{lstlisting}
+
+% -----------------------------------------------------------------------------
+% CHAPTER 5
+% -----------------------------------------------------------------------------
+\chapter{Thiết kế thí nghiệm}
+
+\section{Chiến lược kiểm định giả thuyết}
+
+Các thí nghiệm đi theo chuỗi component--hypothesis--ablation--conclusion. TBM được tách
+thành retrieval source, bốn thành phần composite score, reranking, distinct-PDB và gap
+filling. Tính bổ sung TBM--DRfold2 được kiểm tra bằng allocation giữ cố định số candidate.
+Geometry v2 được mổ bằng cumulative/leave-one-out, đối chứng đơn giản, sensitivity,
+convergence và cuối cùng là xác nhận 20 RNA mới nhất.
+
+Prior được ước lượng trên 60 RNA; tham số Geometry chỉ được chọn trên 20 hiệu chỉnh từ
+danh sách khai báo trước. Tập xác nhận mới nhất được mở sau khi ghi tệp cấu hình đóng
+băng. Native reference cho mỗi candidate refined được cố định theo candidate thô để
+phương pháp không được lợi do đổi sang cấu dạng native dễ hơn.
+
+\section{Liên hệ giữa câu hỏi nghiên cứu và thí nghiệm}
+
+\begin{longtable}{p{0.08\textwidth}p{0.29\textwidth}p{0.27\textwidth}p{0.24\textwidth}}
+\toprule
+ID & Giả thuyết & So sánh & Chỉ số chính\\
+\midrule
+\endhead
+E0 & TBM phải an toàn theo thời gian & safe so với cho phép template tương lai & TM, availability\\
+E1 & Composite tăng recall & MMseqs2, composite và hợp hai nguồn & availability, top-1/best-5 TM, coverage\\
+E2 & Reranking/gap-fill có vai trò riêng & component score; identity; identity$\times$coverage; distinct-PDB; linear/current gap-fill & top-1/3/5 TM, SW-RMSD9\\
+E3 & DRfold2 bổ sung TBM & 3T; 2T+1D; 1T+2D; 3T+2D, Geometry off/on & best-of-$N$ TM, oracle, bootstrap\\
+E4 & Thành phần Geometry có tác dụng gì & cumulative, leave-one-out, fixed/adaptive, source/lr/step sensitivity & TM, lDDT, SW-RMSD, diagnostic\\
+E5 & Geometry vượt đối chứng đơn giản & raw, source--backbone, full Geometry & chỉ số native độc lập\\
+E6 & Geometry khái quát khi nào & 20 RNA newest; stratify source/quality/length/support & paired target bootstrap\\
+\bottomrule
+\end{longtable}
+
+\section{Phương pháp đối chứng}
+
+Đối chứng TBM gồm MMseqs2 đơn lẻ, từng subset của composite score, identity-only ranking
+và gap-fill tuyến tính. Đối chứng Geometry ``ngu'' nhưng công bằng chỉ có source restraint
+và backbone loss, cùng số bước và candidate. Full Geometry được so với fixed strength,
+leave-one-out từng loss và raw không tinh chỉnh. Diagnostic được báo cáo để giải thích
+cơ chế nhưng gate chỉ dùng TM, \cprime{}-lDDT và sliding-window RMSD độc lập.
+
+\section{Điểm lý tưởng và điểm lựa chọn}
+
+Điểm lý tưởng (oracle) chọn cấu trúc tốt nhất bằng cách nhìn cấu trúc thực nghiệm sau
+khi đánh giá; nó chỉ đo trần chất lượng của tập ứng viên. Điểm lựa chọn được tạo bằng quy tắc không sử
+dụng cấu trúc thực nghiệm và có thể áp dụng cho dữ liệu mới. Chênh lệch giữa điểm lý
+tưởng và điểm lựa chọn là phần chất lượng còn mất ở khâu xếp hạng. Khi điểm lý tưởng
+tăng nhưng điểm lựa chọn không tăng, hệ thống đã sinh được cấu trúc tốt hơn nhưng chưa
+nhận ra chúng một cách đáng tin.
+
+\section{Phân tích thống kê}
+
+Mọi RNA có trọng số bằng nhau bất kể chiều dài. So sánh theo cặp dùng phép lấy mẫu lại
+10,000 lần ở cấp RNA với hạt giống ngẫu nhiên 2025 để tạo khoảng tin cậy 95\%.
+Nucleotide trong cùng một RNA
+không được coi là đối tượng độc lập. Khi khoảng tin cậy của chênh lệch chứa 0, kết quả
+được diễn giải là chưa đủ bằng chứng về một thay đổi ổn định.
+
+\section{Tiêu chí đánh giá Geometry v2}
+
+Trước khi mở kết quả xác nhận, tiêu chí được đặt là \cprime{}-lDDT phải tăng, RMSD phải
+cải thiện ở ít nhất hai trong ba quy mô cửa sổ và chênh lệch TM không thấp hơn $-0.005$.
+Tiêu chí này buộc phương pháp thể hiện lợi ích bằng chỉ số độc lập đồng thời hạn chế làm
+hỏng nếp gấp tổng thể.
+
+\section{Factorial và giới hạn allocation}
+
+Cache confirmatory có ba TBM và hai DRfold2 trên mỗi RNA. Factorial chính vì vậy giữ
+cố định $N=3$: 3T+0D so với 2T+1D, mỗi bank có Geometry off/on. Bảng allocation còn
+báo cáo mọi tổ hợp khả thi ở $N=1,2,3$ và production bank 3T+2D. Không có dữ liệu để
+giả lập trung thực 5T+0D hay 0T+5D; luận văn ghi đây là giới hạn thay vì đệm bản sao.
+
+\section{Môi trường tính toán và tái lập}
+
+Hệ thống được phát triển trong WSL với môi trường conda \texttt{rna-fold}; mã nguồn và
+cấu hình thí nghiệm được quản lý bằng Git. Suy luận DRfold2 sử dụng GPU Kaggle khi tài
+nguyên cục bộ không đủ. Các tệp cấu trúc và bộ trọng số lớn được lưu ngoài Git, trong
+khi tệp kê khai, nguồn gốc dữ liệu, cấu hình, báo cáo và bảng tổng hợp được lưu trong
+kho mã. \TODO{Bổ sung CPU, GPU, RAM, phiên bản WSL, CUDA, Python, PyTorch và thời gian
+chạy cuối từ tệp kê khai.}
+
+% -----------------------------------------------------------------------------
+% CHAPTER 6
+% -----------------------------------------------------------------------------
+\chapter{Kết quả}
+
+\section{RQ1: Mở rộng khả năng tìm khuôn mẫu}
+
+Giả thuyết đầu tiên cho rằng một cơ chế truy hồi nhanh có thể bỏ lỡ những khuôn mẫu xa,
+và việc bổ sung tìm kiếm tương đồng mở rộng sẽ cải thiện chất lượng tập dự đoán. Hai
+phương pháp được so sánh trên cùng 12 đối tượng CASP15, cùng bộ lọc thời gian, cùng bước
+chuyển tọa độ và cùng bộ tinh chỉnh; khác biệt duy nhất là việc bật tìm kiếm mở rộng.
+
+\begin{table}[H]
+\centering
+\caption{Ảnh hưởng của tìm kiếm tương đồng mở rộng đối với TBM}
+\begin{tabularx}{\textwidth}{Xrr}
+\toprule
+Phương pháp & TM trung bình tốt nhất trong năm & Chênh lệch\\
+\midrule
+Chỉ MMseqs2 & 0.2117 & --\\
+MMseqs2 + tìm kiếm tổng hợp & \textbf{0.3072} & +0.0955\\
+Ứng viên đầu theo phương pháp tái tạo, an toàn theo thời gian & 0.2983 & +0.0866 so với chỉ MMseqs2\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Tìm kiếm mở rộng cải thiện 11 trong 12 đối tượng. R1116 là ngoại lệ duy nhất, giảm
+0.0084. Trên R1108, TM-score tăng từ 0.3124 lên 0.4889; trên R1117v2, MMseqs2 không
+tìm được khuôn mẫu hữu ích nhưng nhánh mở rộng tạo đủ năm cấu trúc và tăng điểm từ
+0.0999 lên 0.4199. Vì các bước còn lại được giữ cố định, mức tăng trung bình 0.0955
+được quy chủ yếu cho khả năng truy hồi khuôn mẫu tốt hơn. Kết quả cũng cho thấy việc
+thêm một cơ chế tìm kiếm không bảo đảm cải thiện mọi RNA: khuôn mẫu xa vẫn có thể làm
+xếp hạng nhiễu nếu giống trình tự nhưng không phản ánh đúng cấu trúc.
+
+Để giải thích cơ chế thay vì chỉ báo cáo điểm cuối, một ablation mới được chạy trên 20
+RNA hiệu chỉnh. MMseqs2 chỉ trả candidate ở 8/20 RNA; composite trả đủ ở 20/20. Trên
+8 RNA có hit, MMseqs2 đạt best-of-five TM 0.678316, nhưng đây là trung bình có điều
+kiện và không đại diện 12 RNA thất bại retrieval. Hợp MMseqs2--composite đạt 0.389705
+trên đủ 20 RNA, so với 0.376060 của composite đơn lẻ.
+
+\begin{table}[H]
+\centering
+\caption{Ablation nguồn truy hồi trên 20 RNA hiệu chỉnh}
+\begin{tabular}{lrrrr}
+\toprule
+Nguồn & RNA có candidate & Availability & Best-5 khi có & Coverage\\
+\midrule
+MMseqs2 & 8/20 & 0.40 & 0.678316 & 0.930965\\
+Composite & 20/20 & 1.00 & 0.376060 & 0.754893\\
+Hợp hai nguồn & 20/20 & 1.00 & \textbf{0.389705} & 0.812411\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Component study không xác nhận rằng bộ trọng số composite là tối ưu. G-only đạt best-5
+0.381177, còn full weighted đạt 0.376060; chênh $+0.005117$ theo hướng G-only có CI
+$[-0.002178,+0.015004]$. Thay đổi trọng số $G,L$ quanh $\pm25\%$ chỉ làm điểm dao động
+trong khoảng 0.375435--0.376500. Kết luận đúng mức là score composite ổn định và giúp
+recall, không phải mọi component đều tăng TM. Khi cho phép template phát hành sau target,
+best-5 tăng lạc quan 0.026961; đây là định lượng trực tiếp cho nhu cầu temporal filter.
+
+\begin{table}[H]
+\centering
+\caption{Ablation reranking trên cùng pool composite high-recall}
+\begin{tabular}{lrrrr}
+\toprule
+Ranking & Top-1 & Top-3 & Top-5 & PDB khác nhau\\
+\midrule
+Identity & 0.334450 & 0.363854 & 0.371900 & 4.85\\
+Identity $\times$ coverage & \textbf{0.363720} & \textbf{0.378412} & \textbf{0.387558} & 4.95\\
+$\times$ completeness & 0.363720 & 0.378412 & 0.387558 & 4.95\\
++ distinct-PDB & 0.363720 & 0.378412 & 0.387558 & 5.00\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Coverage là component reranking có hiệu ứng thực dụng lớn nhất ($\Delta$ best-5
+$+0.015659$), dù CI còn chứa 0. Completeness không đổi ranking trên cohort có tọa độ
+gần đầy đủ; distinct-PDB tăng đa dạng nguồn nhưng không tăng TM. Với gap-fill, heuristic
+cong không khác tuyến tính ở gap 1--8 nucleotide, nhưng giảm SW-RMSD9 trung bình
+0.036778~\angstrom{} ở gap 9--20, CI $[0.009289,0.067605]$. Với gap $>20$, phần lớn
+là terminal nên hai cách dùng cùng extrapolation và cho kết quả bằng nhau.
+
+\subsection{Đánh giá bên ngoài trên Kaggle}
+
+Hai chương trình Kaggle được đóng băng trước khi xem điểm của tập riêng đạt:
+
+\begin{table}[H]
+\centering
+\caption{Đánh giá bên ngoài của TBM và pipeline lai cuối}
+\begin{tabular}{lrr}
+\toprule
+Phương pháp & Công khai & Riêng tư\\
+\midrule
+TBM & 0.60084 & 0.60175\\
+3 TBM + 2 DRfold2 + Geometry v2 & \textbf{0.62809} & \textbf{0.61390}\\
+Chênh lệch tuyệt đối & +0.02725 & +0.01215\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Phiên bản TBM gồm MMseqs2 và tìm kiếm mở rộng, lọc theo thời gian và PDB của chính
+đối tượng, căn chỉnh lại, chuyển tọa độ, lấp khoảng trống, tinh chỉnh hình học 300 bước
+và kiểm tra tệp CSV. Phiên bản này không chứa DRfold2 hay Boltz. Sổ tay tính
+toán TBM dùng làm tham chiếu trên bảng xếp hạng có điểm được báo cáo là 0.59298, thấp
+hơn 0.00877 so với điểm trên tập riêng tư 0.60175 của phương pháp trong luận văn. Do tập ẩn không cung
+cấp điểm theo từng RNA, kết quả Kaggle là bằng chứng đánh giá bên ngoài cho toàn nhánh
+TBM, không phải bằng chứng nhân quả riêng cho từng thành phần.
+
+Phiên bản lai \texttt{rna3d-thesis-hybrid-geometry-v2}, phiên bản 10, giữ ba cấu trúc
+TBM xếp hạng cao nhất và thay hai vị trí còn lại bằng hai cấu trúc DRfold2 có độ tin cậy
+mô hình cao nhất khi chiều dài không quá 600 nucleotide; nếu DRfold2 không khả thi thì
+vị trí đó quay về TBM. Geometry v2 sau đó tinh chỉnh cả năm cấu trúc trong 300 bước.
+Trong lần chạy kiểm tra công khai, DRfold2 sinh đủ hai cấu trúc cho 11/12 RNA; RNA dài
+720 nucleotide dùng năm cấu trúc TBM, và Geometry v2 hoàn tất cho 60/60 cấu trúc. Tệp
+kết quả khớp đúng 2.515 ID mẫu, không trùng ID, không có tọa độ thiếu và không sử dụng
+cấu trúc thực nghiệm. Đây là phép loại bỏ thành phần ở mức quy trình: mức tăng 0.01215
+trên tập riêng chứng minh cấu hình lai có ích trên tập ẩn, nhưng không tách riêng phần
+đóng góp của DRfold2 và Geometry v2.
+
+\section{RQ2: Giá trị bổ sung của mô hình học sâu}
+
+Sau khi tăng khả năng tìm khuôn mẫu, câu hỏi tiếp theo là liệu mô hình học sâu chỉ lặp
+lại các nếp gấp đã có hay tạo thêm các giả thuyết hữu ích. Để tách chất lượng sinh cấu
+trúc khỏi chất lượng lựa chọn, thí nghiệm báo cáo cả điểm lý tưởng và điểm được lựa chọn
+không sử dụng cấu trúc thực nghiệm.
+
+Bằng chứng chính đến từ 20 RNA mới nhất. Candidate tốt nhất trong ba TBM đạt TM
+0.565183; candidate tốt nhất trong hai DRfold2 đạt 0.502627. DRfold2 vì vậy không mạnh
+hơn TBM theo trung bình, nhưng thắng TBM trên 8/20 RNA. Khi đặt cả năm cấu trúc vào tập,
+best-of-five/union oracle tăng lên 0.588304, chênh $+0.023121$ so với TBM với CI
+$[+0.006444,+0.047519]$. Tám RNA cải thiện và 12 RNA giữ nguyên vì scorer vẫn có thể
+chọn candidate TBM cũ.
+
+\begin{table}[H]
+\centering
+\caption{Allocation TBM--DRfold2 với Geometry tắt trên 20 RNA mới nhất}
+\begin{tabular}{lrrr}
+\toprule
+Allocation & Số candidate & Mean best TM & Chênh so với TBM cùng $N$\\
+\midrule
+1T+0D & 1 & 0.533635 & --\\
+0T+1D & 1 & 0.488402 & $-0.045233$\\
+2T+0D & 2 & 0.549041 & --\\
+1T+1D & 2 & \textbf{0.579587} & $+0.030546$\\
+3T+0D & 3 & 0.565183 & --\\
+2T+1D & 3 & \textbf{0.581195} & $+0.016012$\\
+1T+2D & 3 & 0.582752 & $+0.017569$\\
+3T+2D & 5 & \textbf{0.588304} & $+0.023121$ so với 3T\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Fixed-$N=3$ thay một TBM bằng một DRfold2 tăng trung bình 0.016012 nhưng CI
+$[-0.002072,+0.041466]$ chứa 0: hiệu ứng có lợi tập trung ở 7 RNA, 10 hòa và 3 giảm.
+Ở $N=2$, 1T+1D tăng 0.030546 với CI $[+0.002949,+0.068185]$. Hai DRfold2 đơn lẻ lại
+thấp hơn hai TBM 0.046414. Mẫu này hỗ trợ claim ``complementarity'': giữ đại diện của
+cả hai nguồn tốt hơn thay toàn bộ TBM bằng deep learning.
+
+\subsection{Bằng chứng phát triển CASP15}
+
+\begin{table}[H]
+\centering
+\caption{Khả năng bao phủ nếp gấp của TBM và mô hình học sâu}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X*{5}{>{\centering\arraybackslash}p{0.105\textwidth}}}
+\toprule
+Phân tích & Số RNA & TBM lựa chọn & Hợp lựa chọn & TBM lý tưởng & Hợp lý tưởng\\
+\midrule
+Đủ 12 RNA & 12 & 0.3113 & 0.4713 & 0.3143 & \textbf{0.5123}\\
+Loại R1128 trùng trình tự & 11 & 0.3155 & 0.4245 & 0.3188 & \textbf{0.4693}\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Mức tăng của điểm lý tưởng lần lượt là +0.1981 và +0.1505. Khi loại R1128 có trùng lặp trình tự,
+mô hình học sâu vẫn làm tăng điểm này ở 10 trong 11 RNA và giữ nguyên một RNA. Do đó lợi
+ích không chỉ đến từ trường hợp trùng dữ liệu. Tuy nhiên, nguồn học sâu không luôn vượt
+TBM: ở R1117v2, điểm lý tưởng của TBM đạt 0.4616 còn mô hình học sâu chỉ đạt 0.2799. Hệ thống lai
+vì thế cần bảo tồn cấu trúc tốt từ cả hai nguồn, thay vì luôn ưu tiên một nguồn.
+
+Điểm lựa chọn của pilot đạt 0.4713, thấp hơn oracle 0.5123 khoảng 0.0411. Kết quả này
+giải thích vì sao GeoFuse từng được khảo sát, nhưng không còn là phát hiện trung tâm của
+luận văn sau khi phép hợp nhất không khái quát. Pipeline cuối giữ allocation cố định.
+
+Độ tin cậy thô không giải quyết được nút thắt này. Trên 55 cấu trúc DRfold2, tương quan
+Spearman gộp giữa độ tin cậy và TM là 0.486, nhưng tương quan trung bình khi xếp hạng
+trong từng RNA chỉ là $-0.036$. Quan hệ gộp chủ yếu phân biệt những RNA dễ và khó, chứ
+không ổn định để chọn giữa các cấu trúc của cùng một RNA hoặc giữa TBM với DRfold2.
+
+\subsection{Boltz trên RNA dài}
+
+R1138 dài 720 nucleotide:
+
+\begin{equation}
+\mathrm{TM}_{TBM}=0.2243,\quad
+\mathrm{TM}_{Boltz}=0.2751,\quad
+\Delta=+0.0508.
+\end{equation}
+
+Kết quả này cho thấy Boltz có thể cung cấp một phương án bổ sung khi DRfold2 không chạy
+được vì giới hạn bộ nhớ. Một trường hợp đơn lẻ không đủ để kết luận Boltz luôn tốt hơn
+DRfold2 hoặc TBM.
+
+\iffalse
+\section{RQ3: Tinh chỉnh độ chính xác hình học cục bộ}
+
+Giả thuyết của Geometry v2 không phải tạo một nếp gấp mới mà là sửa sai lệch cục bộ
+trong khi giữ cấu trúc nguồn. Vì các đại lượng như va chạm hoặc NLL đồng thời là thành
+phần của hàm mục tiêu, chúng không được dùng làm bằng chứng chính. Thay vào đó, cùng 60
+cấu trúc của 12 RNA được so sánh trước và sau tinh chỉnh bằng TM-score,
+\cprime{}-lDDT và RMSD cục bộ so với cấu trúc thực nghiệm.
+
+\begin{table}[H]
+\centering
+\caption{Đánh giá Geometry v2 bằng các chỉ số độc lập}
+\begin{tabular}{lrrr}
+\toprule
+Chỉ số & Trước tinh chỉnh & Geometry v2 & Mức thay đổi theo chiều tốt\\
+\midrule
+TM tốt nhất trong năm & 0.471268 & 0.471308 & +0.000040\\
+\cprime{} RMSD (\angstrom) & 28.2718 & 28.2650 & +0.006893\\
+\cprime{}-lDDT & 0.472117 & \textbf{0.481823} & \textbf{+0.009706}\\
+RMSD cửa sổ 9 (\angstrom) & 4.00131 & \textbf{3.94415} & \textbf{+0.057166}\\
+RMSD cửa sổ 15 (\angstrom) & 6.54814 & 6.52453 & +0.023608\\
+RMSD cửa sổ 31 (\angstrom) & 11.8667 & 11.8716 & $-0.004926$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\cprime{}-lDDT tăng trên cả 12 RNA và 56 trong 60 cấu trúc; khoảng tin cậy 95\% của
+chênh lệch là $[+0.007403,+0.012617]$. RMSD cửa sổ 9 cũng cải thiện trên cả 12 RNA,
+với khoảng tin cậy $[+0.035077,+0.091680]$~\angstrom{} theo chiều giảm lỗi. Ngược lại,
+chênh lệch TM có khoảng tin cậy $[-0.003888,+0.003962]$ và RMSD cửa sổ 31 gần như
+không đổi. Mẫu kết quả này phù hợp với mục tiêu thiết kế: Geometry v2 điều chỉnh mạng
+khoảng cách ở quy mô ngắn nhưng không tạo ra thay đổi đáng kể ở bố cục toàn cục. Do đó
+đóng góp của phương pháp nằm ở tinh chỉnh cục bộ, không phải cải thiện nếp gấp tổng thể.
+
+\fi
+
+\section{RQ3: Hiệu quả, cơ chế và khả năng khái quát của Geometry v2}
+
+\subsection{Khóa cấu hình trên 20 RNA hiệu chỉnh}
+
+Priors được ước lượng lại chỉ từ 60 RNA train. Trên 20 RNA calibration, hai cấu hình
+full fixed/adaptive đều qua gate: TM không giảm quá 0.005, lDDT tăng và ít nhất hai
+trong ba sliding-window RMSD giảm. Source restraint 1.5 tạo mức tăng lDDT lớn nhất trong
+các cấu hình full khai báo trước nên được đóng băng trước khi mở validation.
+
+\begin{table}[H]
+\centering
+\caption{Các ablation tiêu biểu trên 20 RNA hiệu chỉnh}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Variant & Best-5 TM & lDDT & SW9 & Kink & Angle NLL & Torsion NLL\\
+\midrule
+Raw & 0.407436 & 0.500573 & 4.175314 & 0.043392 & 0.867374 & 0.790828\\
+Source+backbone & 0.406346 & 0.510639 & 4.170749 & 0.063631 & 0.910474 & 0.823790\\
+Full fixed & 0.404957 & 0.506502 & 4.148670 & 0.039937 & 0.630507 & 0.704167\\
+Full adaptive & 0.404908 & 0.508102 & 4.151196 & 0.040512 & 0.635805 & 0.702107\\
+Full, source=1.5 & 0.404674 & \textbf{0.511698} & \textbf{4.144572} & \textbf{0.038782} & \textbf{0.591498} & \textbf{0.677023}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Đối chứng source+backbone thậm chí tăng lDDT mạnh, nhưng làm sharp-kink, angle NLL và
+torsion NLL xấu hơn. Leave-one-out giải thích các thành phần: bỏ backbone đưa lDDT về
+0.500739, gần raw; bỏ angle làm angle NLL tăng từ 0.638915 lên 0.837255; bỏ torsion làm
+torsion NLL tăng từ 0.706165 lên 0.829415; bỏ kink guard tăng kink từ 0.040512 lên
+0.045454; bỏ clash/Rg tăng clash proxy. Không component nào một mình chứng minh native
+accuracy; vai trò của chúng là kiểm soát kiểu lỗi tương ứng.
+
+Convergence cho thấy lDDT calibration tăng lần lượt 0.506190, 0.506357, 0.506953,
+0.507858 và 0.508102 ở 25, 50, 100, 200 và 300 bước. Mức cải thiện dần bão hòa, không
+có dấu hiệu cần tối ưu vô hạn. Learning rate 0.02--0.08 và source restraint 1.5--6.0
+đều giữ TM trong gate; phương pháp không phụ thuộc đúng một hằng số duy nhất.
+
+\subsection{Kết quả confirmatory trên 20 RNA mới nhất}
+
+\begin{table}[H]
+\centering
+\caption{Raw, đối chứng đơn giản và Geometry v2 trên tập xác nhận mới nhất}
+\small
+\begin{tabular}{lrrr}
+\toprule
+Chỉ số & Raw & Source+backbone & Full Geometry v2\\
+\midrule
+Best-of-5 TM & 0.588304 & 0.587767 & 0.587197\\
+\cprime{} RMSD (\angstrom) & 10.903641 & 10.902999 & 10.903764\\
+\cprime{}-lDDT & 0.659836 & \textbf{0.667417} & 0.666496\\
+SW-RMSD9 (\angstrom) & 2.651395 & 2.641594 & \textbf{2.611010}\\
+SW-RMSD15 (\angstrom) & 4.273393 & 4.264781 & \textbf{4.256136}\\
+SW-RMSD31 (\angstrom) & 7.562650 & 7.558546 & \textbf{7.557402}\\
+Sharp-kink fraction & 0.048977 & 0.068558 & \textbf{0.044498}\\
+Angle NLL & 0.820552 & 0.869599 & \textbf{0.618824}\\
+Torsion NLL & 0.837811 & 0.871896 & \textbf{0.734876}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Full Geometry v2 tăng lDDT $+0.006660$, CI 95\%
+$[+0.000933,+0.013093]$, cải thiện 12 và làm giảm 8 RNA. SW-RMSD9 giảm 0.040386,
+CI $[0.029354,0.052090]$, cải thiện 19/20 RNA; SW-RMSD15 giảm 0.017257,
+CI $[0.000617,0.031336]$, cải thiện 15/20. SW-RMSD31 giảm 0.005248 nhưng CI chứa 0.
+TM giảm 0.001107, CI $[-0.002809,+0.000418]$: không có bằng chứng TM thay đổi và mức
+giảm nằm trong biên bảo toàn 0.005. Gate confirmatory vì vậy đạt.
+
+Đối chứng đơn giản tăng lDDT $+0.007581$, lớn hơn full 0.000921 nhưng chênh trực tiếp có
+CI $[-0.003118,+0.001327]$; full không thắng đối chứng về lDDT. Full thắng rõ ở SW9
+($+0.030585$ theo chiều giảm lỗi, CI $[0.019640,0.044115]$) và sửa các diagnostic mà
+đối chứng làm xấu. Claim đúng là full Geometry tạo projection cân bằng hơn ở nhiều
+khía cạnh; không phải mọi metric native đều vượt baseline đơn giản.
+
+\subsection{Factorial nguồn ứng viên và Geometry}
+
+Factorial fixed-$N=3$ cho kết quả: TBM 3T+0D đạt 0.565183 khi Geometry off và 0.559331
+khi on; hybrid 2T+1D đạt 0.581195 off và 0.578592 on. Hiệu ứng Geometry là
+$-0.005852$ trên TBM (CI chứa 0) và $-0.002604$ trên hybrid (CI
+$[-0.005473,-0.000278]$). Interaction $+0.003248$ có CI chứa 0. Như vậy mức tăng của
+pipeline Kaggle không được quy cho Geometry: nguồn candidate đa dạng tăng fold coverage,
+còn Geometry chủ yếu sửa cục bộ và có thể đổi candidate thắng best-of-$N$ theo chiều xấu.
+
+\subsection{Khi nào tinh chỉnh có lợi?}
+
+Theo chất lượng raw, nhóm thấp tăng lDDT $+0.016261$, CI
+$[+0.008900,+0.024089]$; nhóm cao thay đổi $-0.001788$, CI chứa 0. Nhóm TBM tăng
+$+0.007610$ với CI dương; DRfold2 tăng $+0.005235$ nhưng CI chứa 0. Hiệu ứng rõ hơn ở
+candidate support thấp và confidence trung bình; RNA ngắn/dài có interval rộng do chỉ
+có 4/5 target. Phát hiện này gợi ý Geometry nên được gate theo chất lượng ban đầu trong
+tương lai, nhưng luận văn không học gate mới sau khi đã mở validation.
+
+\iffalse
+\section{RQ4: Từ lựa chọn nguồn đến hợp nhất tọa độ}
+
+RQ4 gồm hai kiểm định tách biệt. Kiểm định thứ nhất hỏi mô hình có nhận ra nguồn tốt hơn
+theo nucleotide hay không. Kiểm định thứ hai hỏi liệu dự đoán đó có thể tạo một cấu trúc
+hợp nhất tốt hơn hay không. Việc tách hai bước tránh suy luận rằng độ chính xác phân loại
+tự động đồng nghĩa với độ chính xác cấu trúc.
+
+\subsection{Lựa chọn đại lượng giám sát}
+
+Trên 100 RNA, 352 cặp nguồn và 24,876 nucleotide hợp lệ, quyết định theo sai lệch điểm
+sau căn chỉnh đồng thuận với \cprime{}-lDDT ở 69.7\% vị trí; tương quan Spearman sau
+khi loại ảnh hưởng giữa các RNA là 0.319. Mức đồng thuận giữa sai lệch điểm và RMSD cửa
+sổ 15 là 72.7\%, còn giữa lDDT và RMSD cửa sổ là 70.9\%. Các đại lượng chia sẻ một phần
+tín hiệu nhưng không tương đương. Vì \cprime{}-lDDT đo quan hệ khoảng cách cục bộ mà
+không phụ thuộc một phép chồng khít toàn cấu trúc, nó được chọn làm đại lượng giám sát
+chính.
+
+\subsection{Khả năng lựa chọn nguồn trên RNA mới}
+
+\begin{table}[H]
+\centering
+\caption{Ước lượng nguồn tốt hơn trên 20 RNA mới nhất}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{0.23\textwidth}>{\centering\arraybackslash}p{0.14\textwidth}>{\centering\arraybackslash}p{0.12\textwidth}}
+\toprule
+Phương pháp & Lỗi $1-$lDDT trung bình theo RNA & Độ chính xác & ROC-AUC\\
+\midrule
+Lựa chọn lý tưởng theo nucleotide & 0.193424 & 0.923691 & 0.934561\\
+Conv1D & \textbf{0.238994} & 0.650573 & 0.729868\\
+Hồi quy logistic & 0.247937 & 0.628682 & 0.687387\\
+Tăng cường gradient & 0.250951 & 0.643208 & 0.731747\\
+Luôn chọn DRfold2 & 0.269575 & 0.583061 & 0.500000\\
+Luật khoảng trống & 0.322453 & 0.458265 & 0.534949\\
+Luật độ tin cậy & 0.326173 & 0.452332 & 0.530001\\
+Luôn chọn TBM & 0.347735 & 0.416939 & 0.500000\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Tập hiệu chỉnh chọn Conv1D với ngưỡng 0.75. So với luật dựa trên khoảng trống được chọn
+trên cùng tập hiệu chỉnh, lỗi trung bình giảm 0.083458; khoảng tin cậy 95\% kéo dài từ
++0.023419 đến +0.155562, với 14 trong 20 RNA cải thiện. Như vậy mô hình học được một
+tín hiệu có khả năng khái quát để so sánh chất lượng cục bộ của hai nguồn. Tuy nhiên,
+AUC 0.729868 và độ chính xác 0.650573 cũng cho thấy dự đoán còn xa mức hoàn hảo, nên cần
+một cơ chế kiểm soát rủi ro trước khi sửa tọa độ.
+
+\subsection{Kết quả hợp nhất có chọn lọc}
+
+Ba ngưỡng self-TM 0.35, 0.45 và 0.55 cho cùng kết quả tổng hợp trên tập hiệu chỉnh;
+0.35 được chọn theo thứ tự định trước. Cụm chứa cả TBM và DRfold2 xuất hiện ở 3/20 RNA
+hiệu chỉnh và 12/20 RNA xác nhận. Do đó thiếu cặp cùng nếp gấp không phải nguyên nhân
+duy nhất khiến hợp nhất khó xảy ra.
+
+\begin{table}[H]
+\centering
+\caption{Kết quả hợp nhất có chọn lọc trên 20 RNA mới nhất}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X*{4}{>{\centering\arraybackslash}p{0.14\textwidth}}}
+\toprule
+Biến thể & TM được chọn & lDDT được chọn & TM lý tưởng & lDDT lý tưởng\\
+\midrule
+F0 cấu trúc gốc & 0.588304 & 0.795059 & 0.588304 & 0.795059\\
+F1 quy tắc kinh nghiệm & 0.589984 & 0.793841 & 0.592826 & 0.795828\\
+F2 lựa chọn theo chất lượng & 0.588304 & 0.795059 & 0.588304 & 0.795059\\
+F3 F2 + Geometry v2 & 0.588304 & 0.795059 & 0.588304 & 0.795059\\
+F4 dẫn hướng bằng cấu trúc thực nghiệm & 0.589158 & 0.795648 & 0.589160 & 0.795648\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+F2 và F3 từ chối mọi cặp vì không có đoạn nào đồng thời vượt xác suất 0.90, nằm trong
+giới hạn bất đồng và kéo dài ít nhất 7 nucleotide. Vì vậy cả 20 RNA giữ nguyên kết quả
+của F0. Cơ chế bảo thủ đã tránh suy giảm, nhưng không cung cấp bằng chứng rằng phép hợp
+nhất cải thiện cấu trúc.
+
+F1 tạo 24 cấu trúc trên 12 RNA và tăng TM lựa chọn trung bình 0.001681, nhưng khoảng
+tin cậy $[-0.004908,+0.008495]$ chứa 0, trong khi lDDT lựa chọn giảm 0.001218. Kết quả
+nhỏ và không ổn định này không đủ để thay thế phương pháp bảo thủ bằng quy tắc kinh
+nghiệm. Dữ liệu dẫn tới kết luận:
+
+Kết quả này làm rõ phát hiện trung tâm của RQ4: mô hình có thể nhận ra nguồn tốt hơn
+theo \cprime{}-lDDT cục bộ, nhưng khả năng đó chưa chuyển thành một phép hợp nhất tọa
+độ hữu ích. Biết nguồn nào tốt hơn không đồng nghĩa biết cắt, căn chỉnh và ghép hai cấu
+trúc sao cho toàn cấu trúc tốt hơn.
+
+\subsection{Minh họa trên R1108}
+
+Cấu trúc TBM tốt nhất của R1108 là 1DRZ\_B, TM 0.49384; DRfold2 P1 đạt 0.60192, tăng
+0.10808 khi đặt hai nguồn vào cùng tập. Geometry v2 đưa P1 từ TM 0.60192 lên 0.60227
+và lDDT từ 0.788065 lên 0.788827. Trường hợp này minh họa đúng vai trò khác nhau của
+hai thành phần: DRfold2 cung cấp một nếp gấp tốt hơn khuôn mẫu, còn Geometry v2 chỉ điều
+chỉnh cục bộ trên nếp gấp đó.
+
+\subsection{Minh họa trên 8K0Y\_A}
+
+RNA dài 56 nucleotide có ba cấu trúc TBM và hai cấu trúc DRfold2. Cặp 8V1I\_B--P1 có
+RMSD sau căn chỉnh 1.099~\angstrom, độ bất đồng trung bình 2.855~\angstrom{} và xác suất
+trung bình chọn DRfold2 là 0.7218. Không có đoạn dài 7 nucleotide vượt 0.90, nên F2
+không hợp nhất. TM/lDDT của tập gốc là 0.65667/0.871251 và được giữ nguyên. Đây là ví
+dụ về sự đánh đổi: quy tắc an toàn bảo vệ dự đoán tốt, nhưng đồng thời không tạo giá trị
+mới khi tín hiệu chưa đủ mạnh.
+
+\fi
+
+\section{Mạch phát hiện qua ba câu hỏi nghiên cứu}
+
+Ba câu hỏi tạo thành một chuỗi rõ: composite giúp TBM không rơi vào trạng thái không có
+khuôn; DRfold2 bổ sung một số nếp gấp TBM bỏ lỡ; Geometry v2 sửa quan hệ cục bộ trên
+candidate đã có. Candidate diversity cải thiện best-of-five TM, còn Geometry không tạo
+nếp gấp mới và không tăng TM. Giá trị khoa học nằm ở việc tách đúng hai hiệu ứng này và
+kiểm chứng local refinement trên một split thời gian/họ độc lập.
+
+% -----------------------------------------------------------------------------
+% CHAPTER 7
+% -----------------------------------------------------------------------------
+\chapter{Thảo luận}
+
+\section{Từ retrieval coverage đến candidate complementarity}
+
+RQ1 cho thấy hai tầng search có vai trò khác nhau. MMseqs2 tạo candidate chất lượng cao
+khi có hit nhưng chỉ phủ 40\% cohort hiệu chỉnh; composite hạ precision trung bình để
+đạt availability 100\%. Reranking identity$\times$coverage chuyển một phần recall đó
+thành top-$k$ precision. Distinct-PDB không tăng TM trên cohort này nhưng làm năm giả
+thuyết ít phụ thuộc một PDB hơn. Đây là kết luận component-specific, mạnh hơn việc chỉ
+nói ``full TBM tăng điểm''.
+
+RQ2 cho thấy DRfold2 không thay thế TBM: oracle riêng của DRfold2 thấp hơn, nhưng thắng
+ở 8/20 RNA. Giữ đại diện cả hai nguồn làm union tăng 0.023121. Fixed-size allocation
+xác nhận hướng hiệu ứng dương nhưng CI còn rộng; do đó claim là complementarity có điều
+kiện theo target, không phải deep learning luôn ưu việt.
+
+\section{Vì sao Geometry v2 cải thiện cục bộ nhưng không tăng TM-score}
+
+Hàm mục tiêu của Geometry v2 được thiết kế để giữ gần cấu trúc nguồn. Trên tập
+confirmatory, lDDT và RMSD cửa sổ 9/15 cải thiện với CI không chứa 0, trong khi TM giảm
+0.001107 và CI chứa 0. Projection dịch mỗi nucleotide trung bình khoảng
+0.305~\angstrom{} nhưng không tạo tiếp xúc xa hay nếp gấp mới.
+
+TM-score ưu tiên nếp gấp tổng thể và giảm ảnh hưởng của một số sai số cục bộ. Geometry
+v2 không tạo tiếp xúc xa mới, không đổi cách các miền sắp xếp và không tìm một kiểu nếp gấp
+khác; do đó không có cơ chế mạnh để tăng TM-score nếu cấu trúc nguồn sai toàn cục. Giá
+trị của phương pháp nằm ở việc sửa vừa phải quan hệ \cprime{} cục bộ mà không làm mất
+giả thuyết nếp gấp đã có. Đối chứng source--backbone cho thấy một phần lDDT gain đến từ
+smoothing đơn giản; full Geometry được biện minh bởi SW9 tốt hơn và việc không làm xấu
+kink/angle/torsion. Stratification cho thấy gain tập trung ở candidate yếu, còn nhóm
+chất lượng cao không cải thiện. Vì biểu diễn chỉ gồm \cprime{}, kết quả không cho phép
+suy rộng sang bắt cặp base hay hóa học lập thể toàn nguyên tử.
+
+\iffalse
+\section{Vì sao lựa chọn nguồn chưa chuyển thành hợp nhất tọa độ}
+
+Kết quả Conv1D cho thấy các đặc trưng độ tin cậy, hỗ trợ khuôn mẫu, bất đồng và hình học
+có chứa thông tin về nguồn tốt hơn theo nucleotide. Tuy nhiên, nhãn phân loại chỉ trả
+lời một câu hỏi so sánh: tại vị trí này, nguồn nào có quan hệ cục bộ gần cấu trúc thực
+nghiệm hơn? Nó không trực tiếp cho biết vector dịch chuyển nào nên áp dụng, biên đoạn
+nên đặt ở đâu hoặc cách bảo toàn tương quan giữa các miền.
+
+Phép hợp nhất tuyến tính còn phụ thuộc vào chồng khít hai cấu trúc. Khi hai miền có
+chuyển động tương đối, một phép Kabsch toàn cục có thể căn miền này tốt nhưng để miền
+khác lệch. Một đoạn có lDDT tốt hơn trong DRfold2 cũng không nhất thiết khớp tọa độ và
+hướng tiếp tuyến với hai đầu của đoạn TBM. Lấy trung bình có thể tạo một cấu trúc nằm
+giữa hai giả thuyết chứ không gần cấu trúc đúng. Vì vậy, lựa chọn chất lượng và kiến tạo
+tọa độ là hai bài toán khác nhau.
+
+Ngưỡng bảo thủ của F2 đã thể hiện đúng vai trò kiểm soát rủi ro nhưng quá nghiêm để tạo
+dữ liệu về hiệu quả: không quyết định nào được thực hiện. Nới ngưỡng sau khi nhìn tập
+xác nhận có thể tạo một mức tăng nhỏ, nhưng sẽ làm mất tính độc lập của đánh giá. Luận
+văn vì thế giữ nguyên kết quả âm và xem nó như chỉ dẫn cho một phương pháp hợp nhất học
+phần dư tọa độ hoặc dùng hệ tọa độ cục bộ trong nghiên cứu tiếp theo.
+
+\fi
+\section{Quan hệ giữa phần kế thừa và đóng góp của luận văn}
+
+\begin{table}[H]
+\centering
+\caption{Nguồn gốc và vai trò của các thành phần}
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}p{0.27\textwidth}X}
+\toprule
+Thành phần & Nguồn ý tưởng & Phần được thực hiện hoặc nghiên cứu thêm\\
+\midrule
+Tìm kiếm tương đồng mở rộng & Sổ tay tính toán TBM tham chiếu & Kết hợp MMseqs2, lọc thời gian/PDB, xếp hạng lại và đánh giá có đối chứng.\\
+Chuyển tọa độ và lấp khoảng trống & TBM truyền thống và mã cuộc thi & Mặt nạ hỗ trợ, độ tin cậy theo nucleotide và biểu diễn nguồn gốc thống nhất.\\
+DRfold2/Boltz & Mô hình công bố & Kiểm tra mốc dữ liệu/trùng lặp, chuẩn hóa ứng viên và allocation fixed-$N$.\\
+Geometry v2 & Đóng góp phương pháp & Phân bố tiên nghiệm theo ngữ cảnh, cường độ thích nghi, ràng buộc nguồn, bảo vệ góc gập và đánh giá cục bộ độc lập.\\
+Quy trình đánh giá & Các bộ đánh giá chuẩn về cấu trúc & Chia theo thời gian/họ, nhiều chỉ số bổ sung và lấy mẫu lại theo RNA.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Quan hệ với kết quả cuộc thi}
+
+Sổ tay tính toán TBM tham chiếu có điểm được báo cáo là 0.59298. Phiên bản lai V4 có điểm
+0.57631 và kết hợp Boltz, DRfold2 với ràng buộc cùng phương án quay về khuôn mẫu, nhưng
+không thực hiện lựa chọn nguồn cục bộ theo độ tin cậy. Mã nguồn này cũng có một số vấn đề
+về chỉ số hàng, lựa chọn đối tượng và tọa độ giữ chỗ; vì vậy điểm thấp hơn không phải
+bằng chứng rằng mô hình học sâu về bản chất kém hơn TBM
+\cite{top1_tbm,top1_hybrid}.
+
+Phương pháp TBM của luận văn đạt 0.60175 trên tập riêng tư. Pipeline lai cuối
+đạt 0.61390, cao hơn 0.01215, nên khả năng triển khai và lợi ích của toàn cấu hình lai đã
+được xác nhận bằng một lần nộp bên ngoài. Tuy nhiên, kết quả này đồng thời thay đổi thành
+phần ứng viên và áp dụng Geometry v2; vì vậy không được dùng để quy toàn bộ mức tăng cho
+một thành phần riêng. Factorial công khai cho thấy source diversity làm tăng fold
+coverage còn Geometry không tăng TM; bằng chứng cho Geometry đến từ chỉ số cục bộ trên
+tập xác nhận, không phải từ việc dò ngược bảng xếp hạng.
+
+\section{Các nguy cơ đối với tính hợp lệ}
+
+\subsection{Tính hợp lệ nội tại}
+
+Nguy cơ gồm rò rỉ qua ngày công bố, khuôn mẫu của chính đối tượng, trình tự trùng hoàn
+toàn, mốc huấn luyện của mô hình học sâu và việc thay đối tượng sau lỗi kỹ thuật. Các
+kiểm tra đã giảm rủi ro nhưng không thể chứng minh tuyệt đối rằng bộ trọng số chưa học
+một quan hệ họ hàng xa. Một số dữ liệu lớn nằm ngoài Git nên cần tệp kê khai và mã kiểm tra
+đầy đủ trước khi công bố.
+
+\subsection{Khả năng khái quát}
+
+Geometry v2 được xác nhận trên 20 RNA dài tối đa 96 nucleotide, sau calibration 20 RNA
+và prior-train 60 RNA. Kết quả chưa chắc áp dụng cho RNA rất dài, phức hợp nhiều chuỗi
+hoặc họ RNA ít được đại diện. Tập ẩn Kaggle khác CASP15 nên điểm giữa hai tập không thể
+so sánh trực tiếp.
+
+\subsection{Mức độ phù hợp của đại lượng đo}
+
+\cprime{}-lDDT là bản thích nghi, độ dài cửa sổ là lựa chọn phân tích, còn tỷ lệ góc gập
+sắc, va chạm \cprime{}, NLL góc phẳng/góc xoắn và chỉ dấu có dạng cặp là các đại lượng
+nội bộ. Chúng không đo trực tiếp độ đúng của cặp base nitơ, xếp chồng hoặc tính hợp lý vật lý toàn nguyên tử.
+
+\subsection{Tính hợp lệ của kết luận thống kê}
+
+Số RNA độc lập nhỏ hơn số nucleotide rất nhiều; candidate của cùng RNA cũng tương quan.
+Mỗi subgroup trước hết được trung bình trong target/group cell rồi mới bootstrap RNA.
+Những CI chứa 0 được trình bày là bằng chứng chưa đủ, không bị diễn giải thành cải thiện.
+
+\section{Hạn chế kỹ thuật}
+
+DRfold2 đòi hỏi GPU và khó chạy trên trình tự dài; Boltz chưa được tích hợp thống nhất
+vào đường xác nhận. Bản Kaggle lai vì vậy giới hạn DRfold2 ở 600 nucleotide và quay về
+TBM cho trình tự dài hơn. Bộ chọn năm cấu trúc vẫn dùng một luật cố định ba TBM cộng hai
+DRfold2 thay vì một ước lượng chất lượng toàn cấu trúc đã hiệu chỉnh.
+Một số nucleotide biến đổi hiếm được ánh xạ thành N, có thể làm giảm nhẹ mức đồng nhất
+trình tự dù tọa độ vẫn được chuyển.
+
+Trong phạm vi những giới hạn trên, kết luận của luận văn được giữ ở mức tương xứng với
+dữ liệu: TBM và pipeline lai cuối đều đã được đánh giá bên ngoài trên Kaggle; nguồn học
+sâu tăng fold coverage; Geometry v2 cải thiện đường \cprime{} cục bộ trên tập
+confirmatory nhưng không tăng TM-score.
+
+% -----------------------------------------------------------------------------
+% CHAPTER 8
+% -----------------------------------------------------------------------------
+\chapter{Kết luận và hướng phát triển}
+
+\section{Kết luận}
+
+Luận văn đã xây dựng một pipeline RNA 3D mức \cprime{} an toàn theo thời gian. MMseqs2
+tạo precision khi có homolog rõ, còn composite bảo đảm retrieval coverage; reranking
+coverage chuyển một phần recall thành chất lượng top-$k$. Nhánh TBM đạt private Kaggle
+0.60175. DRfold2 không mạnh hơn TBM trên mọi RNA nhưng thắng ở 8/20 RNA mới nhất; union
+3T+2D đạt oracle 0.588304 so với 0.565183 của 3T. Pipeline lai cuối đạt private Kaggle
+0.61390. Các kết quả fixed-$N$ cho phép quy lợi ích này cho candidate complementarity
+thận trọng hơn, thay vì gán toàn bộ cho deep learning hoặc Geometry.
+
+Đóng góp phương pháp Geometry v2 được kiểm tra bằng protocol 60/20/20. Trên 20 RNA
+confirmatory, lDDT tăng 0.006660 và SW-RMSD9 giảm 0.040386~\angstrom{} với CI dương;
+TM giảm 0.001107, CI chứa 0 và nằm trong biên bảo toàn. Đối chứng source--backbone cho
+lDDT tương đương, nhưng full Geometry tốt hơn rõ ở SW9 và tránh làm xấu kink/angle/
+torsion. Hiệu ứng tập trung ở candidate ban đầu yếu. Factorial không cho thấy Geometry
+tăng TM, nên claim cuối là local refinement có kiểm chứng, không phải fold predictor.
+
+Câu chuyện luận văn vì vậy gọn thành ba contribution: TBM time-safe có component
+analysis; bằng chứng TBM--DRfold2 complementarity; và Geometry v2 với ablation,
+baseline và held-out validation. GeoFuse bị loại khỏi core vì chưa móc được quality
+signal thành một cải thiện tọa độ khái quát.
+
+\section{Hướng phát triển ưu tiên}
+
+\begin{enumerate}
+  \item \textbf{Gate Geometry theo chất lượng ban đầu:} kiểm tra trên một cohort mới
+  quy tắc chỉ refine candidate quality thấp; không học gate từ 20 RNA đã mở.
+  \item \textbf{Mở rộng allocation bank:} sinh thật ít nhất năm TBM và năm DRfold2 mỗi
+  RNA để chạy fixed-five 5T--0D tới 0T--5D, thay vì đệm bản sao.
+  \item \textbf{Mở rộng số họ và chiều dài:} xác nhận trên RNA dài, phức hợp nhiều chuỗi
+  và các họ ít đại diện; đánh giá riêng fallback Boltz.
+  \item \textbf{Đánh giá toàn nguyên tử:} dựng cấu trúc đầy đủ để đo cặp base nitơ, xếp chồng,
+  va chạm lập thể và độ trung thành của mạng tương tác khi tài nguyên cho phép.
+  \item \textbf{Cải thiện lựa chọn cấu trúc:} học điểm chất lượng toàn cấu trúc có hiệu
+  chỉnh riêng theo nguồn và mục tiêu đa dạng tường minh để giảm khoảng cách tới trần lý tưởng.
+  \item \textbf{Đối chứng refinement ngoài hệ:} nếu dựng được full-atom, so sánh với
+  QRNAS hoặc force-field refinement theo cùng source restraint và native-blind protocol.
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+% APPENDICES
+% -----------------------------------------------------------------------------
+\appendix
+
+\chapter{Thí nghiệm khám phá GeoFuse (không thuộc pipeline cuối)}
+
+\section{Giả thuyết}
+
+GeoFuse thử trả lời câu hỏi: nếu một đoạn TBM tốt còn đoạn khác DRfold2 tốt, liệu có thể
+dùng đặc trưng native-blind để chọn nguồn theo nucleotide rồi ghép hai cấu trúc hay
+không? Hai cấu trúc trước hết được phân cụm self-TM để tránh ghép khác nếp gấp, chồng
+khít Kabsch, sau đó Conv1D dự đoán xác suất DRfold2 tốt hơn theo \cprime{}-lDDT cục bộ.
+Chỉ đoạn dài ít nhất bảy nucleotide, xác suất ít nhất 0.90 và bất đồng 0.5--12~\angstrom{}
+mới được ghép; nếu không, phương pháp từ chối.
+
+\section{Kết quả khám phá}
+
+Trên 20 RNA validation, Conv1D đạt ROC-AUC 0.729868 và lỗi $1-$lDDT 0.238994, tốt hơn
+luật confidence/gap cố định. Tuy nhiên, điều đó chỉ chứng minh đặc trưng có tín hiệu so
+sánh nguồn, chưa chứng minh vector tọa độ hợp nhất đúng. Với ngưỡng khóa trên
+calibration, GeoFuse từ chối toàn bộ quyết định; TM/lDDT giữ nguyên 0.588304/0.795059.
+Một luật kinh nghiệm nới hơn tạo 24 cấu trúc, tăng TM trung bình 0.001681 nhưng CI
+$[-0.004908,+0.008495]$ chứa 0 và lDDT giảm 0.001218.
+
+\section{Quyết định phạm vi}
+
+GeoFuse không đạt tiêu chí ``tạo cấu trúc tốt hơn trên RNA mới'' và không tham gia
+submission Kaggle 0.61390. Vì vậy luận văn không coi Conv1D, clustering hay fusion là
+contribution. Thí nghiệm được lưu để minh bạch lịch sử nghiên cứu và giải thích một
+failure mode: biết nguồn nào có lỗi cục bộ thấp hơn không tự động cho biết cách cắt,
+căn chỉnh và ghép tọa độ liên tục. Hướng này chỉ nên mở lại với target mới, gate mới
+được preregister và một mô hình học phần dư tọa độ SE(3)-equivariant.
+
+\chapter{Bảng thuật ngữ}
+
+\begin{longtable}{p{0.25\textwidth}p{0.65\textwidth}}
+\toprule
+Thuật ngữ & Nghĩa trong luận văn\\
+\midrule
+\endhead
+Cấu trúc ứng viên & Một giả thuyết cấu trúc ba chiều cho RNA cần dự đoán.\\
+Cấu trúc thực nghiệm & Cấu trúc được đo và dùng làm tham chiếu khi huấn luyện hoặc đánh giá.\\
+Khuôn mẫu & Cấu trúc RNA đã biết dùng để chuyển tọa độ sang đối tượng mới.\\
+TBM & Template-based modeling, mô hình hóa dựa trên khuôn mẫu.\\
+Mô hình tiền huấn luyện & Mô hình đã học từ dữ liệu trước đó; bộ trọng số được giữ cố định khi suy luận.\\
+Nếp gấp tổng thể & Kiểu nếp gấp và bố cục lớn của cấu trúc ba chiều.\\
+Hình học cục bộ & Khoảng cách, góc phẳng và góc xoắn trong một vùng nucleotide ngắn.\\
+Căn chỉnh & Ánh xạ nucleotide của đối tượng với nucleotide của khuôn mẫu.\\
+Khoảng trống & Vị trí không có nucleotide khuôn mẫu tương ứng.\\
+$k$-mer & Đoạn trình tự liên tiếp dài $k$.\\
+Tìm kiếm mở rộng & Quét toàn thư viện tương đồng, không phải vét cạn không gian 3D.\\
+Độ tin cậy & Tín hiệu nội bộ của mô hình, không đồng nhất với độ chính xác.\\
+Hiệu chỉnh & Liên hệ đầu ra độ tin cậy với tần suất đúng quan sát được.\\
+Oracle & Điểm lý tưởng do lựa chọn bằng cấu trúc thực nghiệm sau đánh giá; không triển khai được khi suy luận.\\
+OOF & Dự đoán cho một mẫu nằm ngoài nếp gấp dữ liệu dùng để huấn luyện mô hình đó.\\
+An toàn theo thời gian & Chỉ dùng dữ liệu đã tồn tại trước mốc của đối tượng.\\
+Self-TM & TM-score giữa hai cấu trúc dự đoán, không cần cấu trúc thực nghiệm.\\
+Cơ chế từ chối & Không hợp nhất khi bằng chứng chưa đủ mạnh.\\
+Tinh chỉnh & Sửa nhẹ một cấu trúc có sẵn, không dự đoán lại nếp gấp từ đầu.\\
+\bottomrule
+\end{longtable}
+
+\chapter{Danh sách kiểm tra khả năng tái lập}
+
+\begin{enumerate}
+  \item Tạo môi trường conda từ \texttt{environment.yml} và ghi phiên bản gói chính xác.
+  \item Kiểm tra mã kiểm tra của CSV, CIF, cơ sở khuôn mẫu, bộ trọng số và dữ liệu tạm.
+  \item Xây cơ sở khuôn mẫu bằng bộ đọc hiện tại; xác nhận số dòng và độ phủ ngày công bố.
+  \item Kiểm tra rò rỉ thời gian và PDB của chính đối tượng; mốc thiếu hoặc sai phải bị từ chối.
+  \item Chạy kiểm thử cho bộ đọc, căn chỉnh, chỉ số, gap-fill baseline và Geometry v2.
+  \item Tái tạo TBM white-box ablation trên 20 RNA hiệu chỉnh.
+  \item Tái tạo đánh giá Geometry v2 và lấy mẫu lại theo RNA với hạt giống ngẫu nhiên 2025.
+  \item Tái tạo tập 60/20/20, xác nhận không có họ hoặc trình tự trùng giữa các tập.
+  \item Chỉ huấn luyện trên tập huấn luyện; chỉ chọn mô hình và ngưỡng trên tập hiệu chỉnh.
+  \item Mở tập xác nhận mới nhất đúng một lần và lưu kết quả bất kể chiều hướng.
+  \item Kiểm tra định dạng tệp nộp cuối và nguồn gốc mọi dữ liệu đi kèm.
+\end{enumerate}
+
+\chapter{Các mục cần hoàn thiện trước khi nộp}
+
+\begin{itemize}
+  \item Thay toàn bộ marker \texttt{TODO} trên trang bìa và front matter.
+  \item Chuẩn hóa mẫu LaTeX theo quy định của trường.
+  \item Chốt tên luận văn tiếng Việt/Anh cùng giảng viên hướng dẫn.
+  \item Chuyển tài liệu tham khảo nhúng sang BibTeX theo chuẩn của trường.
+  \item Thêm hình mô tả dữ liệu, khung phương pháp và Geometry v2 từ kho mã.
+  \item Bổ sung bảng kết quả từng RNA vào phụ lục nếu hội đồng yêu cầu.
+  \item Bổ sung phần cứng, thời gian chạy, mã phiên bản Git và mã kiểm tra dữ liệu.
+  \item Lưu mã phiên bản kernel, ID submission, manifest và mã kiểm tra SHA-256 của cả
+  hai lần nộp Kaggle; không điều chỉnh ngược quy trình phát triển để khớp điểm tập riêng.
+  \item Rà soát thuật ngữ Việt--Anh và định dạng số theo hướng dẫn khoa.
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+% REFERENCES — embedded to keep this as one self-contained .tex file.
+% -----------------------------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{tm_score}
+Y. Zhang và J. Skolnick,
+``Scoring function for automated assessment of protein structure template quality,''
+\emph{Proteins}, 2004.
+
+\bibitem{usalign}
+J. Zhang và cộng sự,
+``US-align: universal structure alignments of proteins, nucleic acids, and macromolecular complexes,''
+\emph{Nature Methods}, 2022.
+
+\bibitem{lddt}
+V. Mariani, M. Biasini, A. Barbato và T. Schwede,
+``lDDT: a local superposition-free score for comparing protein structures and models using distance difference tests,''
+\emph{Bioinformatics}, 2013.
+
+\bibitem{rna_puzzles}
+J. A. Cruz và cộng sự,
+``RNA-Puzzles: a CASP-like evaluation of RNA three-dimensional structure prediction,''
+\emph{RNA}, 2012.
+
+\bibitem{rna_puzzles_toolkit}
+M. Magnus, M. Antczak, T. Zok và cộng sự,
+``RNA-Puzzles toolkit: a computational resource of RNA 3D structure benchmark datasets,
+structure manipulation, and evaluation tools,''
+\emph{Nucleic Acids Research}, tập 48, số 2, trang 576--588, 2020,
+doi: 10.1093/nar/gkz1108.
+
+\bibitem{rna_progress_review}
+X. Wang, S. Yu, E. Lou, Y.-L. Tan và Z.-J. Tan,
+``RNA 3D Structure Prediction: Progress and Perspective,''
+\emph{Molecules}, tập 28, số 14, bài 5532, 2023,
+doi: 10.3390/molecules28145532.
+
+\bibitem{state_of_rnart}
+C. Bernard, G. Postic, S. Ghannay và F. Tahi,
+``State-of-the-RNArt: benchmarking current methods for RNA 3D structure prediction,''
+\emph{NAR Genomics and Bioinformatics}, tập 6, số 2, lqae048, 2024,
+doi: 10.1093/nargab/lqae048.
+
+\bibitem{computational_rna_review}
+Y. Kagaya, B. Liu và D. Kihara,
+``Computational approaches for RNA structure prediction and design,''
+\emph{Cell Reports Physical Science}, tập 7, số 2, bài 103097, 2026,
+doi: 10.1016/j.xcrp.2026.103097.
+
+\bibitem{rna_composer}
+M. Biesiada, K. J. Purzycka, M. Szachniuk, J. Blazewicz và R. W. Adamiak,
+``Automated RNA 3D Structure Prediction with RNAComposer,''
+\emph{Methods in Molecular Biology}, tập 1490, trang 199--215, 2016,
+doi: 10.1007/978-1-4939-6433-8\_13.
+
+\bibitem{drfold}
+Y. Li, C. Zhang, C. Feng, R. Pearce, P. L. Freddolino và Y. Zhang,
+``Integrating end-to-end learning with deep geometrical potentials for ab initio RNA
+structure prediction,''
+\emph{Nature Communications}, tập 14, bài 5745, 2023.
+
+\bibitem{rhofoldplus}
+T. Shen, Z. Hu, S. Sun và cộng sự,
+``Accurate RNA 3D structure prediction using a language model-based deep learning approach,''
+\emph{Nature Methods}, tập 21, trang 2287--2298, 2024,
+doi: 10.1038/s41592-024-02487-0.
+
+\bibitem{drfold2}
+Y. Li, C. Feng, X. Zhang, S. Tsukiyama, D. Feng và Y. Zhang,
+``DRfold2 is a deep learning-based tool that enables efficient and accurate RNA
+structure prediction,''
+\emph{PLOS Biology}, tập 24, số 2, e3003659, 2026,
+doi: 10.1371/journal.pbio.3003659.
+
+\bibitem{boltz1}
+J. Wohlwend, G. Corso, S. Passaro và cộng sự,
+``Boltz-1: Democratizing Biomolecular Interaction Modeling,''
+\emph{bioRxiv}, 2024,
+doi: 10.1101/2024.11.19.624167.
+
+\bibitem{ares}
+R. J. L. Townshend, S. Eismann, A. M. Watkins và cộng sự,
+``Geometric deep learning of RNA structure,''
+\emph{Science}, tập 373, trang 1047--1051, 2021,
+doi: 10.1126/science.abe5650.
+
+\bibitem{rnassess}
+P. Lukasiak, M. Antczak, T. Ratajczak và J. Blazewicz,
+``RNAssess---a web server for quality assessment of RNA 3D structures,''
+\emph{Nucleic Acids Research}, tập 43, trang W502--W506, 2015,
+doi: 10.1093/nar/gkv557.
+
+\bibitem{kaggle_competition}
+Stanford RNA 3D Folding Competition,
+Kaggle competition documentation,
+\url{https://www.kaggle.com/competitions/stanford-rna-3d-folding}.
+
+\bibitem{top1_tbm}
+JaeJohn,
+``RNA 3D folds --- TBM only approach,'' Kaggle notebook, version được báo cáo 0.59298,
+\url{https://www.kaggle.com/code/jaejohn/rna-3d-folds-tbm-only-approach}.
+
+\bibitem{top1_hybrid}
+JaeJohn,
+``Sub 1 4 4 hybrid final take,'' Kaggle notebook, version được báo cáo 0.57631,
+\url{https://www.kaggle.com/code/jaejohn/sub-1-4-4-hybrid-final-take}.
+
+\end{thebibliography}
+
+\end{document}

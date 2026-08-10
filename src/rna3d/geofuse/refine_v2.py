@@ -28,6 +28,10 @@ class GeometryV2Config:
     w_angle: float = 0.30
     w_torsion: float = 0.15
     w_kink: float = 20.0
+    # Confidence-aware strength is an explicit, ablatable component.  Keeping
+    # the default ``True`` preserves the original Geometry-v2 behaviour.
+    adaptive_strength: bool = True
+    fixed_strength: float = 1.0
     kink_floor_deg: float = 70.0
     kink_margin_deg: float = 5.0
     backbone_huber_delta: float = 2.0
@@ -225,7 +229,11 @@ def refine_structure_v2(
     sigma = max(float(priors_v1["adjacent_c1"]["std"]), 1e-3)
     r_min = float(priors_v1["clash"]["r_min"])
     rg_target = _rg_target(len(sequence), priors_v1)
-    strength = 0.2 + 0.8 * (1.0 - float(np.clip(global_confidence, 0.0, 1.0)))
+    strength = (
+        0.2 + 0.8 * (1.0 - float(np.clip(global_confidence, 0.0, 1.0)))
+        if cfg.adaptive_strength
+        else float(cfg.fixed_strength)
+    )
 
     optimizer = torch.optim.Adam([current], lr=cfg.lr)
     history = []

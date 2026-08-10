@@ -14,8 +14,10 @@ import pandas as pd
 from rna3d.data.io import build_submission, order_submission_like, validate_submission
 from rna3d.geometry.transforms import apply_rigid, kabsch, random_rotation, rmsd
 from rna3d.template.confidence import template_confidence, temporal_valid
+from rna3d.template.gap_fill import fill_gaps, fill_gaps_linear
 from rna3d.paths import processed
 from rna3d.template.mmseqs_search import mmseqs_bin
+from rna3d.baselines.top1 import composite_similarity, composite_similarity_components
 
 
 class TransformTests(unittest.TestCase):
@@ -48,6 +50,28 @@ class TemplateConfidenceTests(unittest.TestCase):
 
     def test_confidence_multiplies_components(self) -> None:
         self.assertAlmostEqual(template_confidence(0.8, 0.5, 0.75), 0.3)
+
+    def test_composite_score_is_weighted_sum_of_exposed_components(self) -> None:
+        components = composite_similarity_components("AUGCAUGC", "AUGGAUGC")
+        expected = sum(
+            weight * components[name]
+            for weight, name in zip(
+                (0.4, 0.3, 0.2, 0.1),
+                ("global", "local", "features", "kmer3"),
+            )
+        )
+        self.assertAlmostEqual(composite_similarity("AUGCAUGC", "AUGGAUGC"), expected)
+
+    def test_linear_gap_baseline_removes_only_long_gap_curvature(self) -> None:
+        coords = np.full((7, 3), np.nan)
+        coords[0] = [0.0, 0.0, 0.0]
+        coords[6] = [18.0, 0.0, 0.0]
+        mask = np.isfinite(coords).all(axis=1)
+        current, _ = fill_gaps(coords, mask)
+        linear, _ = fill_gaps_linear(coords, mask)
+        np.testing.assert_allclose(linear[:, 1:], 0.0, atol=1e-12)
+        self.assertGreater(float(np.abs(current[:, 1:]).max()), 0.0)
+        np.testing.assert_allclose(current[mask], linear[mask])
 
 
 class PortablePathTests(unittest.TestCase):

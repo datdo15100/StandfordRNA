@@ -86,3 +86,55 @@ def fill_gaps(coords: np.ndarray, mask: np.ndarray, adj_dist: float = 6.0,
             conf[last + k] = 0.1
 
     return coords, conf
+
+
+def fill_gaps_linear(
+    coords: np.ndarray,
+    mask: np.ndarray,
+    adj_dist: float = 6.0,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Simple fair baseline: linear internal interpolation + terminal extension.
+
+    It shares the same transferred coordinates and confidence convention as
+    :func:`fill_gaps`; the only removed heuristic is long-gap curvature.
+    """
+    coords = np.array(coords, dtype=float)
+    mask = np.asarray(mask, dtype=bool)
+    length = len(coords)
+    confidence = mask.astype(float)
+    resolved = np.flatnonzero(mask)
+    if not len(resolved):
+        z = np.arange(length) * adj_dist
+        return np.stack([np.zeros(length), np.zeros(length), z], axis=1), confidence
+
+    for left, right in zip(resolved[:-1], resolved[1:]):
+        gap = right - left - 1
+        for offset in range(1, gap + 1):
+            fraction = offset / (gap + 1)
+            coords[left + offset] = (
+                (1.0 - fraction) * coords[left] + fraction * coords[right]
+            )
+            confidence[left + offset] = 0.3 * (1.0 - abs(2 * fraction - 1))
+
+    first, last = int(resolved[0]), int(resolved[-1])
+    if first:
+        direction = (
+            coords[first] - coords[resolved[1]]
+            if len(resolved) >= 2
+            else np.array([0.0, 0.0, -1.0])
+        )
+        direction /= np.linalg.norm(direction) + 1e-8
+        for offset in range(1, first + 1):
+            coords[first - offset] = coords[first] + direction * adj_dist * offset
+            confidence[first - offset] = 0.1
+    if last < length - 1:
+        direction = (
+            coords[last] - coords[resolved[-2]]
+            if len(resolved) >= 2
+            else np.array([0.0, 0.0, 1.0])
+        )
+        direction /= np.linalg.norm(direction) + 1e-8
+        for offset in range(1, length - last):
+            coords[last + offset] = coords[last] + direction * adj_dist * offset
+            confidence[last + offset] = 0.1
+    return coords, confidence

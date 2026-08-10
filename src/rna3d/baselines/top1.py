@@ -75,7 +75,15 @@ def _kmer_sim(s1: str, s2: str, k: int = 3) -> float:
     return len(a & b) / len(a | b) if (a | b) else 0.0
 
 
-def _composite_similarity(query: str, train: str, qfeat: list[float]) -> float:
+def composite_similarity_components(
+    query: str, train: str, qfeat: list[float] | None = None
+) -> dict[str, float]:
+    """Return the four independently ablatable retrieval signals.
+
+    Exposing these values does not change the reproduced top-1 method; it makes
+    the previously monolithic composite score auditable in component studies.
+    """
+    qfeat = rna_features(query) if qfeat is None else qfeat
     q = Seq(query)
     g = pairwise2.align.globalms(q, train, 2.9, -1, -10, -0.5, one_alignment_only=True)
     gs = g[0].score / (2 * min(len(query), len(train))) if g else 0.0
@@ -83,7 +91,27 @@ def _composite_similarity(query: str, train: str, qfeat: list[float]) -> float:
     ls = lo[0].score / (2 * min(len(query), len(train))) if lo else 0.0
     fs = cosine_similarity([qfeat], [rna_features(train)])[0][0]
     ks = _kmer_sim(query, train, k=3)
-    return 0.4 * gs + 0.3 * ls + 0.2 * fs + 0.1 * ks
+    return {"global": float(gs), "local": float(ls), "features": float(fs), "kmer3": float(ks)}
+
+
+def composite_similarity(
+    query: str,
+    train: str,
+    qfeat: list[float] | None = None,
+    *,
+    weights: tuple[float, float, float, float] = (0.4, 0.3, 0.2, 0.1),
+) -> float:
+    components = composite_similarity_components(query, train, qfeat)
+    return float(
+        weights[0] * components["global"]
+        + weights[1] * components["local"]
+        + weights[2] * components["features"]
+        + weights[3] * components["kmer3"]
+    )
+
+
+def _composite_similarity(query: str, train: str, qfeat: list[float]) -> float:
+    return composite_similarity(query, train, qfeat)
 
 
 def _diversity_clustering(F: np.ndarray, k: int) -> np.ndarray:
