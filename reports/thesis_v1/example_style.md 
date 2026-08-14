@@ -1,0 +1,709 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{subfigure}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% Use the caption package for more control over captions
+\usepackage{caption}
+\captionsetup{belowskip=0pt, aboveskip=5pt}
+
+\begin{document}
+\title{PeakDetect: A Hybrid LSTM-Heuristic Framework for Network Peak Detection \
+% {\footnotesize \textsuperscript{*}Note: Sub-titles are not captured in Xplore and
+% should not be used}
+
+\thanks{This work was supported by NBN Co and University of Technology Sydney}
+}
+
+\author{Duc-Minh Pham$^{1}$, Hiep Vo$^1$, Daniel Franklin$^1$, Mehran Abolhasan$^1$, Max Downey$^2$, Raymond Owen$^1$ \
+$^1$School of Electrical and Data Engineering, University of Technology Sydney, Sydney, Australia \
+$^2$NBN Co, Melbourne, Australia \
+%$^$Corresponding author: Duc.Pham@uts.edu.au \
+{Duc.Pham, KhacHiep.Vo, Daniel.Franklin, Mehran.Abolhasan, Ray.Owen}@uts.edu.au, \
+maxdowney@nbnco.com.au
+}
+
+\maketitle
+
+\begin{abstract}
+Accurate congestion detection is essential for maintaining Quality of Experience (QoE) in bandwidth-intensive applications. Conventional approaches rely on infrastructure-level metrics and protocol dynamics, often overlooking user-centric indicators of effective capacity. This paper introduces a hybrid framework for congestion detection and \textit{maximum achievable throughput} estimation, combining a lightweight heuristic with a Long Short-Term Memory (LSTM) model enhanced by Elastic Weight Consolidation (EWC). The heuristic detects sustained throughput plateaus by contrasting short- and long-term maxima, distinguishing demand-limited variability from congestion-induced saturation, while the LSTM-EWC model provides adaptive learning across diverse traffic patterns. Evaluation with Mininet and D-ITG under controlled bandwidth constraints shows that the hybrid framework achieves 92.1% accuracy and an 81.5% F1-score, outperforming baseline machine learning models by 13 F1 points. Although the heuristic alone reaches slightly higher accuracy (93.0%), the LSTM-EWC component ensures superior precision–recall balance under heterogeneous conditions. By identifying persistent throughput ceilings caused by network congestion, the framework enables practical estimation of maximum achievable throughput, supporting QoE management, service optimization, and user decisions such as upgrading to higher-tier plans.
+\end{abstract}
+
+
+
+\begin{IEEEkeywords}
+Network congestion detection, LSTM, bandwidth management, network simulation.
+\end{IEEEkeywords}
+
+% \section{Introduction}
+
+% Network congestion poses a persistent challenge for bandwidth-intensive applications such as video streaming, cloud gaming, and real-time communication. Ensuring high Quality of Experience (QoE) requires timely and accurate congestion detection. Conventional methods, including Active Queue Management (AQM) \cite{floyd1993random, nichols2018codel, athuraliya2001rem} and delay-based approaches such as TCP Vegas \cite{brakmo1994tcp}, primarily operate at the infrastructure level and emphasize fairness and global performance. However, these techniques often fail to reveal persistent user-level capacity constraints.
+
+% A key underexplored aspect is the estimation of a user’s \textit{maximum achievable throughput}-the effective upper bound on achievable throughput under current network conditions. For example, a subscriber on a 50 Mbps plan may consistently observe only 40 Mbps throughput, either due to limited application demand or sustained contention on the access link. Unlike transient losses or delays, such sustained throughput plateaus provide stronger evidence of user-level bandwidth exhaustion and are highly relevant for QoE management, capacity planning, and user-driven decision making.
+
+% Recent congestion-control advances, including deep learning-based schemes such as Aurora \cite{jay2019deep}, PCC Vivace \cite{dong2018pcc}, and Sage \cite{10.1145/3603269.3604838}, primarily optimize sending rates and transport behavior. Similarly, methods like Sprout \cite{winstein2013stochastic}, SVR-based models \cite{5378489}, and frameworks such as CCP \cite{narayan2018restructuring} adapt to dynamic conditions but do not explicitly detect user-level saturation. These approaches enhance responsiveness yet fall short in distinguishing between demand-limited and congestion-limited throughput.
+
+% To address this gap, we propose a hybrid framework that combines heuristic interpretability with data-driven adaptability. A lightweight heuristic algorithm detects sustained throughput plateaus, while a Long Short-Term Memory (LSTM) model enhanced with Elastic Weight Consolidation (EWC) adapts across traffic patterns without catastrophic forgetting. The unified hybrid design leverages both interpretability and generalization.
+
+% The main contributions of this work are as follows:
+% \begin{itemize}
+%     \item We formalize \textit{maximum achievable throughput} as sustained throughput plateaus reflecting user-level capacity constraints, distinct from transient congestion events.
+%     \item We develop a hybrid framework that integrates heuristic plateau detection with an EWC-enhanced LSTM for robust learning across diverse traffic scenarios.
+%     \item We validate the framework using Mininet and D-ITG simulations, demonstrating improved accuracy and robustness compared to baseline models.
+% \end{itemize}
+
+\section{Introduction}
+
+Network congestion remains a critical challenge for bandwidth-intensive applications such as video streaming, cloud gaming, and real-time communication. Ensuring high Quality of Experience (QoE) requires timely and accurate congestion detection. Conventional methods, including Active Queue Management (AQM) \cite{floyd1993random, nichols2018codel, athuraliya2001rem} and delay-based approaches such as TCP Vegas \cite{brakmo1994tcp}, operate at the infrastructure level and emphasize fairness and global performance, but often fail to reveal persistent user-level capacity constraints.
+
+A key underexplored aspect is the estimation of a user’s \textit{maximum achievable throughput} - the effective upper bound under current network conditions. For example, a subscriber on a 50 Mbps plan may consistently observe only 40 Mbps throughput due to limited application demand or sustained contention on the access link. Unlike transient losses or delays, such sustained throughput plateaus provide stronger evidence of user-level bandwidth exhaustion and are highly relevant for QoE management and capacity planning.
+
+Recent congestion-control advances, including deep learning-based schemes such as Aurora \cite{jay2019deep}, PCC Vivace \cite{dong2018pcc}, and Sage \cite{10.1145/3603269.3604838}, primarily optimize sending rates and transport behavior. Similarly, methods like Sprout \cite{winstein2013stochastic}, reinforcement learning-based frameworks \cite{10621288}, and CCP \cite{narayan2018restructuring} adapt to dynamic conditions but do not explicitly detect user-level saturation. While reinforcement learning-based congestion control shows promise, systematic evaluations reveal that such approaches often under-perform when bandwidth and latency vary dynamically \cite{10621288}. These methods enhance responsiveness yet fall short in distinguishing between demand-limited and congestion-limited throughput.
+
+To address this gap, we propose a hybrid framework that combines heuristic interpretability with data-driven adaptability. A lightweight heuristic algorithm detects sustained throughput plateaus, while a Long Short-Term Memory (LSTM) model enhanced with Elastic Weight Consolidation (EWC) adapts across traffic patterns without catastrophic forgetting. This unified design leverages both interpretability and generalization, with the potential to remain effective under dynamic bandwidth and latency conditions.
+
+The main contributions of this work are as follows:
+\begin{itemize}
+\item We formalize \textit{maximum achievable throughput} as sustained throughput plateaus reflecting user-level capacity constraints, distinct from transient congestion events.
+\item We develop a hybrid framework that integrates heuristic plateau detection with an EWC-enhanced LSTM for robust learning across diverse traffic scenarios.
+\item We validate the framework using Mininet and D-ITG simulations, demonstrating improved accuracy and robustness compared to baseline models.
+\end{itemize}
+
+
+
+\section{Methodology}
+
+To address the challenge of distinguishing sustained capacity limitations from transient traffic fluctuations, we develop three complementary detection methods. Each method targets a different aspect of user-level congestion, ranging from interpretable heuristic logic to deep learning, with a hybrid strategy that unifies both approaches. The central objective is to identify sustained throughput plateaus that indicate effective maximum achievable throughput, even when these values fall below the nominal capacity of the subscribed network plan.
+
+\subsection{Heuristic Peak Detection Algorithm}
+
+Conventional congestion metrics often misinterpret application-level bursts as network-induced capacity constraints. To address this limitation, we introduce a heuristic method that detects sustained throughput plateaus, which arise when user demand persistently approaches the maximum achievable throughput of the link.
+
+The method is based on a key observation: capacity-limited traffic produces consistent clustering of throughput values near the achievable upper bound, in contrast to the naturally fluctuating peaks and valleys of application-limited behavior. By quantifying the density of near-peak samples over time, the algorithm can reliably differentiate between these conditions with high interpretability.
+
+The detection process involves three sequential steps:
+
+\begin{enumerate}
+\item \textbf{Long-term maximum calculation}: Establish a reference capacity by identifying the maximum throughput within configurable long-duration windows (see Fig.~\ref{fig}).
+\item \textbf{Short-term bin analysis}: Within each long window, count the number of samples that fall within a tolerance threshold of the long-term maximum, using short-duration bins (Fig.~\ref{fig}).
+\item \textbf{Binary classification}: Label a bin as ``congested" if the near-peak count exceeds a predefined threshold, indicating capacity saturation (Fig.~\ref{fig}).
+\end{enumerate}
+
+The full procedure is presented in Algorithm~\ref{alg}, which formalizes how throughput samples are processed and classified. The key configuration parameters controlling the detection logic-such as window durations, peak tolerances, and thresholds-are summarized in Table~\ref{tab}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.48\textwidth, height=0.20\textheight]{figures/heuristic/Heuristic1}
+\caption{Long-term maximum calculation methodology.}
+\label{fig}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.48\textwidth, height=0.20\textheight]{figures/heuristic/Heuristic2}
+\caption{Short-term bin analysis process.}
+\label{fig}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.48\textwidth, height=0.20\textheight]{figures/heuristic/Heuristic3}
+\caption{Binary classification of congestion behavior for threshold $N > 15$.}
+\label{fig}
+\end{figure}
+
+\begin{algorithm}
+\caption{Heuristic Peak Detection}
+\label{alg}
+\begin{algorithmic}[1]
+\REQUIRE Throughput data $T$, parameters $(W_l, W_s, \tau, \theta)$
+\ENSURE Congestion classification $C$ and feature set $F$
+\STATE Initialize arrays: $C$, $L_{max}$, $S_{peak}$, $S_{count}$, $P_{ratio}$
+\STATE $T_f \leftarrow$ Apply median filter to $T$ if enabled
+\FOR{each long window of size $W_l$ in $T$}
+\STATE $p_l \leftarrow \max(T_f^{window})$
+\STATE $L_{max}^{window} \leftarrow p_l$
+\FOR{each short bin of size $W_s$ within long window}
+\STATE $p_s \leftarrow \max(T^{bin})$
+\STATE $S_{peak}^{bin} \leftarrow p_s$
+\STATE $threshold \leftarrow (1 - \tau) \times p_l$
+\STATE $count \leftarrow \sum(T^{bin} \geq threshold)$
+\STATE $S_{count}^{bin} \leftarrow count$
+\IF{$count > \theta$}
+\STATE $C^{bin} \leftarrow 1$
+\ELSE
+\STATE $C^{bin} \leftarrow 0$
+\ENDIF
+\ENDFOR
+\ENDFOR
+\STATE Calculate $P_{ratio} \leftarrow S_{peak} / L_{max}$ where $L_{max} > 0$
+% \STATE Handle any NaN or Inf values in all arrays
+\STATE $F \leftarrow {L_{max}, T_f, P_{ratio}, S_{count}, S_{peak}}$
+\RETURN $C$ and $F$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{table}[htbp]
+\centering
+\caption{Heuristic Algorithm Parameters}
+\label{tab}
+\vspace{0.5em}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{|p{2.5cm}|p{0.8cm}|p{0.8cm}|p{3.7cm}|}
+\hline
+\textbf{Parameter} & \textbf{Default} & \textbf{Units} & \textbf{Function} \
+\hline
+long_window_ms ($W_l$) & 25000 & ms & Sets temporal scope for maximum calculation \
+\hline
+short_window_ms ($W_s$) & 200 & ms & Defines bin size for sample counting \
+\hline
+peak_tolerance ($\tau$) & 0.3 & fraction & Tolerance for samples to be considered near peak \
+\hline
+count_threshold ($\theta$) & 3 & samples & Minimum samples required to label a window as congested \
+\hline
+use_median_filter & True & boolean & Enables smoothing to reduce noise \
+\hline
+\end{tabular}
+\end{table}
+
+The algorithm produces a set of diagnostic features for capacity assessment, described in Table~\ref{tab}.
+
+\begin{table}[htbp]
+\centering
+\caption{Algorithm Output Features and Their Meanings}
+\label{tab}
+\vspace{0.5em}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{|p{1cm}|p{1.5cm}|p{5.7cm}|}
+\hline
+\textbf{Feature} & \textbf{Type} & \textbf{Meaning and Purpose} \
+\hline
+$C$ & Binary array & 1 = congestion detected, 0 = normal variation \
+\hline
+$L_{max}$ & Float array & Maximum value in each long window (baseline capacity) \
+\hline
+$T_f$ & Float array & Filtered throughput for noise-robust analysis \
+\hline
+$P_{ratio}$ & Float array & Ratio of short-term peaks to long-term maximum \
+\hline
+$S_{count}$ & Integer array & Count of near-peak samples in short window \
+\hline
+$S_{peak}$ & Float array & Peak throughput in short window \
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{LSTM Deep Learning Model}
+
+While the heuristic model provides interpretability, it lacks the capacity to capture complex nonlinear relationships and long-range temporal dependencies inherent in network traffic patterns. To address these limitations, we adopt a Long Short-Term Memory (LSTM) based deep learning architecture that automatically learns temporal patterns from raw sequences.
+
+LSTM networks are particularly well-suited for capacity constraint prediction, as network bottlenecks typically develop gradually over extended time horizons. The sequential nature of LSTMs enables the model to maintain long-term memory of past network states while filtering transient noise through gating mechanisms. Our architecture, detailed in Table~\ref{tab}, employs a two-layer design with fully connected layers for final classification.
+
+\begin{table}[htbp]
+\centering
+\caption{LSTM Architecture Components}
+\label{tab}
+\vspace{0.5em}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|p{1.7cm}|p{1.8cm}|p{1.1cm}|p{3.3cm}|}
+\hline
+\textbf{Layer} & \textbf{Configuration} & \textbf{Output} & \textbf{Purpose} \
+\hline
+LSTM Layers & 2 layers, 50 units & (batch, 50) & Temporal pattern extraction from sequences \
+\hline
+Fully-Connected & 50 $\rightarrow$ 25, ReLU & (batch, 25) & Nonlinear transformation \
+\hline
+Fully-Connected & 25 $\rightarrow$ 1, Sigmoid & (batch, 1) & Probability output of congestion \
+\hline
+Regularization & Dropout: 0.2 & Same & Prevents overfitting \
+\hline
+\end{tabular}
+\end{table}
+
+% To support continual learning across diverse traffic types, we apply \textit{Elastic Weight Consolidation (EWC)} \cite{doi:10.1073/pnas.1611835114}, which preserves important weights by penalizing changes based on the Fisher Information Matrix. EWC addresses the catastrophic forgetting problem by computing Fisher information to identify weights crucial for previously learned tasks, then regularizing weight updates during fine-tuning according to $\mathcal{L}{EWC} = \mathcal{L}{new} + \lambda \sum_{i} F_i (\theta_i - \theta_i^*)^2$, where $F_i$ represents Fisher information for parameter $i$ and $\lambda$ controls regularization strength. The key advantage of EWC fine-tuning lies in its operational efficiency for production deployments. Unlike conventional retraining approaches that require processing entire historical datasets, EWC enables cost-effective adaptation to new network configurations, traffic patterns, or test cases using only recent data. This capability is particularly valuable when computational resources are constrained or when rapid model updates are required to address evolving network conditions. The technique allows users to incrementally adapt pre-trained models to updated test scenarios without sacrificing performance on previously encountered traffic types, significantly reducing both computational overhead and deployment time compared to full model retraining.
+
+To support continual learning across diverse traffic types, we apply \textit{Elastic Weight Consolidation (EWC)} \cite{doi:10.1073/pnas.1611835114}, which mitigates catastrophic forgetting by penalizing changes to parameters critical for past tasks, identified via the Fisher Information Matrix. The loss is defined as $\mathcal{L}{EWC} = \mathcal{L}{new} + \lambda \sum_{i} F_i (\theta_i - \theta_i^*)^2$, where $F_i$ denotes the Fisher information for parameter $i$ and $\lambda$ controls regularization strength. EWC fine-tuning is operationally efficient, enabling adaptation to new network conditions using only recent data rather than retraining on full historical datasets. This allows incremental updates to pre-trained models while preserving prior knowledge, reducing computational overhead and deployment time, and supporting rapid adaptation under constrained resources.
+
+We evaluate two variants: an EWC-regularized LSTM model fine-tuned sequentially on different traffic test cases, and a baseline LSTM model trained jointly on all data. This comparison demonstrates how EWC enables practical model adaptation while preserving learned knowledge across diverse network environments.
+
+\subsection{Hybrid Model with Parameter Optimization}
+Our core contribution is a hybrid congestion detection framework that integrates a tunable heuristic feature extractor with a lightweight LSTM classifier. This design balances interpretability and adaptability by combining domain-informed features with a data-driven model.
+
+The heuristic module, defined in Algorithm~\ref{alg}, extracts congestion indicators based on configurable parameters: short window size, long window size, peak tolerance, and count threshold. These govern the temporal and statistical sensitivity of the detection logic. The full parameter space is outlined in Table~\ref{tab}, spanning over 12,600 valid combinations.
+
+% \begin{table}[htbp]
+% \centering
+% \caption{Parameter Space Definition and Search Strategy}
+% \vspace{1em}
+% \label{tab}
+% \small
+% \begin{tabular}{|c|c|c|}
+% \hline
+% \textbf{Parameter} & \textbf{Range} & \textbf{Values} \
+% \hline
+% Short Window & 100-1000 ms & 10 values \
+% $W_s$ & (100ms steps) &  \
+% \hline
+% Long Window & 10000-30500 ms & 42 values \
+% $W_l$ & (500ms steps) &  \
+% \hline
+% Peak Tolerance & 0.05-0.30 & 6 values \
+% $\tau$ & (0.05 steps) &  \
+% \hline
+% Count Threshold & 3, 5, 8, 10, 15 & 5 values \
+% $\theta$ & samples &  \
+% \hline
+% \end{tabular}
+% \end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Parameter Space Definition and Search Strategy}
+\vspace{1em}
+\label{tab}
+\small
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Range} & \textbf{Values} \
+\hline
+$W_l$ & 10000-30500 ms (500ms steps) & 42 values
+\
+\hline
+$W_s$ & 100-1000 ms (100ms steps) & 10 values \
+\hline
+$\tau$ & 0.05-0.30 (0.05 steps) & 6 values \
+\hline
+$\theta$ & 3, 5, 8, 10, 15 samples & 5 values \
+\hline
+\end{tabular}
+\end{table}
+
+Each configuration is evaluated by training a small LSTM model (Table~\ref{tab}) using the generated features and assessing its accuracy, precision, recall, and F1-score against ground truth. F1-score is used as the primary optimization metric due to its robustness to class imbalance.
+
+The full pipeline is depicted in Fig.~\ref{fig} and formalized in Algorithm~\ref{alg}. After identifying the optimal parameter tuple $\theta^$, the system retrains the LSTM on features regenerated with $\theta^$. This process enhances performance under diverse traffic conditions while preserving interpretability. By tuning the feature extraction layer and coupling it with a compact LSTM, our framework improves generalization, reduces overfitting, and enables accurate detection of persistent congestion behavior.
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/hybrid_architecture1}
+\caption{Proposed hybrid model overview: parameter optimization, feature generation, and model training.}
+\label{fig}
+\end{figure*}
+
+\begin{algorithm}
+\caption{Hybrid Model (PeakDetect))}
+\label{alg}
+\begin{algorithmic}[1]
+\REQUIRE Training scenarios $S_1, ..., S_n$, parameter space $\Theta$
+\ENSURE Optimized hybrid model $M_{hybrid}$
+\STATE \textbf{Stage 1: Parameter Optimization}
+\FOR{each $\theta \in \Theta$}
+\FOR{each $S_i$}
+\STATE $features_i \leftarrow$ HeuristicAlgorithm($S_i$, $\theta$)
+\STATE $F1_i \leftarrow$ Evaluate($features_i$, ground_truth$i$)
+\ENDFOR
+\STATE $F1{avg} \leftarrow$ mean($F1_1, ..., F1_n$)
+\ENDFOR
+\STATE $\theta^* \leftarrow \arg\max_\theta F1_{avg}$
+\STATE \textbf{Stage 2: Feature Generation}
+\FOR{each $S_i$}
+\STATE $features_i^* \leftarrow$ HeuristicAlgorithm($S_i$, $\theta^$)
+\ENDFOR
+\STATE \textbf{Stage 3: LSTM Training}
+\STATE $M_{hybrid} \leftarrow$ TrainLSTM($features^$, architecture)
+\RETURN $M_{hybrid}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Data Collection}
+
+\subsection{Test Case Design}
+
+% \subsubsection{Behavioral Traffic Scenarios}
+
+% Ten realistic usage scenarios were designed to represent common broadband usage patterns observed in residential and small business environments. These scenarios combine multiple traffic types, including TCP, UDP, and stochastic traffic to create complex, realistic network conditions. Each scenario incorporates four primary traffic components as shown in Table \ref{tab}.
+
+% \begin{table*}[htbp]
+% \centering
+% \caption{Behavioral Traffic Scenarios}
+% \vspace{1em}
+% \label{tab}
+% \footnotesize
+% \begin{tabular}{|c|c|c|c|c|}
+% \hline
+% \textbf{Scenario} & \textbf{TCP Flows} & \textbf{TCP Flows} & \textbf{CBR Traffic} & \textbf{Stochastic Traffic} \
+%  & \textbf{(Rate Limited)} & \textbf{(Unlimited)} &  &  \
+% \hline
+% HD streaming + & 2@15 Mb/s & 0 flows & 20 Mb/s & Video(800;1200;g;0.1) \
+% download & per flow &  & CBR UDP &  \
+% \hline
+% Dual game & 3@12 Mb/s & 0 flows & 15 Mb/s & Gaming(32;64;0.001) + \
+% sessions & per flow &  & CBR UDP & Gaming(32;64;0.001) \
+% \hline
+% Family & 2@10 Mb/s & 0 flows & 25 Mb/s & Video(800;1200;g;0.1) + \
+% streaming & per flow &  & CBR UDP & Video(500;800;g;0.1) \
+% \hline
+% Work-from-home & 3@10 Mb/s & 0 flows & 18 Mb/s & VoIP(120;160;0.0025) + \
+%  & per flow &  & CBR UDP & Video(800;1200;g;0.1) \
+% \hline
+% Evening & 2@12 Mb/s & 0 flows & 22 Mb/s & Video(1000;1400;g;0.1) + \
+% entertainment & per flow &  & CBR UDP & Gaming(32;64;0.001) \
+% \hline
+% Small business & 3@8 Mb/s & 2 flows & 15 Mb/s & VoIP(120;160;0.0025) + \
+%  & per flow &  & CBR UDP & VoIP(120;160;0.0025) \
+% \hline
+% Media & 2@15 Mb/s & 0 flows & 20 Mb/s & Video(800;1200;g;0.1) \
+% enthusiast & per flow &  & CBR UDP &  \
+% \hline
+% Home security + & 2@10 Mb/s & 0 flows & 18 Mb/s & Video(500;800;g;0.1) + \
+% streaming & per flow &  & CBR UDP & Video(500;800;g;0.1) \
+% \hline
+% Remote & 3@12 Mb/s & 0 flows & 20 Mb/s & Video(800;1200;g;0.1) + \
+% education & per flow &  & CBR UDP & VoIP(120;160;0.0025) \
+% \hline
+% Weekend & 3@10 Mb/s & 2 flows & 18 Mb/s & Video(800;1200;g;0.1) + \
+% usage & per flow &  & CBR UDP & Gaming(32;64;0.001) \
+% \hline
+% \end{tabular}
+% \end{table*}
+
+% The traffic components are defined as follows:
+
+% \begin{itemize}
+% \item \textbf{Rate-limited TCP flows}: File downloads with application-imposed \
+% bandwidth limits, generated using:\
+% \texttt{iperf3 -c server -C reno -R -b <rate>M -t <duration>}
+
+% \item \textbf{Unlimited TCP flows}: Bulk data transfers utilizing all available \
+% bandwidth, generated using:\
+% \texttt{iperf3 -c server -C reno -R -t <duration>}
+
+% \item \textbf{Constant Bit Rate (CBR) UDP traffic}: Steady-state background \
+% traffic, generated using:\
+% \texttt{iperf3 -c server -R -u -b <rate>M -t <duration>}
+
+% \item \textbf{Stochastic application traffic}: Real-time applications with \
+% variable characteristics, generated using:\
+% \texttt{ITGSend -T UDP -a <server> -C <max_size> -c <min_size>} \
+% \texttt{-t <duration> -v <variance>}
+% \end{itemize}
+
+\subsubsection{Streaming Media Scenarios}
+
+% Streaming media was selected due to its dominant role in internet bandwidth consumption and its impact on viewing behavior through personalized, interactive platforms \cite{doi:10.1177/02673231231155731}. Network simulations were conducted using Mininet to emulate the NBN topology, with traffic generated via D-iTG. Seven scenarios were evaluated across two NBN capacity tiers (NBN50 and NBN100) and three video quality profiles: Full HD (1080p), Ultra HD (4K), and HDR.
+
+Streaming media was selected due to its dominant role in internet bandwidth consumption and its impact on viewing behavior through personalized, interactive platforms \cite{doi:10.1177/02673231231155731}. Network simulations were conducted using Mininet to emulate the National Broadband Network (NBN), Australia’s wholesale open-access broadband network that delivers retail plans across capacity tiers such as NBN25 (25/5 Mbps), NBN50 (50/20 Mbps), and NBN100 (100/20 Mbps) \cite{accc2025nbnplans}. In this study, traffic was generated via D-iTG, and seven scenarios were evaluated across two representative plans (NBN50 and NBN100) and three video quality profiles: Full HD (1080p), Ultra HD (4K), and HDR.
+
+
+
+% \begin{table*}[htbp]
+% \centering
+% \caption{Video Quality Profiles for Streaming Scenarios}
+% \vspace{1em}
+% \label{tab}
+% \small
+% \begin{tabular}{|c|c|c|c|c|c|}
+% \hline
+% \textbf{Quality} & \textbf{Idle Traffic} & \textbf{Initial Burst} & \textbf{High Bitrate} & \textbf{Medium Bitrate} & \textbf{Packet Size} \
+%  & \textbf{(Mb/s)} & \textbf{(Kb/s)} & \textbf{(Kb/s)} & \textbf{(Kb/s)} & \textbf{(bytes)} \
+% \hline
+% Full HD & 1.2 & 14000-16000 & 7000 & 5000 & 512 \
+% (1080p) &  &  &  &  &  \
+% \hline
+% Ultra HD & 2.5 & 21000-25000 & 15000 & 10000 & 1024 \
+% (4K) &  &  &  &  &  \
+% \hline
+% HDR & 3.0 & 25000-30000 & 18000 & 12000 & 1024 \
+% (4K HDR) &  &  &  &  &  \
+% \hline
+% \end{tabular}
+% \end{table*}
+
+The streaming test scenarios are summarised in Table \ref{tab}.
+
+\begin{table}[htbp]
+\centering
+\caption{Streaming Media Test Scenarios}
+\vspace{1em}
+\label{tab}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|p{2.1cm}|c|c|c|p{2.2cm}|}
+\hline
+\textbf{Test Name} & \textbf{Streams} & \textbf{Quality} & \textbf{Target Network} & \textbf{Quality Distribution} \
+\hline
+low_mbps_mixed & 5 & Mixed & 50Mbps & FHD 60%, UHD 30%, HDR 10% \
+\hline
+low_mbps_4k & 3 & UHD & 50Mbps & Single quality \
+\hline
+low_mbps_overload & 4 & UHD & 50Mbps & Single quality \
+\hline
+high_mbps_mixed & 10 & Mixed & 100Mbps & FHD 50%, UHD 30%, HDR 20% \
+\hline
+high_mbps_4k & 6 & UHD & 100Mbps & Single quality \
+\hline
+high_mbps_hdr & 5 & HDR & 100Mbps & Single quality \
+\hline
+high_mbps_overload & 12 & Mixed & 100Mbps & FHD 40%, UHD 40%, HDR 20% \
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Ground Truth Definition}
+\label{groundtruth}
+To evaluate prediction accuracy, we define the ground truth based on buffer occupancy. When the offered traffic exceeds the available capacity, excess packets are queued, resulting in persistent buffer buildup-a clear signal of congestion. To filter out short-term fluctuations and identify sustained saturation, a threshold of 100 packets is applied; any time interval during which buffer occupancy exceeds this value is labeled as `1', indicating a capacity-limited state.
+
+\section{Results}
+
+
+
+% \subsubsection{Training and Prediction Evaluation}
+% \label{training_eval}
+
+% \textbf{ To evaluate the models' predictive accuracy, we apply a threshold-based classification scheme comparing model outputs to ground truth labels, as defined in Section~\ref{groundtruth}. The LSTM models produces confidence scores in the range [0, 1], indicating the likelihood of congestion at each time step while the heuristic model returns binary value of 0 and 1. }
+
+% \textbf{ For LSTM models, a prediction is classified as \textit{congested} (label 1) if the maximum confidence score within a prediction window exceeds 0.5; otherwise, it is labeled as \textit{non-congested} (label 0). These binary predictions are then compared against the corresponding ground truth. }
+
+% \textbf{A \textbf{correct prediction} occurs when the model and ground truth agree (true positive or true negative), while a \textbf{spurious prediction} refers to false positives or false negatives. This classification supports the computation of standard metrics such as precision, recall, and F1-score.}
+
+\subsection{Qualitative Results}
+
+Fig.~\ref{fig} presents a sample test case illustrating the performance of the heuristic model with and without the application of a median filter. As shown in Fig.~\ref{fig}(a), the raw input signal without filtering exhibits bursty traffic artifacts, which obscure the long-term network peak trend and result in poor detection performance. These short-term noisy spikes distort the model's perception of the peak traffic threshold, elevating the tolerance zone and thereby suppressing the detection of genuine congestion events.
+In contrast, Fig.~\ref{fig}(b) demonstrates that applying a median filter effectively removes high-frequency noise, allowing the model to better identify sustained periods of congestion. However, the filtered model remains susceptible to false positives, such as the anomaly observed in the final 50 seconds of the sequence. This behavior underscores the heuristic model’s sensitivity to input noise and its reliance on careful parameter tuning for optimal performance.
+
+\begin{figure}[htbp]
+\centering
+\subfigure[Heuristic detection without median filter]{
+\includegraphics[width=0.95\linewidth, height=0.18\textheight]{figures/heuristic/heuristic_no_median}
+}
+\vspace{1mm}
+\subfigure[Heuristic detection with median filter]{
+\includegraphics[width=0.95\linewidth, height=0.18\textheight]{figures/heuristic/heuristic_median}
+}
+\caption{Performance of the heuristic model on a 5-minute test case: (a) Raw input results in under-detection due to noise; (b) Median filtering improves detection results.}
+\label{fig}
+\end{figure}
+
+Fig.~\ref{fig} illustrates the performance of the hybrid model, focusing on the first 100 seconds of the 5-minute test sequence. The ground truth buffer occupancy is shown in Fig.~\ref{fig}(a), while Fig.~\ref{fig}(b) presents the corresponding congestion confidence output generated by the hybrid model. The congestion detection comparison between the two models is shown in Fig.~\ref{fig}(c).
+
+As shown in Fig.~\ref{fig}(a) and (b), the LSTM model effectively captures temporal patterns in buffer occupancy. Sustained high occupancy in the ground truth corresponds to elevated confidence in the model output, reflecting its ability to generalize the relationship between traffic build-up and congestion. The confidence levels increase gradually as buffer load rises and decrease as congestion subsides, indicating a time-aware interpretation of network dynamics.
+
+The comparative analysis in Fig.~\ref{fig}(c) highlights the differing behaviors of heuristic and LSTM-based congestion detection. The heuristic method applies a conservative strategy, identifying congestion primarily when the network operates close to its capacity limit. While this minimizes false alarms, it overlooks periods where bursty traffic causes congestion below the nominal limit. The LSTM model, by contrast, provides more balanced detection, capturing a larger portion of congestion events while maintaining reliable precision, resulting in closer agreement with the ground truth.
+
+This alignment between occupancy trends and model predictions confirms that the hybrid approach leverages the LSTM’s temporal modeling to track buffer evolution with greater fidelity. Overall, the hybrid model demonstrates strong potential for real-time congestion prediction by remaining consistent with observed traffic behavior over time.
+
+\begin{figure}[htbp]
+\centering
+\subfigure[Ground truth buffer occupancy]{
+\includegraphics[width=0.85\linewidth, height=0.18\textheight]{figures/ground_truth_buffer_v1.pdf}
+}
+\subfigure[Hybrid model detection confidence]{
+\includegraphics[width=0.85\linewidth, height=0.18\textheight]{figures/LSTM_predictions_v1.pdf}
+}
+\subfigure[Congestion detection between heuristic and hybrid models]{
+\includegraphics[width=0.85\linewidth, height=0.18\textheight]{figures/Both.pdf}
+}
+\caption{Performance of the hybrid model: (a) Raw buffer occupancy; (b) Congestion confidence of  hybrid model (c) Congestion detection comparison between the 2 models.}
+\label{fig}
+\end{figure}
+
+% \begin{figure}[!ht]
+% \centering
+% \subfigure[Raw downstream throughput]{
+% \includegraphics[width=0.9\linewidth, height=0.12\textheight]{figures/ground_truth_throughput}
+% }
+% % \vspace{1mm}
+% \subfigure[Ground truth buffer occupancy]{
+% \includegraphics[width=0.9\linewidth, height=0.12\textheight]{figures/ground_truth_buffer}
+% }
+% % \vspace{1mm}
+% \subfigure[Hybrid model detection confidence]{
+% \includegraphics[width=0.9\linewidth, height=0.12\textheight]{figures/LSTM_predictions}
+% }
+% \caption{Performance of the hybrid model on a 5-minute test case: (a) Raw downstream throughput; (b) Ground truth buffer occupancy; (c) Congestion confidence output from hybrid model.}
+% \label{fig}
+% \end{figure}
+
+\subsection{Quantitative Results}
+% Table \ref{tab} and Fig. \ref{fig} present detailed performance metrics for all 14 streaming test cases, showing each scenario at both network capacity levels.
+As outlined in Table~\ref{tab} defines seven scenarios, each tested at two network limits (50 and 100 Mbps), yielding 14 cases. Table~\ref{tab} reports the results, with entries shown as \textit{Scenario (Network Limit)}. The fine-tuned LSTM achieves the highest overall F1-score with strong accuracy, offering a more balanced trade-off between precision and recall than the baselines. The heuristic obtains the highest average accuracy but weaker F1 performance, reflecting its conservative strategy: it reliably detects congestion near capacity limits but fails to capture bursty events below the threshold. Traditional machine learning models such as Random Forest, KNN, and Gradient Boosting achieve comparable accuracies yet substantially lower F1-scores, indicating poor recall and limited value for real-time monitoring. At 50~Mbps, both the fine-tuned LSTM and heuristic perform well since congestion is more persistent, while at 100~Mbps, where congestion is more sporadic, the LSTM maintains stronger recall whereas the heuristic often underestimates congestion.
+
+\begin{table*}[htbp]
+\centering
+\caption{Streaming Media Scenarios Performance Results (All 14 Test Cases)}
+\vspace{1em}
+\label{tab}
+\footnotesize
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Scenario} & \multicolumn{2}{c|}{\textbf{LSTM Fine-tuned}} & \multicolumn{2}{c|}{\textbf{LSTM Combined}} & \multicolumn{2}{c|}{\textbf{Heuristic}} & \multicolumn{2}{c|}{\textbf{Random Forest}} & \multicolumn{2}{c|}{\textbf{KNN}} & \multicolumn{2}{c|}{\textbf{Gradient Boosting}} \
+\textbf{(Network Limit)} & \textbf{Acc.} & \textbf{F1} & \textbf{Acc.} & \textbf{F1} & \textbf{Acc.} & \textbf{F1} & \textbf{Acc.} & \textbf{F1} & \textbf{Acc.} & \textbf{F1} & \textbf{Acc.} & \textbf{F1} \
+\hline
+high_mbps_hdr (50) & 0.974 & 0.945 & 0.922 & 0.809 & 0.970 & 0.937 & 0.971 & 0.937 & 0.942 & 0.866 & 0.971 & 0.938 \
+low_mbps_overload (50) & \textbf{0.975} & \textbf{0.939} & 0.964 & 0.902 & 0.972 & 0.927 & 0.967 & 0.913 & 0.968 & 0.915 & 0.975 & 0.935 \
+low_mbps_4k (50) & \textbf{0.959} & \textbf{0.911} & 0.945 & 0.870 & 0.951 & 0.892 & 0.955 & 0.896 & 0.921 & 0.803 & 0.946 & 0.873 \
+high_mbps_mixed (50) & \textbf{0.958} & \textbf{0.902} & 0.955 & 0.887 & 0.951 & 0.880 & 0.943 & 0.849 & 0.932 & 0.818 & 0.940 & 0.838 \
+high_mbps_4k (50) & 0.920 & 0.880 & 0.785 & 0.594 & \textbf{0.928} & \textbf{0.897} & 0.729 & 0.395 & 0.783 & 0.577 & 0.679 & 0.210 \
+low_mbps_mixed (50) & 0.965 & 0.884 & \textbf{0.976} & \textbf{0.914} & 0.970 & 0.897 & 0.975 & 0.908 & 0.958 & 0.840 & 0.974 & 0.906 \
+high_mbps_overload (50) & 0.691 & 0.455 & 0.672 & 0.406 & \textbf{0.925} & \textbf{0.912} & 0.570 & 0.021 & 0.630 & 0.270 & 0.609 & 0.185 \
+low_mbps_overload (100) & \textbf{0.949} & \textbf{0.846} & 0.925 & 0.696 & 0.920 & 0.672 & 0.940 & 0.773 & 0.924 & 0.695 & 0.935 & 0.753 \
+high_mbps_hdr (100) & \textbf{0.933} & \textbf{0.841} & 0.890 & 0.679 & 0.915 & 0.799 & 0.888 & 0.671 & 0.887 & 0.674 & 0.881 & 0.643 \
+high_mbps_mixed (100) & \textbf{0.936} & \textbf{0.839} & 0.901 & 0.691 & 0.912 & 0.753 & 0.889 & 0.642 & 0.897 & 0.691 & 0.891 & 0.654 \
+high_mbps_4k (100) & \textbf{0.929} & \textbf{0.802} & 0.873 & 0.518 & 0.874 & 0.564 & 0.872 & 0.507 & 0.867 & 0.495 & 0.875 & 0.523 \
+low_mbps_mixed (100) & 0.943 & 0.779 & \textbf{0.960} & \textbf{0.810} & 0.951 & 0.763 & 0.956 & 0.789 & 0.948 & 0.756 & 0.955 & 0.786 \
+high_mbps_overload (100) & \textbf{0.850} & \textbf{0.693} & 0.798 & 0.522 & 0.842 & 0.679 & 0.789 & 0.485 & 0.798 & 0.527 & 0.796 & 0.513 \
+low_mbps_4k (100) & 0.906 & 0.689 & 0.932 & 0.746 & \textbf{0.935} & 0.638 & 0.944 & \textbf{0.766} & 0.914 & 0.671 & 0.941 & 0.763 \
+\hline
+\textbf{Overall Average} & 0.921 & \textbf{0.815} & 0.893 & 0.718 & \textbf{0.930} & 0.801 & 0.885 & 0.682 & 0.884 & 0.686 & 0.884 & 0.680 \
+\hline
+\end{tabular}
+\end{table*}
+
+Fig.~\ref{fig} presents the mean ROC curves with confidence intervals. The fine-tuned LSTM achieves the highest mean AUC ($0.981 \pm 0.010$), followed closely by Random Forest ($0.980 \pm 0.013$) and Gradient Boosting ($0.977 \pm 0.015$). The combined model performs moderately well ($0.965 \pm 0.026$), while Decision Tree ($0.904 \pm 0.056$) and KNN ($0.878 \pm 0.083$) show lower separability and higher variance. These results confirm that the fine-tuned LSTM provides the most consistent balance across accuracy, F1, recall, and AUC, significantly outperforming the random baseline (AUC = 0.5).
+
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=\linewidth]{figures/f1_score_comparison_plot}
+% \caption{F1-score comparison across all streaming media scenarios}
+% \label{fig}
+% \end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/roc_curves_aggregate.png}
+\caption{Mean ROC curves with 95% confidence intervals.}
+\label{fig}
+\end{figure}
+
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=\linewidth]{figures/accuracy_comparison_plot}
+% \caption{Accuracy comparison across all streaming media scenarios. Box plots show Traditional Heuristic parameter optimisation distribution, while lines show LSTM model performance}
+% \label{fig}
+% \end{figure}
+
+
+
+% \subsubsection{SHAP Analysis: Model Interpretability and Feature Utilisation}
+
+% The SHAP (SHapley Additive exPlanations) analysis mentioned in section \ref{sec} reveals fundamental differences in how the Fine-tuned and Combined LSTM models process network features for peak speed detection. This analysis quantifies each feature's contribution to model predictions, providing mechanistic insights into why each approach excels in different traffic scenarios.
+
+% \textbf{Feature Definitions and LSTM Model Interpretation:}
+
+% The models utilize six core features derived from network measurements and traditional Heuristic heuristics:
+
+% \begin{itemize}
+% \item \textbf{filtered_throughput}: Smoothed throughput measurements representing the primary capacity signal for both models
+% \item \textbf{short_term_peaks}: Recent peak detection events within short time windows, critical for immediate bottleneck identification
+% \item \textbf{peak_ratio}: Instantaneous peak-to-average throughput ratios, indicating momentary capacity constraint severity
+% \item \textbf{short_term_counts}: Frequency of peak events in recent windows, providing pattern density information
+% \item \textbf{long_term_peak}: Historical peak characteristics over extended periods, capturing traffic trend contexts
+% \item \textbf{congestion_score}: Network-imposed limitation indicators derived from traffic shaping detection
+% \end{itemize}
+
+% \textbf{Model-Specific Feature Utilisation Strategies:}
+
+% Fig. \ref{fig} displays the individual model feature rankings, while Fig. \ref{fig} provides side-by-side beeswarm visualisations showing how feature value distributions impact predictions differently across the two LSTM approaches.
+
+% \begin{figure}[htbp]
+% \centering
+% \begin{minipage}{0.48\textwidth}
+% \centering
+% \includegraphics[width=\textwidth]{figures/finetune_aggregated_beeswarm_plot}
+% \caption*{(a) Fine-tuned Model}
+% \end{minipage}
+% \hfill
+% \begin{minipage}{0.48\textwidth}
+% \centering
+% \includegraphics[width=\textwidth]{figures/combined_aggregated_beeswarm_plot}
+% \caption*{(b) Combined Model}
+% \end{minipage}
+% \caption{SHAP beeswarm plots showing feature value distributions and prediction impacts for both LSTM models}
+% \label{fig}
+% \end{figure}
+
+% \begin{figure}[htbp]
+% \centering
+% \begin{minipage}{0.48\textwidth}
+% \centering
+% \includegraphics[width=\textwidth]{figures/finetuned_aggregated_feature_importance}
+% \caption*{(a) Fine-tuned Model}
+% \end{minipage}
+% \hfill
+% \begin{minipage}{0.48\textwidth}
+% \centering
+% \includegraphics[width=\textwidth]{figures/combined_aggregated_feature_importance}
+% \caption*{(b) Combined Model}
+% \end{minipage}
+% \caption{SHAP bar plots showing aggregated feature values and prediction impacts for both LSTM models}
+% \label{fig}
+% \end{figure}
+
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=\linewidth]{figures/aggregated_feature_importance}
+% \caption{Feature importance rankings for both LSTM models}
+% \label{fig}
+% \end{figure}
+
+
+
+% \textbf{Fine-tuned Model Strategy (Immediate Signal Specialisation):}
+
+% % \textbf{Differences in SHAP plots for Fine-tune Model and Combine Model: Fine-tuned Model has peak ratio as the 2nd important feature since it links different test case together, for each test case the relation between short windows and long windows are very different.
+% % For Combine Model, all data are merged together and learn as a batch. The short term counts is 2nd most important feature since it represent the distance to the peak}
+
+% When we inspect the SHAP summary plots for our two training strategies in Fig. \ref{fig} and Fig. \ref{fig}, a clear difference in feature importance emerges. In the fine-tuned model-where we sequentially adapt the LSTM to each test case-peak ratio consistently ranks as the second-most influential feature. This makes sense because peak ratio (short-term peak divided by long-term peak) effectively “links” across disparate scenarios: each test case has its own characteristic balance between short-window and long-window behavior, so the ratio becomes the unifying signal the model relies on to reconcile these differences.
+% By contrast, in the combined model, where all ten datasets are merged and learned in one batch, short-term counts rise to the second-most important position in the SHAP ranking. When the model sees every scenario at once, absolute short-term throughput values become a more stable global indicator of how close the system is to a peak event-essentially acting as a direct measure of “distance to peak” across the entire data universe.
+
+% The Fine-tuned model develops an \textit{immediate peak detection specialisation}, allocating 52.8% of its decision-making capacity to instantaneous signals. This combines short-term peaks (26.6%) and peak ratio features (26.2%). This strategy proves optimal for streaming media scenarios where adaptive bitrate algorithms create discrete, temporally-localised peak events that directly correlate with network capacity discovery processes.
+
+% The model shows minimal reliance on temporal context features. Long-term peak importance drops to just 1.5%, while short-term counts contribute only 6.4%. This indicates that sequential training develops focused pattern recognition optimised for specific traffic characteristics encountered during domain-specific fine-tuning phases.
+
+% \textbf{Combined Model Strategy (Temporal Pattern Integration):}
+
+% The Combined model employs a \textit{temporal pattern integration strategy}, balancing immediate signals with substantial temporal context utilisation. Short-term counts contribute 21.3% while long-term peaks add 21.1%, totaling 42.4% allocation to temporal features. This enables robust performance across diverse behavioral scenarios where peak detection requires understanding longer-term traffic evolution patterns.
+
+% The dramatically reduced peak ratio importance (3.4% versus 26.2%) suggests that single-phase training across heterogeneous data prevents over-specialisation on instantaneous peak characteristics, instead developing generalised pattern recognition capabilities.
+
+% \textbf{Mechanistic Performance Explanations:}
+
+% These feature utilisation differences directly explain observed performance patterns:
+
+% \begin{itemize}
+% \item \textbf{Streaming scenario dominance}: Fine-tuned models' 52.8% immediate signal focus aligns perfectly with streaming applications' discrete peak generation patterns, enabling superior F1-scores in adaptive bitrate detection tasks.
+
+% \item \textbf{Behavioral scenario robustness}: Combined models' 42.4% temporal feature utilisation provides necessary context for complex mixed-traffic scenarios where peak events require historical pattern understanding for accurate classification.
+
+% \item \textbf{Network capacity sensitivity}: Both models prioritize filtered throughput (~37%), confirming that fundamental capacity measurements remain essential regardless of algorithmic approach, while secondary feature strategies determine scenario-specific optimisation.
+% \end{itemize}
+
+\section{Conclusion}
+
+This paper addressed the challenge of detecting persistent capacity limitations that manifest as sustained throughput plateaus, often overlooked by traditional congestion control mechanisms. Such plateaus serve as indicators of user-level bandwidth saturation and enable estimation of the maximum achievable throughput, providing a more accurate reflection of achievable performance than nominal plan rates.
+
+To detect these conditions, we proposed a hybrid framework that combines heuristic peak detection with LSTM-based temporal modeling enhanced by Elastic Weight Consolidation (EWC). The framework achieved 92.1% accuracy and an 81.5% F1-score under controlled streaming scenarios, outperforming baseline machine learning methods by 13 percentage points in F1-score while maintaining interpretability. By reliably estimating maximum achievable throughput, the framework provides actionable insights for proactive bandwidth management, QoE optimization, and user-informed decisions such as upgrading to higher-tier network plans. Future work will explore real-time deployment and integration with automated network management systems.
+
+
+
+
+
+\bibliographystyle{ieeetr}
+\bibliography{refs}
+
+\vspace{12pt}
+\color{red}
+
+\end{document}
