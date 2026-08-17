@@ -1,0 +1,1416 @@
+% !TeX program = xelatex
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Consolas}
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3.2cm,right=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,longtable,tabularx,array,multirow}
+\usepackage{graphicx,float}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{url}
+\usepackage[hidelinks,unicode]{hyperref}
+
+\graphicspath{{figures/}}
+\definecolor{darkred}{RGB}{150,35,35}
+\setstretch{1.35}
+\setlength{\parindent}{1.2cm}
+\setlength{\parskip}{0.25em}
+\setlength{\emergencystretch}{3em}
+\setlist[itemize]{topsep=0.3em,itemsep=0.2em}
+\setlist[enumerate]{topsep=0.3em,itemsep=0.2em}
+\renewcommand{\arraystretch}{1.18}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small RNA 3D thesis}
+\fancyhead[R]{\small TBM, DRfold2, and Geometry Refinement}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{15pt}
+
+\hypersetup{
+  pdftitle={A Hybrid Template-Based and Deep-Learning Framework for RNA Three-Dimensional Structure Prediction},
+  pdfauthor={Do Thanh Dat},
+  pdfsubject={Master thesis draft},
+  pdfkeywords={RNA 3D, TBM, DRfold2, temporal leakage, Geometry Refinement, TM-score}
+}
+
+\newcommand{\cprime}{C1$^{\prime}$}
+\newcommand{\angstrom}{\text{\AA}}
+\newcommand{\todo}[1]{\textcolor{darkred}{\textbf{[TO COMPLETE: #1]}}}
+\newcommand{\T}{\mathrm{T}}
+\newcommand{\D}{\mathrm{D}}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+  {\large UNIVERSITY OF SCIENCE AND TECHNOLOGY OF HANOI}\\[0.25cm]
+  {\large ICT LAB}\\[1.6cm]
+  {\Large\bfseries DO THANH DAT}\\[1.5cm]
+  {\Large\bfseries
+  A HYBRID TEMPLATE-BASED AND DEEP-LEARNING\\
+  FRAMEWORK FOR RNA THREE-DIMENSIONAL\\
+  STRUCTURE PREDICTION WITH\\
+  TEMPORAL LEAKAGE CONTROL AND\\
+  Geometry Refinement
+  }\\[1.5cm]
+  {\large MASTER THESIS}\\[0.5cm]
+  {\large DATA SCIENCE}\\[1.6cm]
+  \begin{tabularx}{0.94\textwidth}{lX}
+  Supervisors: & NGUYEN MINH HUONG\\
+  & NGUYEN CAM LINH\\
+  Student ID: & 2440059
+  \end{tabularx}
+  \vfill
+  {\large HANOI, 2026}
+\end{center}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+\chapter*{Declaration}
+\addcontentsline{toc}{chapter}{Declaration}
+\todo{Insert the declaration required by the university template.}
+
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+\todo{Acknowledge supervisors, the degree program, colleagues, and family.}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Predicting the three-dimensional structure of RNA from sequence remains difficult
+because RNA can adopt multiple conformations and experimental structures remain limited
+\cite{zhang_experimental_review,rna_progress_review,state_of_rnart}. This thesis starts
+from the public method of the winning Stanford RNA 3D Folding team: retrieve related
+structures, transfer coordinates to the query, and supplement template models with a
+pretrained predictor. It then develops an auditable pipeline with time-safe TBM, two
+DRfold2 candidates, and Geometry Refinement. Five structures are produced without access
+to the native structure, matching the competition's best-of-five evaluation
+\cite{competition_paper,kaggle_competition,kaggle_top1}.
+
+The evidence is separated into local component studies and external hidden-set
+evaluation. The local protocol uses 60 temporally earlier RNAs to estimate geometric
+priors, 20 RNAs to select the configuration, and 20 family-disjoint newer RNAs for a
+single confirmatory evaluation. In the TBM component study, MMseqs2 returned a template
+for 8 of 20 calibration targets, whereas composite search produced candidates for all
+20. The composite score therefore increased retrieval coverage, although its full
+weighted form did not clearly outperform global alignment alone.
+
+On the 20 held-out RNAs, three TBM candidates reached a mean best-available TM-score of
+0.565, whereas two DRfold2 candidates reached 0.503. Keeping all five candidates raised
+the score to 0.588, an absolute gain of $0.023$ with a 95\% confidence interval of
+$[0.006,0.048]$. DRfold2 supplied the stronger candidate on 8 of 20 targets, indicating
+complementarity rather than higher average accuracy. Geometry Refinement increased
+\cprime{}-lDDT from 0.660 to 0.666 and reduced SW-RMSD9 from 2.651 to
+2.611~\angstrom{}, while TM-score changed from 0.588 to 0.587. The method therefore
+improved short-range accuracy without increasing global-fold accuracy.
+
+On Kaggle, the thesis TBM pipeline scored 0.601 public and 0.602 private, while the final
+pipeline scored 0.628 and 0.614. The final private score was 0.021 above John's public
+TBM-only notebook, 0.038 above his public hybrid notebook, and 0.036 above the winning
+team's 0.578 leaderboard score. These are pipeline-level comparisons because the systems
+differ in data, retrieval, pretrained sources, and postprocessing. Controlled local
+experiments identify candidate diversity as the main mechanism behind the TM-score gain,
+whereas Geometry Refinement provides a separate short-range benefit.
+
+\noindent\textbf{Keywords:} RNA three-dimensional structure, template-based modeling,
+DRfold2, TM-score, \cprime{}-lDDT, temporal safety, Geometry Refinement.
+
+\tableofcontents
+\listoftables
+\listoffigures
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+\label{chap:intro_en}
+
+\section{Background and motivation}
+
+RNA regulates gene expression, catalyzes reactions, recognizes molecular partners, and
+forms ribonucleoprotein complexes. These functions depend not only on the order of A, C,
+G, and U, but also on the base pairs, motifs, and three-dimensional arrangements formed
+by the chain \cite{cao_rna_functions,tinoco_folding,butcher_tertiary}. Secondary
+structure describes base pairing and local motifs, whereas tertiary structure captures
+how these elements interact in space \cite{tinoco_folding,butcher_tertiary}. An RNA 3D
+predictor must consequently recover both the global fold and its local geometry.
+
+X-ray crystallography, nuclear magnetic resonance, and cryogenic electron microscopy
+are major routes to experimental RNA structures. Each technique has a distinct domain
+of applicability, and cryo-EM has expanded access to large RNA-containing complexes;
+nevertheless, sample preparation, data acquisition, and model reconstruction remain
+resource-intensive \cite{zhang_experimental_review,ma_cryoem}. The PDB provides the
+global archive for experimentally determined macromolecular structures, but RNA remains
+less represented than protein and many RNA families lack close structural templates
+\cite{pdb_archive,zhang_experimental_review}. This gap motivates computational
+prediction from sequence.
+
+Current RNA 3D methods draw on physical principles, knowledge extracted from observed
+structures, and learned patterns. Template-based modeling can be highly accurate when a
+suitable structural relative is recognized, whereas deep models can produce candidates
+when direct template retrieval is weak \cite{rna_progress_review,drfold,rhofoldplus,
+drfold2}. Blind RNA-Puzzles and CASP assessments show that rankings vary across targets,
+lengths, fold novelty, and permitted information \cite{rna_puzzles,casp15,
+state_of_rnart}. A bank of candidates from different sources is therefore attractive
+when the evaluation retains the best of several predictions.
+
+The Stanford RNA 3D Folding competition provides a particularly relevant setting. More
+than 1,700 teams predicted 43 previously unreleased structures, and both leading systems
+used TBM. Post-competition analysis further showed that combining TBM and deep learning
+could outperform individual components on the same test set \cite{competition_paper}.
+This observation does not make every RNA a template-rich problem. Instead, it motivates
+two questions: how to retrieve structures without future information, and how to cover
+targets for which templates are inadequate.
+
+\section{Research problem}
+
+A TBM pipeline can receive an artificially high score if its library contains a
+structure released after the prediction cutoff. This temporal leakage uses information
+that is public at rerun time but unavailable in the original blind setting. RNA-Puzzles
+and CASP explicitly separate prediction from unreleased structures, making the data
+cutoff part of the scientific protocol \cite{rna_puzzles,casp15,competition_paper}.
+This thesis requires every template to predate its target and excludes the target's own
+reference PDB entries.
+
+Even under a valid cutoff, a single retrieval system may miss useful templates. MMseqs2
+supports fast, sensitive sequence search at database scale \cite{mmseqs2}, but structural
+relatives do not always present a sufficiently strong homolog for the fast retrieval
+path. We therefore complement MMseqs2 with a search heuristic based on global alignment,
+local alignment, sequence composition, and 3-mer overlap. Its purpose is to increase
+candidate recall rather than define an optimal biological score.
+
+TBM cannot provide a strong model for every target. DRfold2 is therefore introduced as
+an independent source rather than a replacement for templates. DRfold2 extends the line
+of work that combines end-to-end learning with learned geometric potentials for RNA 3D
+prediction \cite{drfold,drfold2}. Retaining three TBM and two DRfold2 models preserves
+template strength on easier targets while reserving two slots for folds that the deep
+model may recover better.
+
+Candidates from both branches may still contain irregular backbone distances, clashes,
+or local distortions. Previous nucleic-acid refinement tools show that better geometric
+quality does not guarantee systematic improvement in native RMSD \cite{qrnas,arena}.
+The refinement objective in this thesis is therefore narrow: improve local \cprime{}
+geometry while keeping TM-score within a predeclared preservation margin. Refinement is
+not presented as a second global-fold predictor.
+
+\section{Research questions}
+
+The thesis addresses three questions in the order in which information enters the
+pipeline:
+
+\begin{description}[leftmargin=1.4cm,style=nextline]
+  \item[RQ1.] What does composite search add to MMseqs2 in a time-safe TBM pipeline, and
+  which ranking components produce measurable changes?
+  \item[RQ2.] When candidate count is controlled, does DRfold2 complement the targets
+  missed by TBM?
+  \item[RQ3.] Does Geometry Refinement improve \cprime{}-lDDT and sliding-window RMSD
+  while preserving global TM-score?
+\end{description}
+
+These questions form a testable progression. RQ1 explains candidate availability, RQ2
+tests source diversity, and RQ3 identifies the structural scale affected by postprocessing.
+The leaderboard is used as an external assessment of the frozen pipeline, not as a
+substitute for local ablation.
+
+\section{Contributions}
+
+The thesis does not present the full pipeline as an invention built from scratch. Its
+starting points are John's public TBM notebook, which is associated with the winning
+team, and his public hybrid notebook combining Boltz, DRfold2, and template fallback
+\cite{kaggle_top1,kaggle_hybrid}. The thesis changes data controls, retrieval, ranking,
+candidate allocation, and postprocessing, and evaluates these changes separately.
+
+The first contribution is an auditable time-safe TBM branch that unifies fast and
+composite retrieval, enforces release-date and self-PDB filters, realigns candidates,
+ranks them by identity, coverage, and completeness, and transfers \cprime{} coordinates.
+Component studies evaluate each decision instead of inferring its value from a single
+final score.
+
+The second contribution is quantitative evidence of complementarity between TBM and
+DRfold2. The study reports each source, their union, and fixed-size candidate banks.
+Fixed-N comparisons partially separate genuine source effects from the mechanical
+benefit of adding more prediction slots.
+
+The third contribution is conservative Geometry Refinement evaluated with a held-out
+protocol. Priors are estimated on 60 RNAs, the configuration is selected on 20, and the
+method is frozen before opening 20 newer RNAs. Raw candidates, a simple smoothing
+baseline, the full objective, cumulative ablation, and leave-one-out ablation are all
+reported.
+
+Finally, the thesis provides a two-level explanation of leaderboard performance. The
+0.614 private score establishes external value for the complete pipeline, while local
+experiments examine candidate complementarity and Geometry Refinement separately. This
+separation avoids assigning the full Kaggle difference to a component that has not yet
+been isolated on the private set.
+
+\section{Scope and organization}
+
+The system predicts one \cprime{} coordinate per nucleotide and returns five structures
+per target. Confirmatory local analysis covers single-chain RNAs up to 96 nucleotides;
+Kaggle provides an external check on a different distribution that includes longer
+targets. Full-atom chemistry, ions, ligands, chemical modifications, and RNA-protein
+interfaces are outside the evaluated representation, although each can be important to
+RNA structure and function \cite{butcher_tertiary,zhang_experimental_review}.
+
+Chapter~\ref{chap:background_en} reviews the scientific and computational background.
+Chapter~\ref{chap:data_en} describes the data and leakage controls.
+Chapter~\ref{chap:method_en} presents the pipeline, and
+Chapter~\ref{chap:experiment_en} defines the experiments. Results are reported in
+Chapter~\ref{chap:results_en}, followed by discussion in
+Chapter~\ref{chap:discussion_en} and conclusions in Chapter~\ref{chap:conclusion_en}.
+
+\chapter{Background and Related Work}
+\label{chap:background_en}
+
+\section{RNA structural organization}
+
+RNA is a polymer with a sugar-phosphate backbone and four primary bases. Watson-Crick
+interactions, base stacking, noncanonical pairs, ions, and tertiary contacts contribute
+to structural stability \cite{tinoco_folding,butcher_tertiary}. Interactions that are
+distant in sequence can become adjacent in space, allowing a local motif error to alter
+the molecular arrangement. Local and global quality must therefore be measured with
+different metrics.
+
+This thesis uses the \cprime{} trace as a common representation. For a sequence of
+length $L$, a candidate is
+\begin{equation}
+X=[\mathbf{x}_1,\ldots,\mathbf{x}_L]^\T\in\mathbb{R}^{L\times3},
+\end{equation}
+where $\mathbf{x}_i$ is the \cprime{} coordinate of nucleotide $i$. This coarse-grained
+form matches the competition output \cite{competition_paper,kaggle_competition}. It
+does not encode base orientation or full chemistry, so conclusions are limited to fold
+and \cprime{}-trace quality.
+
+Rigid rotation and translation do not alter internal structure. Kabsch superposition
+finds the rotation that minimizes squared deviations for known correspondence
+\cite{kabsch}. lDDT avoids global superposition, whereas TM-score searches for a
+structural alignment and uses length-dependent normalization
+\cite{tm_score,lddt,usalign}. The metrics consequently respond to distinct scales of
+structural error.
+
+\section{Template-based modeling}
+
+TBM assumes that a known structure can provide a scaffold for a related query. A typical
+workflow retrieves templates, aligns query and template, transfers corresponding
+coordinates, builds unsupported regions, and refines the model
+\cite{rna_progress_review,competition_paper}. Accuracy depends on both recognizing a
+suitable structure and aligning residues correctly. High identity over a short fragment
+may be less useful than weaker similarity over nearly the complete target.
+
+Needleman-Wunsch solves global sequence alignment, whereas Smith-Waterman identifies the
+best local alignment \cite{needleman_wunsch,smith_waterman}. The two algorithms expose
+different signals: global alignment measures whole-chain agreement and local alignment
+recognizes conserved regions. The composite search combines both with composition and
+3-mer features to broaden retrieval.
+
+MMseqs2 enables sensitive search over large sequence collections
+\cite{mmseqs2}. Retrieval speed, however, is not equivalent to structural coverage. The
+experiments therefore report availability, conditional quality when a hit exists, and
+whole-cohort means separately. This prevents the 12 targets without MMseqs2 hits from
+silently disappearing from the evaluation.
+
+\section{Deep RNA structure prediction}
+
+Recent deep models learn sequence representations, geometric distributions, or
+coordinates for RNA. ARES applies geometric deep learning to structure scoring, DRfold
+combines end-to-end prediction with learned potentials, RhoFold+ uses an RNA language
+model, and DRfold2 develops a more efficient predictive pipeline
+\cite{ares,drfold,rhofoldplus,drfold2}. Although these approaches reduce direct
+dependence on a close template, their accuracy remains target and benchmark dependent
+\cite{state_of_rnart,drfold2}.
+
+DRfold2 is not framed as a universal replacement for TBM in this thesis. The sources
+have distinct failure modes: TBM depends on retrieval and alignment, whereas a pretrained
+model depends on its training distribution and learned evolutionary signals. A common
+candidate bank exploits this difference, and the held-out experiment tests whether the
+difference is useful in practice.
+
+\section{Structure refinement}
+
+Refinement searches the neighborhood of a candidate for structures that better satisfy
+geometric or energetic constraints. QRNAS optimizes nucleic-acid models with an extended
+energy function, and Arena reconstructs full-atom RNA from coarse-grained predictions
+\cite{qrnas,arena}. This literature distinguishes stereochemical regularization from
+movement toward the native structure. Better bonds and fewer clashes do not guarantee a
+better global fold.
+
+The refinement in this thesis follows the same distinction. A source restraint preserves
+the initial candidate; distance, angle, and torsion priors regularize the trace; and
+clash, kink, and radius-of-gyration terms target specific artifacts. Effectiveness is
+measured primarily with TM-score, \cprime{}-lDDT, and sliding-window RMSD rather than the
+optimized loss itself \cite{tm_score,lddt,usalign}.
+
+\section{Structural evaluation}
+
+TM-score was introduced as a length-normalized measure of structural similarity
+\cite{tm_score}, and US-align extends structural alignment to nucleic acids and
+macromolecular complexes \cite{usalign}. The competition scores each target using the
+best combination of five predictions and available native conformations, then averages
+over targets \cite{competition_paper}. In this thesis, best-of-five is an evaluation
+oracle only; inference never uses native structures to select a candidate.
+
+lDDT evaluates local distance preservation without global superposition \cite{lddt}.
+We compute it on \cprime{} atoms and denote it \cprime{}-lDDT. Sliding-window RMSD
+superposes each contiguous window by Kabsch and then measures coordinate deviation;
+windows of 9 and 15 nucleotides respond more strongly to local distortions than a
+31-residue window or whole-structure RMSD \cite{kabsch}. Together, these metrics separate
+local trace correction from global fold change.
+
+\section{Research gap}
+
+Benchmarking studies compare RNA 3D predictors, and the competition analysis shows that
+TBM remains competitive as structural databases grow
+\cite{state_of_rnart,competition_paper}. A leaderboard score, however, does not reveal
+which component produced the result, and a component study without a temporal cutoff
+can favor template search. The first gap is therefore a white-box study of TBM under a
+realistic release-date policy.
+
+The second gap concerns source complementarity under controlled candidate count. A
+five-model union can beat a three-model bank merely because it has more opportunities.
+This thesis reports both union and fixed-N comparisons. The final gap is confirmatory
+evaluation of Geometry Refinement against raw candidates, a simple baseline, independent
+metrics, and ablations. These gaps map directly to the three research questions.
+
+\chapter{Data and Evaluation Controls}
+\label{chap:data_en}
+
+\section{Data sources and splits}
+
+Kaggle distributes two main table types. Sequence tables contain one row per RNA with a
+target identifier, nucleotide sequence, temporal cutoff, and system description. Label
+tables contain one row per nucleotide with a position identifier and \cprime{}
+coordinates for one or more experimental conformations. This schema separates the input
+available to a predictor from the native structure used only for training or evaluation.
+Table~\ref{tab:kaggle_files_en} summarizes the frozen project snapshot.
+
+\begin{table}[H]
+\centering
+\caption{Principal Kaggle files and their roles in the pipeline.}
+\label{tab:kaggle_files_en}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{3.6cm}r p{5.1cm}p{5.4cm}}
+\toprule
+File & Rows & Meaning of one row & Role \\
+\midrule
+\path{train_sequences.csv} & 844 & One RNA and metadata & Initial public training set \\
+\path{train_sequences.v2.csv} & 5,135 & One RNA of 10-4,417 nucleotides & Source for temporal cohort selection \\
+\path{train_labels.v2.csv} & 3,677,095 & One nucleotide and \cprime{} coordinates & Public reference structures \\
+\path{validation_sequences.csv} & 12 & One 30-720 nt CASP15 RNA & Local development and reproduction \\
+\path{validation_labels.csv} & 2,515 & One nucleotide, up to 40 conformations & TM-score and local metrics \\
+\path{test_sequences.csv} & 12 & Mock table equal to validation & Notebook check before hidden rerun \\
+\path{sample_submission.csv} & 2,515 & Identifier and five XYZ predictions & Required 18-column output schema \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+The repository test table is the CASP15-based mock set. During scoring, the notebook
+receives hidden-test sequences at runtime but never receives their native coordinates.
+Sequences are therefore inference inputs, whereas native coordinates remain hidden until
+Kaggle scores the five predictions \cite{competition_paper,kaggle_competition}. The
+snapshot also contains 856 initial and 2,534 v2 MSA files. The final pipeline does not
+read these files directly; reporting them distinguishes available competition data from
+the inputs actually used by each branch.
+
+The template library is built from public PDB structures. The PDB is the single global
+archive for macromolecular structural data and supplies chain, sequence, coordinate, and
+release metadata \cite{pdb_archive}. The frozen project snapshot contains 8,670
+structure files, 23,869 RNA or RNA-DNA chains, and approximately 10.86 million residues.
+About 99.9\% of residues contain a \cprime{} coordinate. The MMseqs2 index has roughly
+20,844 valid chains, while the deduplicated composite library has 7,155 unique sequences.
+These counts describe the project artifact rather than the current PDB.
+
+The initial development set contains 12 CASP15 targets of 30 to 720 nucleotides. CASP is
+a blind assessment in which target structures are unreleased during prediction, and its
+RNA targets have an official independent assessment \cite{casp15}. Because this cohort
+is small and intentionally difficult, it is used for development, leakage illustration,
+and deployment checks rather than as the only confirmatory evidence.
+
+The principal study uses 100 RNAs released between January 2024 and March 2025. Every
+target has three blindly generated TBM candidates and two DRfold2 candidates. The data
+are split temporally into 60 train, 20 calibration, and 20 validation RNAs as shown in
+Table~\ref{tab:splits_en}. An audit found no sequence group or family group crossing a
+split.
+
+\begin{table}[H]
+\centering
+\caption{Data split for Geometry Refinement and complementarity analysis.}
+\label{tab:splits_en}
+\begin{tabularx}{\textwidth}{l r p{4.2cm} X}
+\toprule
+Split & RNAs & Release-date range & Role \\
+\midrule
+Train & 60 & 2024-01-10 to 2024-12-04 & Estimate geometric priors \\
+Calibration & 20 & 2024-12-11 to 2025-01-08 & Select and freeze configuration \\
+Validation & 20 & 2025-01-15 to 2025-03-26 & One confirmatory evaluation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The dominant feature of Table~\ref{tab:splits_en} is role separation. Train creates
+statistics, calibration determines hyperparameters, and validation measures the frozen
+method. No validation result is used to revise the configuration. This protocol cannot
+remove every distribution bias, but it prevents the same target from selecting and
+confirming the method.
+
+Kaggle supplies the external evaluation layer. The competition requires five predictions
+per RNA, scores them with US-align on \cprime{} atoms, and reports an aggregate hidden-set
+score \cite{competition_paper,kaggle_competition}. We retain public and private scores,
+the execution manifest, and the public CSV hash. Because native coordinates and
+per-target scores remain unavailable, the leaderboard evaluates the complete pipeline
+rather than replacing local component ablation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.96\textwidth]{evaluation_protocol.pdf}
+\caption{Two-level evidence protocol. Local splits are separated by time and family;
+Kaggle supplies an external hidden-set check of the complete pipeline.}
+\label{fig:evaluation_protocol_en}
+\end{figure}
+
+\section{Temporal and self-template exclusion}
+
+For target $q$ with cutoff $t_q$, template $s$ is valid only if
+\begin{equation}
+\operatorname{release}(s)<t_q
+\quad\text{and}\quad
+\operatorname{PDB}(s)\notin\mathcal{E}_q,
+\label{eq:temporal_gate_en}
+\end{equation}
+where $\mathcal{E}_q$ contains the target's excluded PDB entries. A strict inequality
+avoids ambiguity for same-day releases. Missing cutoffs or release dates should fail
+closed rather than default to an admissible template.
+
+Figure~\ref{fig:leakage_en} uses the early CASP15 pipeline to illustrate this risk. Mean
+best-of-five TM was 0.161 with the temporal filter, 0.639 without it, and 0.957 when the
+target's own template was deliberately allowed. These values predate composite search
+and are not directly comparable to the later 0.307 TBM result. Their sole purpose is to
+quantify the inflation caused by an invalid PDB snapshot \cite{rna_puzzles,casp15}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.77\textwidth]{leakage_diagnostic.pdf}
+\caption{Evaluation inflation from template leakage on the development CASP15 cohort.
+The unsafe variants are diagnostics only.}
+\label{fig:leakage_en}
+\end{figure}
+
+\section{Label-use policy}
+
+Native labels are read only by local evaluation scripts after candidate generation.
+Within the complementarity analysis, an ``oracle'' is a maximum used to measure the
+available ceiling of a candidate bank; it is never an inference-time selector. Geometry
+refinement receives only source coordinates, source confidence, and aggregate priors.
+For each candidate, the reference conformation used for local metrics is fixed from the
+raw candidate so that refinement cannot benefit by switching to an easier native.
+
+An exact-sequence audit of CASP15 found two targets in the supplied DRfold2 training
+manifest: \texttt{R1128} and \texttt{R1138}. Pretrained results on this cohort are
+therefore developmental and require a sensitivity analysis excluding both RNAs. The
+principal 100-RNA cohort is time- and family-separated with no sequence or family group
+crossing a split, although the thesis does not claim absence of every remote relationship
+to RNA language-model pretraining data.
+
+The public execution manifest records \texttt{native\_labels\_used: false}; its mock
+output has 2,515 rows, 18 columns, correct identifiers, and finite coordinates. The
+public-file SHA-256 is
+\begin{center}
+\scriptsize\ttfamily 54fe6e6598a1c2924ef7cbf03482f7ecf3c2e52e8726a1609569f777b1ac8c9a
+\end{center}
+These checks establish schema and inference integrity on the 12 public RNAs. Kaggle
+produces the private score through a hidden rerun, so the 2,515-row file is not presented
+as the hidden output. Equation~\ref{eq:temporal_gate_en} governs template validity in
+both executions.
+
+\section{Statistical unit}
+
+The RNA target is the independent unit for every confidence interval. Candidates from
+one target share a sequence, native structure, and generation process, and are not
+treated as independent observations. For target effects $d_i$, we report
+\begin{equation}
+\bar d=\frac{1}{n}\sum_{i=1}^{n}d_i
+\end{equation}
+and a percentile interval from 10,000 bootstrap samples of targets with replacement.
+Bootstrap resampling provides a nonparametric estimate of uncertainty from the observed
+sample \cite{bootstrap}. The random seed is fixed at 2025.
+
+Effects are oriented so that positive values indicate improvement. TM-score and lDDT
+use new minus baseline, whereas RMSD, clash, and deviation use baseline minus new. Tables
+also report medians and improve, tie, and regress counts when available, preventing a
+mean effect from hiding systematic failures.
+
+\chapter{Proposed Pipeline}
+\label{chap:method_en}
+
+\section{Overview}
+
+The pipeline accepts an RNA sequence and temporal cutoff, then generates candidates from
+two independent branches. TBM returns three ranked structures, and DRfold2 returns two
+structures by internal confidence. When DRfold2 exceeds its resource limit, TBM fills
+the unused positions. Geometry Refinement processes each candidate independently for
+300 steps, and the writer emits exactly five \cprime{} traces.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{pipeline_overview.pdf}
+\caption{Final pipeline. Source diversity is created before candidate-wise refinement,
+with no native-guided selection or coordinate fusion.}
+\label{fig:pipeline_en}
+\end{figure}
+
+The design follows two principles. First, diversity is introduced at the source level
+through three TBM and two DRfold2 candidates. Second, refinement remains close to each
+source to avoid disrupting an already correct fold. The two principles address distinct
+failure modes and are evaluated separately.
+
+\section{Time-safe TBM}
+
+\subsection{Dual-path retrieval}
+
+The first path runs MMseqs2 over the template-sequence index. MMseqs2 uses accelerated
+filters and sensitive alignment to search large collections \cite{mmseqs2}. Raw hits
+are normalized to chain keys, identity, alignment coverage, and release dates. Hits that
+lack \cprime{} coordinates or violate temporal validity are removed before ranking.
+
+The second path scans the deduplicated library with
+\begin{equation}
+S_{\mathrm{comp}}(q,s)=0.4G(q,s)+0.3L(q,s)+0.2F(q,s)+0.1K_3(q,s),
+\label{eq:composite_en}
+\end{equation}
+where $G$ is global-alignment similarity, $L$ is local-alignment similarity, $F$ measures
+sequence-composition agreement, and $K_3$ is 3-mer overlap. The alignment terms use the
+Needleman-Wunsch and Smith-Waterman formulations
+\cite{needleman_wunsch,smith_waterman}. The weights are frozen heuristics, and their
+sensitivity is tested by ablation rather than assigned a probabilistic interpretation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{tbm_flow.pdf}
+\caption{TBM flow. MMseqs2 prioritizes clear homologs, composite search broadens recall,
+and the safety gate precedes realignment and coordinate transfer.}
+\label{fig:tbm_flow_en}
+\end{figure}
+
+The two lists are merged by chain key before temporal and self-PDB filtering. The design
+in Figure~\ref{fig:tbm_flow_en} keeps the roles separate: MMseqs2 is not considered
+inaccurate when no hit is returned, and composite search is not considered accurate
+merely because it always returns a candidate. Availability and conditional quality are
+reported separately.
+
+\subsection{Realignment and ranking}
+
+Every valid hit is globally realigned with match 2, mismatch $-1$, gap opening $-6$, gap
+extension $-0.5$, and unpenalized terminal gaps. This final alignment establishes one
+correspondence for coordinate transfer. Let $I$ denote identity on aligned positions,
+$C_q$ the query fraction with supported coordinates, and $C_s$ template completeness.
+The rank score is
+\begin{equation}
+S_{\mathrm{rank}}=I\,C_q\,C_s.
+\label{eq:rank_en}
+\end{equation}
+The production pipeline sorts directly by the complete product $I C_q C_s$; completeness
+is therefore a ranking component rather than a tie-breaker. For example, a 0.900-identity
+hit covering 0.400 of the query scores 0.360, whereas a hit with identity 0.750, coverage
+0.950, and completeness 0.950 scores 0.677. The second hit ranks higher because it
+supports most of the RNA. Distinct PDB entries are selected first, followed by backfill
+from the remaining chains.
+
+The rank score is not a calibrated probability of correctness. It orders candidates
+without native access. Multiplication by $C_q$ is especially useful when a high-identity
+local hit covers only a small part of the query, as shown by the reranking experiment in
+Chapter~\ref{chap:results_en}.
+
+\subsection{Coordinate transfer and gap completion}
+
+For aligned nucleotides, the template \cprime{} coordinate is copied to the corresponding
+query position. Directly transferred positions retain higher confidence, whereas gaps
+receive lower confidence. Internal gaps are interpolated between anchors; when the
+anchors are too close for the number of missing steps, a perpendicular sinusoidal offset
+prevents the trace from collapsing onto a short line. Terminal gaps follow the nearest
+backbone direction, and a deterministic de novo trace provides finite coordinates when
+anchors are unavailable.
+
+Curved filling makes the candidate valid before refinement; it does not reconstruct a
+new motif from native information. The experiment therefore bins gaps by length and
+measures SW-RMSD9 only at unsupported residues. Evidence of improvement is confined to
+gaps of 9 to 20 nucleotides.
+
+\section{DRfold2 branch}
+
+DRfold2 receives the RNA sequence and runs the pretrained \texttt{cfg\_97} checkpoint to
+produce \texttt{.ret} files containing coordinates, predicted geometry, and residue-level
+confidence. The pipeline averages residue confidence to rank model outputs, runs Arena
+to reconstruct a PDB, reads exactly one \cprime{} atom per nucleotide, and retains the
+two highest-ranked valid candidates. Candidates with the wrong length or non-finite
+coordinates are rejected. The model is not fine-tuned on the 100-RNA cohort
+\cite{drfold,drfold2}.
+
+Unlike John's public hybrid notebook, this branch does not run Boltz or pass a Boltz
+structure to DRfold2 as an AF3-style restraint. DRfold2 generates direct checkpoint
+candidates, while TBM derives candidates from templates; the two lists meet only when
+the five output slots are assembled. This operational independence does not imply that
+pretraining is unrelated to the PDB.
+
+The frozen implementation limits DRfold2 to 600 nucleotides. During public execution it
+ran on 11 of 12 targets and skipped one 720-nucleotide sequence, which retained five TBM
+candidates. The fallback rule was fixed before hidden evaluation.
+
+\section{Geometry Refinement}
+
+\subsection{Objective}
+
+John's TBM notebook applies a rule-based comparator before adding random diversity. It
+moves adjacent \cprime{} distances toward 5.5-6.5~\angstrom{}, separates clashes below
+3.8~\angstrom{}, and gently adjusts selected complementary bases toward
+10.5~\angstrom{}. The rules are applied once with confidence-dependent strength. John's
+hybrid notebook also includes DRfold2 Optimization and Arena, but these belong to
+pretrained candidate generation rather than a common post-refiner. Geometry Refinement
+in this thesis operates after a complete TBM or DRfold2 \cprime{} candidate exists.
+
+Given source candidate $X^{(0)}$, the method finds a nearby $X$ that reduces
+\begin{equation}
+\mathcal{L}(X)=
+\lambda_s\mathcal{L}_{\mathrm{source}}+
+\alpha(c)\left(
+\lambda_b\mathcal{L}_{\mathrm{backbone}}+
+\lambda_a\mathcal{L}_{\mathrm{angle}}+
+\lambda_t\mathcal{L}_{\mathrm{torsion}}+
+\lambda_c\mathcal{L}_{\mathrm{clash}}+
+\lambda_k\mathcal{L}_{\mathrm{kink}}+
+\lambda_r\mathcal{L}_{R_g}\right),
+\label{eq:geometry_objective_en}
+\end{equation}
+where $c$ is whole-candidate confidence and $\alpha(c)=0.2+0.8(1-c)$. High-confidence
+candidates receive weaker geometric correction, whereas uncertain candidates can move
+further. The source term limits overall displacement and the remaining terms address
+specific local distortions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{refinement_mechanism.pdf}
+\caption{Geometry Refinement mechanism. Local distortion is regularized while a source
+restraint preserves the overall arrangement.}
+\label{fig:refinement_mechanism_en}
+\end{figure}
+
+\subsection{Geometric priors}
+
+Adjacent distance is $d_i=\lVert\mathbf{x}_{i+1}-\mathbf{x}_i\rVert_2$. On the 60 train
+RNAs, its mean is 6.090~\angstrom{}, standard deviation is 1.110~\angstrom{}, and median
+is 5.660~\angstrom{}. The nonadjacent \cprime{} clash threshold is 4.180~\angstrom{}, and
+the radius-of-gyration prior is
+\begin{equation}
+\widehat R_g(L)=5.180L^{0.346}.
+\end{equation}
+These values are empirical priors of the frozen project snapshot, not universal physical
+constants. They are estimated only on train and held fixed thereafter.
+
+The backbone term does not use histogram likelihood. Each distance is standardized as
+$e_i=(d_i-\mu)/\sigma$, and Huber loss is applied to $e_i$. Small deviations are treated
+quadratically and large outliers linearly, preserving a repair gradient without allowing
+one long bond to dominate the optimization.
+
+Angles over three consecutive points and torsions over four points use negative log
+likelihood from train histograms. Priors are separated into \emph{pair-like} and
+\emph{unpaired} contexts. A nucleotide is marked pair-like when it forms AU, UA, GC, CG,
+GU, or UG with a nucleotide at least four sequence positions away and their source
+\cprime{} distance lies within $10.5\pm2.5$~\angstrom{}. This is a native-blind geometric
+proxy, not an experimental base-pair assignment.
+
+The kink guard uses a 70-degree reporting threshold and a 5-degree safety margin. It
+prevents a new angle from becoming sharper than 75 degrees without forcing an existing
+bad kink completely straight. Clash loss separates close nonadjacent points, while the
+$R_g$ Huber term limits collapse and excessive expansion.
+
+Let $h_\delta(e)$ denote Huber loss. The confidence-weighted source restraint is
+\begin{equation}
+\mathcal{L}_{\mathrm{source}}=
+\frac{\sum_{i=1}^{L}w_i\,
+h_\delta\!\left(\lVert\mathbf{x}_i-\mathbf{x}^{(0)}_i\rVert_2\right)}
+{\sum_{i=1}^{L}w_i}.
+\end{equation}
+Weights are larger for template-supported or high-confidence residues, allowing gaps and
+weak regions to move more than reliable scaffolds. The local confirmatory configuration
+uses 300 Adam steps, learning rate 0.040, gradient clipping 10.000, and source weight
+1.500. The Kaggle hybrid also uses 300 steps but its production source weight is 3.000;
+the private score is therefore not presented as an isolated test of the exact local
+1.500 configuration.
+
+\subsection{Baseline and output}
+
+The simple baseline contains only source restraint and backbone smoothing. John's
+rule-based method supplies a second inherited comparator. Frozen results currently
+compare the full method with raw and simple candidates; the 20-RNA head-to-head against
+John's rules is specified as an additional experiment and is not used to support a claim
+in version 3.
+
+After refinement, each candidate is checked for shape, finite values, and residue order.
+The writer emits five coordinate triples per nucleotide in exact sample-ID order. The
+final pipeline contains no native-guided router, source selection, or coordinate fusion.
+
+\section{Algorithm summary}
+
+\begin{enumerate}
+  \item Read sequence $q$, temporal cutoff $t_q$, and excluded PDB identifiers.
+  \item Retrieve MMseqs2 and composite hits, then merge by chain key.
+  \item Remove hits that violate Equation~\ref{eq:temporal_gate_en}.
+  \item Realign, rank, and build three TBM candidates.
+  \item Run DRfold2 when $L\leq600$ and retain two candidates by model confidence.
+  \item Fill unavailable DRfold2 positions with TBM, maintaining five candidates.
+  \item Refine each candidate independently for 300 steps.
+  \item Validate identifiers, dimensions, uniqueness, and finite coordinates, then write CSV.
+\end{enumerate}
+
+Native labels do not appear in this inference path. All pre-output decisions use sequence,
+template metadata, pretrained confidence, and aggregate priors. Oracle scores are
+computed only after generation for analysis.
+
+\chapter{Experimental Design}
+\label{chap:experiment_en}
+
+\section{Testing strategy}
+
+Each research question is assigned a distinct experiment and maximum claim. RQ1 uses the
+20 calibration RNAs to study retrieval sources, composite terms, reranking, and gap
+completion. RQ2 uses the 20 validation RNAs to compare candidate banks before refinement.
+RQ3 follows the full 60/20/20 protocol and opens validation only after configuration
+freeze. This separation prevents exploratory TBM analyses from serving as confirmatory
+refinement evidence.
+
+\begin{table}[H]
+\centering
+\caption{Mapping from research questions to experiments and claims.}
+\label{tab:rq_map_en}
+\begin{tabularx}{\textwidth}{p{1.0cm}X X}
+\toprule
+RQ & Primary comparison & Supported claim \\
+\midrule
+RQ1 & MMseqs2, composite, union; component and reranking ablations & Composite expands availability; ranking effects are measured by component \\
+RQ2 & 3T, 2D, union; fixed-N allocation & TBM and DRfold2 complement one another by target \\
+RQ3 & Raw, source+backbone, full refinement; cumulative and leave-one-out analyses & Refinement improves local trace within a TM preservation margin \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Table~\ref{tab:rq_map_en} constrains interpretation before results are examined. RQ3 does
+not hypothesize an increase in TM-score. The frozen gate requires mean C1'-lDDT to
+increase, at least two of SW-RMSD9/15/31 to decrease, and TM-score loss to remain no worse
+than 0.005. Confidence intervals and target-level improve/regress counts are reported even
+when the gate passes.
+
+\section{Inherited comparators and comparison policy}
+
+Three John references are kept separate. The TBM-only notebook is the public method that
+the competition paper calls a Kaggle-winning algorithm; the hybrid notebook is a public
+Boltz, DRfold2, and template-fallback implementation; and 0.578 is the final score of team
+\texttt{john}. The public hybrid score of 0.576 is not treated as the exact winning
+submission \cite{competition_paper,kaggle_top1,kaggle_hybrid}.
+
+On CASP15, the thesis retains an unfiltered reproduction to diagnose leakage and a
+time-safe reproduction for method comparison. On the principal 20-RNA cohort, a fair
+refinement comparator must receive exactly the same raw candidates. John's rule-based
+refiner is specified as the inherited comparator; earlier CASP15 results with the
+project's previous gradient refiner do not substitute for this head-to-head test.
+
+\section{TBM ablations}
+
+The search-source study compares MMseqs2-only, composite-only, and their union. MMseqs2
+TM is conditional on returning a hit, and availability is reported alongside it.
+Composite and union means use all 20 targets. This avoids comparing eight easier targets
+with a full 20-target cohort as if the samples were equivalent.
+
+The component study compares $G$, $G+L$, $G+L+F$, an equal four-term score, the full
+weighted score, and $\pm25\%$ perturbations to individual weights. Useful recall at TM
+0.45 is measured within a common candidate pool as an internal diagnostic. An
+unsafe-date variant quantifies leakage and is never considered a valid method.
+
+The reranking study begins with identity, then adds query coverage, template completeness,
+and distinct-PDB selection. Gap completion compares linear and curved interpolation in
+length bins 1-3, 4-8, 9-20, and above 20 nucleotides. Gaps within a target are averaged
+before target-level bootstrap.
+
+\section{Complementarity analysis}
+
+Source candidates are evaluated before refinement. For target $i$, let $T_i$ contain the
+three TBM scores and $D_i$ the two DRfold2 scores. The source and union ceilings are
+\begin{equation}
+O_T(i)=\max T_i,\quad O_D(i)=\max D_i,\quad
+O_U(i)=\max(T_i\cup D_i).
+\end{equation}
+The union gain $O_U-O_T$ measures the available value of two additional DRfold2 models.
+Because the union has more candidates, it combines source diversity and count effects.
+
+Fixed-N comparisons control this issue. At $N=2$, $2T$ is compared with $1T+1D$; at
+$N=3$, $3T$ is compared with $2T+1D$. Candidates are ordered by blind source confidence.
+The cache contains only three TBM and two DRfold2 models per target, so a complete
+five-slot sweep from $5T$ to $5D$ is not identifiable without duplicating candidates.
+
+\section{Geometry-refinement analysis}
+
+Train estimates priors only. On calibration, cumulative ablation adds source, backbone,
+angle, torsion, clash, kink, and $R_g$ terms, while leave-one-out analysis removes each
+term from the full objective. The selected configuration satisfies local improvement and
+TM preservation, then is serialized before validation.
+
+Validation compares raw candidates, simple source-plus-backbone smoothing, and the full
+objective. Primary local metrics are \cprime{}-lDDT, SW-RMSD9, and SW-RMSD15. Best-of-five
+TM is the global safeguard, with whole-structure C1 RMSD and SW-RMSD31 as secondary
+measures. Backbone deviation, clash, sharp kink, angle NLL, torsion NLL, and $R_g$ error
+are mechanism diagnostics because they lie in or near the objective.
+
+John's rule-based refiner will be evaluated on the same raw candidates with the same
+fixed native conformation. Until that result is available, version 3 does not claim that
+Geometry Refinement outperforms John's refiner.
+
+A fixed-$N=3$ factorial forms four cells: $3T$ raw, $3T$ refined, $2T+1D$ raw, and
+$2T+1D$ refined. It estimates source-bank gain with refinement off, refinement effect
+within each bank, and the interaction. This design directly tests whether refinement can
+explain the hybrid TM increase.
+
+\section{External evaluation and reproducibility}
+
+Two thesis submissions have scores: 0.602 private for TBM and 0.614 for the hybrid. They
+establish deployment performance but are not a one-variable ablation, because the TBM
+submission uses an earlier baseline refiner while the hybrid changes both candidate bank
+and refinement. Their 0.012 difference is therefore a complete-pipeline effect.
+
+A preregistered private factorial will generate four outputs from one candidate run:
+5T raw, 5T refined, 3T+2D raw, and 3T+2D refined. Version 3 does not fabricate these
+unavailable scores and does not assign the existing Kaggle gain separately to DRfold2 or
+refinement.
+
+Repository scripts generate all local tables. Bootstrap seed is 2025, and frozen
+configurations, prior provenance, and candidate caches accompany the artifacts. Audits
+require one metadata row per target, no cross-split groups, exactly three TBM and two
+DRfold2 candidates per target, finite coordinates, and a fixed reference conformation
+between raw and refined evaluation.
+
+\chapter{Results}
+\label{chap:results_en}
+
+\section{RQ1: TBM retrieval and ranking}
+
+\subsection{Retrieval sources}
+
+MMseqs2 found a template for 8 of 20 calibration RNAs, an availability of 40\%. On those
+eight targets, top-1 TM was 0.660 and best-of-five TM was 0.678. Composite search
+produced candidates for all 20 targets but reached a lower whole-cohort mean of 0.376.
+The union maintained full availability and increased the mean to 0.390.
+
+\begin{table}[H]
+\centering
+\caption{Retrieval-source results on 20 calibration RNAs. MMseqs2 quality is conditional
+on the eight targets with a hit.}
+\label{tab:search_source_en}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrr}
+\toprule
+Source & Targets with hits & Availability & Best-of-five TM when available \\
+\midrule
+MMseqs2-only & 8/20 & 0.40 & 0.678 \\
+Composite-only & 20/20 & 1.00 & 0.376 \\
+MMseqs2 + composite & 20/20 & 1.00 & 0.390 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+The sources have distinct roles. MMseqs2 candidates are strong when a homolog is
+recognized, while composite search fills the remaining 12 targets at lower average
+precision. The union gained 0.014 over composite-only, although its interval
+$[-0.004,0.043]$ included zero. The clearest benefit is therefore availability,
+not uniform superiority of composite hits.
+
+\subsection{Composite components}
+
+The full weighted score reached 0.376, whereas global alignment alone reached
+0.381. The G-only advantage was 0.005 with confidence interval
+$[-0.002,0.015]$. Perturbing individual weights by $\pm25\%$ produced scores from
+0.375 to 0.377. The heuristic is locally stable but does not clearly outperform
+global alignment on this cohort.
+
+The $G+L+F$ variant nevertheless had useful recall 0.676 compared with 0.635 for
+G-only within the common hit pool. This pattern is consistent with a recall heuristic:
+additional signals introduce distinct candidates even when mean oracle TM does not rise
+clearly. Useful recall remains an internal diagnostic rather than a replacement for TM.
+
+Removing the temporal filter increased mean TM from 0.376 to 0.403, a change of
+0.027. The interval $[-0.000,0.071]$ was wide and 15 targets were unchanged.
+This is not evidence for an unsafe method; it shows that a few leaked templates can shift
+the cohort mean.
+
+\subsection{Reranking and gap completion}
+
+Adding query coverage to identity increased top-five TM from 0.372 to 0.388, a
+gain of 0.016 with interval $[-0.004,0.045]$. Completeness and distinct-PDB
+selection did not change oracle TM on this cohort, although the latter increased the mean
+number of distinct PDB sources. Coverage is therefore the dominant ranking signal in
+Table~\ref{tab:tbm_rerank_en}, while later rules primarily support robustness.
+
+\begin{table}[H]
+\centering
+\caption{TBM reranking ablation.}
+\label{tab:tbm_rerank_en}
+\begin{tabular}{lrrr}
+\toprule
+Ranking & Top-1 TM & Top-3 TM & Top-5 TM \\
+\midrule
+Identity only & 0.334 & 0.364 & 0.372 \\
+Identity $\times$ coverage & 0.364 & 0.378 & 0.388 \\
+$+\,$template completeness & 0.364 & 0.378 & 0.388 \\
+$+\,$distinct PDB & 0.364 & 0.378 & 0.388 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Curved gap filling showed clear improvement only for gaps of 9 to 20 nucleotides. It
+reduced SW-RMSD9 by 0.037~\angstrom{} with interval
+$[0.009,0.068]$. Bins 1-3 and 4-8 showed no clear difference from linear filling,
+and gaps above 20 were unchanged. The curve has enough span to avoid a straight bridge
+in the middle bin but insufficient information to reconstruct very long missing motifs.
+
+\subsection{Comparison with the inherited TBM pipeline}
+
+On the same 12 CASP15 RNAs under the same time-safe condition, the local reproduction of
+John's TBM notebook reached 0.298, whereas the thesis TBM pipeline reached 0.307. The
+absolute difference was 0.009, and the thesis pipeline performed better on 9 of 12 RNAs.
+This comparison supports the combined TBM changes, including dual retrieval, reranking,
+and candidate handling. It does not assign the full difference to any one change; the
+preceding ablations provide the component-level evidence.
+
+\section{RQ2: Source complementarity}
+
+Before refinement, the best of three TBM candidates reached a mean TM-score of 0.565,
+whereas the best of two DRfold2 candidates reached 0.503. Keeping all five candidates
+increased the mean to 0.588. The absolute gain over TBM was 0.023, with a 95\% confidence
+interval of $[0.006,0.048]$. TBM supplied the stronger candidate for 12 of 20 RNAs, while
+DRfold2 won on the other eight. The pretrained model was therefore useful because it
+covered cases missed by the template bank, not because it had a higher average score.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{complementarity_results.pdf}
+\caption{Candidate-bank complementarity on 20 validation RNAs. The union interval is
+obtained by target-level bootstrap.}
+\label{fig:complementarity_en}
+\end{figure}
+
+The DRfold2 source mean was 0.063 below TBM. Moreover, the best of five candidates has a
+mechanical advantage over the best of three because it has two additional chances to
+contain a good structure. Fixed-size comparisons were therefore required to separate
+source diversity from candidate-count advantage.
+
+With two prediction slots, $1T+1D$ exceeded $2T$ by 0.031, with interval
+$[0.003,0.068]$. With three slots, $2T+1D$ exceeded $3T$ by 0.016, although the interval
+$[-0.002,0.041]$ included zero and ten RNAs tied. The strongest evidence is therefore the
+two-slot comparison. Once three TBM candidates already provide some diversity, the added
+value of replacing one of them with DRfold2 becomes smaller and less certain.
+
+\begin{table}[H]
+\centering
+\caption{Candidate allocation with Geometry Refinement disabled.}
+\label{tab:allocation_en}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrl}
+\toprule
+Comparison & Baseline mean & Hybrid mean & Mean gain and 95\% CI \\
+\midrule
+$2T$ versus $1T+1D$ & 0.549 & 0.580 & $+0.031$ $[0.003,0.068]$ \\
+$3T$ versus $2T+1D$ & 0.565 & 0.581 & $+0.016$ $[-0.002,0.041]$ \\
+$3T$ versus $3T+2D$ & 0.565 & 0.588 & $+0.023$ $[0.006,0.048]$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+Table~\ref{tab:allocation_en} distinguishes fixed-size and production-bank effects. In
+both the two-slot and three-slot comparisons, replacing one TBM candidate with DRfold2
+increased the mean, but only the two-slot confidence interval lay entirely above zero.
+
+\section{RQ3: Geometry Refinement}
+
+\subsection{Confirmatory results}
+
+Full refinement increased \cprime{}-lDDT from 0.660 to 0.666, an absolute gain of 0.007
+with interval $[0.001,0.013]$; 12 of 20 RNAs improved. SW-RMSD9 decreased from 2.651 to
+2.611~\angstrom{}, a 0.040~\angstrom{} error reduction with interval $[0.029,0.052]$;
+19 of 20 RNAs improved. SW-RMSD15 decreased by 0.017~\angstrom{}, with interval
+$[0.001,0.031]$. These three results consistently indicate a short-range effect.
+
+Global TM-score changed from 0.588 to 0.587, or $-0.001$, with interval
+$[-0.003,0.000]$. The unrounded interval contained zero, and the mean change remained
+inside the predeclared 0.005 preservation margin. Whole-structure C1 RMSD and SW-RMSD31
+showed no clear change. Refinement therefore passed the local-quality gate but did not
+provide evidence of a better global fold.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.94\textwidth]{geometry_results.pdf}
+\caption{Confirmatory geometry-refinement effects. Score changes and RMSD reductions use
+separate axes and units.}
+\label{fig:geometry_results_en}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Raw and full Geometry Refinement on 20 validation RNAs.}
+\label{tab:geometry_main_en}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrl}
+\toprule
+Metric & Raw & Refined & Improvement & 95\% CI \\
+\midrule
+Best-of-five TM & 0.588 & 0.587 & $-0.001$ & $[-0.003,0.000]$ \\
+\cprime{}-lDDT & 0.660 & 0.666 & $+0.007$ & $[0.001,0.013]$ \\
+SW-RMSD9 (\angstrom{}) & 2.651 & 2.611 & $+0.040$ & $[0.029,0.052]$ \\
+SW-RMSD15 (\angstrom{}) & 4.273 & 4.256 & $+0.017$ & $[0.001,0.031]$ \\
+Backbone deviation (\angstrom{}) & 1.040 & 0.786 & $+0.254$ & diagnostic \\
+Clash per residue & 0.065 & 0.023 & $+0.042$ & diagnostic \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+The dominant pattern in Table~\ref{tab:geometry_main_en} is stronger improvement at
+shorter spatial scales. SW-RMSD9 is the most consistent effect, SW-RMSD15 is smaller,
+and SW-RMSD31 and global RMSD are inconclusive. This scale gradient matches the design:
+refinement adjusts neighboring relationships rather than rearranging the fold.
+
+\subsection{Simple baseline and ablation}
+
+Source-plus-backbone smoothing increased lDDT by 0.008, close to the full method's gain
+of 0.007. The direct full-minus-simple difference was $-0.001$, with interval
+$[-0.003,0.001]$, so the full objective did not outperform the simple baseline on lDDT.
+However, the full method reduced SW-RMSD9 by a further 0.031~\angstrom{}, with interval
+$[0.020,0.044]$, and avoided worsening the angle, torsion, clash, and kink diagnostics.
+
+Leave-one-out analysis linked terms to mechanisms. Removing backbone nearly eliminated
+the lDDT gain; removing angle or torsion degraded the corresponding NLL; removing kink
+increased sharp bends; and removing clash or $R_g$ worsened clash diagnostics. These
+results show that the objective behaves as designed, but optimized diagnostics are not
+treated as independent evidence. The primary claim remains based on lDDT and
+sliding-window RMSD.
+
+\subsection{Source-by-refinement factorial}
+
+Within the $3T$ bank, refinement changed TM by $-0.006$, with interval
+$[-0.015,0.001]$. Within $2T+1D$, the effect was $-0.003$, with interval
+$[-0.005,0.000]$. The interaction was $+0.003$, with an interval containing
+zero. Table~\ref{tab:factorial_en} therefore shows a positive source-bank effect before
+refinement and no positive TM effect from refinement in either bank.
+
+\begin{table}[H]
+\centering
+\caption{Fixed-$N=3$ factorial separating source composition and Geometry Refinement.}
+\label{tab:factorial_en}
+\begin{tabular}{lrr}
+\toprule
+Candidate bank & Raw mean TM & Refined mean TM \\
+\midrule
+$3T+0D$ & 0.565 & 0.559 \\
+$2T+1D$ & 0.581 & 0.579 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The factorial contradicts a simple explanation in which refinement causes the hybrid
+global-TM gain. Replacing one of three TBM candidates with DRfold2 already produced a
+0.016 mean increase with refinement disabled. Refinement slightly reduced TM in both
+banks. Source diversity is therefore the better-supported global mechanism, while
+refinement acts on local quality.
+
+\subsection{Subgroups and failure cases}
+
+In a post hoc stratification, initially low-quality candidates gained 0.016 lDDT with
+interval $[0.009,0.024]$. High-quality candidates changed by $-0.002$, with interval
+$[-0.006,0.002]$. This pattern motivates a future blind quality gate but
+cannot revise the current method because the groups were examined after validation.
+
+Three failures remain visible. Targets \texttt{9E2Z\_F} and \texttt{8K7W\_A} lost about
+0.009 TM, while \texttt{9B0S\_Et} lost about 0.011 lDDT. Conservative refinement does
+not imply monotonic improvement for every target, and both uncertainty and failure
+counts are needed beside the mean.
+
+\section{External Kaggle evaluation}
+
+The thesis TBM pipeline scored 0.601 public and 0.602 private. The final pipeline reached
+0.628 public and 0.614 private, producing absolute differences of 0.027 and 0.012 between
+the two thesis submissions. Against public reference points, the final pipeline was
+0.021 above John's TBM-only notebook, 0.038 above John's hybrid notebook, and 0.036 above
+the winning team's private score \cite{kaggle_top1,kaggle_hybrid}. Table~\ref{tab:kaggle_compare_en}
+keeps these reference points separate because a public notebook version is not identical
+to the final winning submission.
+
+\begin{table}[H]
+\centering
+\caption{Kaggle comparison. A hyphen indicates that the source did not report that score.}
+\label{tab:kaggle_compare_en}
+\begin{tabular}{lrr}
+\toprule
+Method & Public TM & Private TM \\
+\midrule
+John's hybrid notebook & - & 0.576 \\
+Winning team \texttt{john} & - & 0.578 \\
+John's TBM-only notebook & - & 0.593 \\
+Thesis TBM pipeline & 0.601 & 0.602 \\
+Thesis final pipeline & 0.628 & 0.614 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\textwidth]{leaderboard_results.pdf}
+\caption{Evaluation on hidden structures. The three John reference points report only
+the published private score; the two thesis pipelines report both public and private scores.}
+\label{fig:leaderboard_en}
+\end{figure}
+
+The public execution provides deployment checks. DRfold2 generated two candidates for
+11 of 12 targets, the 720-nucleotide target used five TBM candidates, and refinement
+completed for all 60 structures. Output shape and identifiers were valid, and the run
+did not read native labels. These observations support execution integrity but cannot
+identify which hidden targets produced the score increase.
+
+The Kaggle result must be read with the local factorial. The final submission both
+replaced two TBM slots and applied refinement, making the private change a pipeline-level
+effect. Local evidence shows that hybrid composition improves global TM before
+refinement, whereas refinement improves local metrics and slightly reduces TM. Together,
+the two evidence levels explain the higher score without attributing it wholesale to
+Geometry Refinement.
+
+\chapter{Discussion}
+\label{chap:discussion_en}
+
+\section{Inheritance and thesis-specific changes}
+
+The pipeline was not developed from scratch. It inherits the winning solution's central
+sequence: retrieve known structures with TBM, generate additional candidates with a
+pretrained model, postprocess the coordinates, and submit five structures. Stating this
+provenance is necessary because a leaderboard difference is scientifically interpretable
+only when the reused and modified components are separated.
+
+The thesis retains the ``retrieve and transfer'' principle of John's TBM method but adds
+two complementary retrieval sources, a merged template snapshot, strict temporal
+filtering, query-coverage reranking, distinct-PDB selection, and curved completion for
+medium gaps. On the same time-safe CASP15 set, John's local TBM reproduction scored 0.298
+and the thesis TBM scored 0.307. The absolute difference was 0.009, approximately 3.0\%
+relative to 0.298, with the thesis method winning on 9 of 12 RNAs. This is a pipeline-level
+TBM comparison; the RQ1 ablations provide the evidence for individual changes.
+
+The pretrained branch also follows John's hybrid idea but does not reproduce every branch
+of the public notebook. The thesis uses a fixed DRfold2 to Arena to \cprime{} path and
+does not use Boltz. John's final rule-based adjustment and the thesis Geometry Refinement
+also differ: John's rules make one pass over adjacent distances, clashes, and selected
+base pairs, whereas the thesis optimizes a multi-term objective over several steps. A
+same-candidate head-to-head comparison has not yet been completed, so this draft does not
+claim that the thesis refiner outperforms John's refiner.
+
+\section{Why the hybrid pipeline has value}
+
+The gain over the TBM-only reference does not require one source to dominate everywhere.
+TBM had the higher source mean and won on 12 targets, while DRfold2 won on the remaining
+eight. Under best-of-five scoring, a distinct source only needs to win a substantial
+subset of targets to improve the union mean. Complementarity is therefore a target-wise
+property rather than a comparison of source averages.
+
+The two-slot fixed-N result strengthens this argument by removing candidate-count
+advantage. Replacing one of two TBM structures with a DRfold2 structure retained a
+positive confidence interval. The three-slot effect was weaker because three TBM models
+already contained more diversity and the validation cohort contained only 20 targets.
+The three-plus-two allocation is consequently a reasonable compromise for the hidden
+distribution, not a universal optimum.
+
+Competition data provide a second explanation. The analysis reported that 19 of 20
+private targets had a prior structure with TM-align above 0.45, a higher template-rich
+fraction than CASP15 \cite{competition_paper}. A large template snapshot and broad
+retrieval were advantageous in this regime. The same paper cautions that this ordering
+may not generalize to template-poor RNA \cite{competition_paper}; DRfold2 remains an
+important hedge against that part of the distribution.
+
+\section{Why refinement does not increase TM-score}
+
+The source restraint places the optimum near the starting candidate. Backbone, angle,
+torsion, and clash terms operate mainly on short-range relationships and contain no
+signal for changing topology or moving an entire domain. Improvement in lDDT and
+SW-RMSD9 with nearly unchanged TM is therefore consistent with the intended mechanism.
+
+An incorrect global fold requires long-range contacts, motif information, or a different
+template. Local optimization around one source cannot invent this evidence. Nucleic-acid
+refinement studies likewise distinguish improved stereochemistry from systematic native
+RMSD improvement \cite{qrnas}. Geometry Refinement should therefore be interpreted as
+trace regularization, with source diversity setting the primary global ceiling.
+
+The simple baseline matched the full method on lDDT, identifying backbone smoothing as
+the principal mechanism for that score. The full objective showed clearer value for
+SW-RMSD9 and balanced angle, torsion, clash, and kink diagnostics. This narrows the
+contribution: the full objective is not necessary for every local gain, but it provides
+a more balanced trace without disrupting the average fold.
+
+\section{Interpreting the leaderboard}
+
+The 0.614 private score is measured on hidden structures. It exceeded the thesis TBM
+pipeline by 0.012, or approximately 2.0\% relative to 0.602. It also exceeded John's
+TBM-only notebook by 0.021, John's public hybrid notebook by 0.038, and the winning team
+score by 0.036. The absolute differences are the primary comparisons; the corresponding
+relative differences are approximately 3.5\%, 6.5\%, and 6.3\%.
+
+These values establish that the complete implementation transfers beyond the local
+cohort, but a scalar leaderboard score does not provide a per-target counterfactual. The
+two thesis submissions changed both candidate composition and postprocessing. In addition,
+the locally confirmed Geometry Refinement used source weight 1.5, whereas the Kaggle run
+used 3.0. The 0.012 private difference is therefore a complete-pipeline effect, not a
+one-variable measurement of DRfold2 or of the exact local refinement configuration.
+
+A defensible explanation has three layers. The integrity audit shows that the
+submission does not use native labels and enforces temporal filtering. The local
+complementarity analysis identifies a positive global mechanism. The local refinement
+analysis identifies a separate local mechanism and shows that it does not increase TM.
+Together, these layers explain performance while preserving the distinction between
+external validity and component causality.
+
+Distribution shift is also visible. The frozen hybrid rule scored 0.465 on the 12
+CASP15 targets and was worse than the local TBM bank, whereas the complete Kaggle pipeline
+improved private TM by 0.012. This reversal shows that effective allocation depends on the target
+distribution. Reporting both outcomes is more credible than selecting the favorable
+cohort and argues against a universally optimal mixture.
+
+\section{Threats to validity}
+
+\subsection{Internal validity}
+
+Calibration and validation contain only 20 targets each, leaving wide intervals for
+several ablations. Target bootstrap handles dependence among candidates but cannot create
+information beyond the observed RNAs \cite{bootstrap}. Multiple subgroup analyses also
+increase the chance of incidental patterns, so they are labeled post hoc and do not
+change the current method.
+
+The cache contains only three TBM and two DRfold2 candidates. Fixed-N comparisons up to
+three positions are identified, but a full five-position allocation sweep is not. Future
+work should generate at least five independent candidates from each source before
+opening a new cohort.
+
+\subsection{External validity}
+
+Local validation covers single-chain RNA up to 96 nucleotides. Refinement results do not
+directly generalize to 720-nucleotide RNA, multichain complexes, or RNA-protein interfaces.
+Such systems have different interaction patterns and experimental uncertainties
+\cite{zhang_experimental_review,ma_cryoem}.
+
+The Kaggle private set is unusually template rich \cite{competition_paper}. Its score
+supports the competition distribution but does not guarantee the same ordering on a
+template-poor benchmark. A new temporal benchmark released after 2026 would provide a
+stronger generalization test.
+
+\subsection{Metric validity}
+
+TM-score and \cprime{}-lDDT evaluate a coarse-grained trace. They do not directly measure
+base orientation, hydrogen bonding, ion coordination, or full-atom stereochemistry,
+all of which contribute to tertiary interactions and RNA function
+\cite{butcher_tertiary,cao_rna_functions}. A high-scoring trace is therefore not yet a
+complete model for docking or mechanistic interpretation.
+
+Angle NLL, torsion NLL, clash, and kink are objective diagnostics and favor the full
+method by construction. They explain mechanism but cannot replace independent metrics.
+Prioritizing lDDT, sliding-window RMSD, and TM reduces circularity, while full-atom
+validation remains necessary for biochemical use.
+
+\section{Future work}
+
+The first priority is a same-candidate comparison between John's rule-based refiner and
+the thesis Geometry Refinement. The second is the locked private $2\times2$ experiment:
+5T raw, 5T refined, 3T+2D raw, and 3T+2D refined. These experiments determine whether
+the thesis can claim an improvement over inherited postprocessing or only a
+complete-pipeline gain.
+
+The next extension is quality-gated refinement. Post hoc results suggest larger lDDT
+gains for weak candidates than strong ones. A blind gate could skip refinement when
+source confidence and self-consistency are high, but it must be preregistered on a new
+calibration set and tested on an unopened cohort.
+
+A second direction is greater within-source diversity. Five independent TBM and five
+DRfold2 models would support a complete allocation sweep and measure the marginal return
+of each position. A third direction is full-atom reconstruction with an evaluated tool
+such as Arena, followed by stereochemical metrics designed for RNA
+\cite{arena,rna_puzzles_toolkit}.
+
+Finally, temporal metadata should fail closed, and self-PDB exclusion should parse target
+reference identifiers directly. These changes improve auditability rather than score. In
+a field with continuously released structural data, reconstructing what was known at
+prediction time is essential to meaningful evaluation.
+
+\chapter{Conclusion}
+\label{chap:conclusion_en}
+
+This thesis inherited the winning solution's TBM-plus-pretrained framework and rebuilt it
+as a time-safe, component-tested pipeline with a separate Geometry Refinement stage.
+Rather than treating the final score as the only evidence, the study separated retrieval,
+source diversity, and local postprocessing into three questions with distinct ablations.
+
+For RQ1, MMseqs2 produced strong candidates when a homolog was found but covered only 8
+of 20 calibration RNAs. Composite search expanded availability to all 20 targets. The
+full weighted score did not clearly beat global alignment alone, and query coverage was
+the most influential reranking component. Composite search is therefore supported as a
+recall heuristic within time-safe TBM.
+
+For RQ2, TBM had higher average source quality, but TBM and DRfold2 won on different
+targets. Their union improved mean best-available TM by 0.023 with a positive
+confidence interval, and the fixed-$N=2$ comparison retained a 0.031 gain. These
+results directly show that source diversity can improve best-of-five performance without
+one source universally outperforming the other.
+
+For RQ3, Geometry Refinement increased \cprime{}-lDDT by 0.007, reduced SW-RMSD9 by
+0.040~\angstrom{}, and changed TM by $-0.001$. A simple smoother explained much
+of the lDDT gain, while the full objective improved short-window RMSD and geometric
+diagnostics. The supported conclusion is local trace correction with average global-fold
+preservation.
+
+The final pipeline reached 0.628 public and 0.614 private. Its private score was 0.021
+above John's TBM-only notebook, 0.038 above John's public hybrid notebook, and 0.036 above
+the winning team. These remain complete-pipeline comparisons, not evidence that every
+component individually outperforms its inherited counterpart. The local factorial
+identifies candidate complementarity as the better-supported global mechanism, while
+Geometry Refinement provides a separate local benefit. The same-candidate refiner
+comparison and private $2\times2$ factorial remain necessary before the thesis is frozen.
+
+\appendix
+
+\chapter{Reproducibility Artifacts}
+\label{app:repro_en}
+
+The principal artifacts are:
+\begin{itemize}
+  \item \path{scripts/run_tbm_whitebox_ablation.py} for the TBM component study;
+  \item \path{scripts/summarize_hybrid_complementarity.py} for source allocation;
+  \item \path{reports/thesis_notes/tbm_whitebox_ablation.md} for RQ1 tables;
+  \item \path{reports/thesis_notes/hybrid_complementarity.md} for RQ2 tables;
+  \item \path{reports/thesis_notes/kaggle_submission_analysis.md} for external scores and manifests;
+  \item \path{scripts/generate_thesis_v3_figures.py} for all data figures in this draft.
+\end{itemize}
+
+The confirmatory runner, its detailed RQ3 report, and the frozen configuration remain in
+the repository. The final release should add a manifest with the Git commit, Python
+environment, template-database checksum, pretrained-model version, and exact command for
+every table.
+
+\chapter{Pre-submission Checklist}
+
+All data figures are generated from frozen aggregates by the script listed in
+Appendix~\ref{app:repro_en}. Before submission, each plotted value must be checked against
+its source table, together with grayscale contrast and text size at 100\%. If a structure
+overlay is added, it must use a public validation RNA selected by a predeclared rule and
+must report the target, candidate source, before-and-after metrics, and generation script.
+A hidden Kaggle structure must not be used as an illustrative example.
+
+\input{references.tex}
+
+\end{document}
