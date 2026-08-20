@@ -1,0 +1,13 @@
+target_id,source_dataset,temporal_cutoff,sequence_length,development_exposed,eligibility_state,final_included,evidence
+R1107,CASP15_validation,2022-05-28,69,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1108,CASP15_validation,2022-05-27,69,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1116,CASP15_validation,2022-06-04,157,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1117v2,CASP15_validation,2022-06-03,30,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1126,CASP15_validation,2022-06-11,363,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1128,CASP15_validation,2022-06-10,238,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1136,CASP15_validation,2022-06-18,374,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1138,CASP15_validation,2022-06-24,720,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1149,CASP15_validation,2022-07-02,124,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1156,CASP15_validation,2022-07-07,135,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1189,CASP15_validation,2022-08-11,118,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses
+R1190,CASP15_validation,2022-08-11,118,True,CASP15_DEVELOPMENT,False,reports/tables/reproduce_top1.csv and historical CASP15 analyses

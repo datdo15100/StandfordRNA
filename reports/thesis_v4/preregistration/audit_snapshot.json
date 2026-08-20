@@ -1,0 +1,79 @@
+{
+  "purpose": "data-only V4 preregistration audit; no predictor or native scoring",
+  "ledger_rows": 3516,
+  "flow_rows": 11,
+  "inputs": [
+    {
+      "path": "data/stanford-rna-3d-folding/train_sequences.v2.csv",
+      "exists": true,
+      "bytes": 55647705,
+      "sha256": "efe6c57cd753f7704167b8ca5ebd73eb46f4da7fbc55dcf29ed59771d9282499"
+    },
+    {
+      "path": "data/stanford-rna-3d-folding/train_labels.v2.csv",
+      "exists": true,
+      "bytes": 268210070,
+      "sha256": "47f622f1c7e671a790a0f985527dbf23f62da5d459872ccf5ddcf511630dc876"
+    },
+    {
+      "path": "data/stanford-rna-3d-folding/validation_sequences.csv",
+      "exists": true,
+      "bytes": 9994,
+      "sha256": "42dc2e35aa92c2bd3d3d32a43bd505a3f12568d2ecde080d9783fb3e2eaa89e0"
+    },
+    {
+      "path": "data/processed/geofuse_real_oof_v2/manifest.csv",
+      "exists": true,
+      "bytes": 84986,
+      "sha256": "6d42459c814e27c3cdbbb834fe526cef55268d02f15c2b526cde3d43ddbc2c6a"
+    },
+    {
+      "path": "data/processed/geofuse_real_oof_v2/medium_manifest.csv",
+      "exists": true,
+      "bytes": 20378,
+      "sha256": "1c05f7571f9ad780283eb1e59bd9fe859f1db74c6534faf608d677209c37fa49"
+    },
+    {
+      "path": "data/processed/geofuse_real_oof_v2/pilot_manifest.csv",
+      "exists": true,
+      "bytes": 3221,
+      "sha256": "a93f48f726948d7b55fc8f4f8fcac7d3853323d5d5ed36e28ca580939631b146"
+    },
+    {
+      "path": "data/processed/geofuse_real_oof_v2/family80_cluster.tsv",
+      "exists": true,
+      "bytes": 6059,
+      "sha256": "8e46d0aff50059da460c8a844628bac13d88deb1ceb73fbd72a0a97ce51586c4"
+    },
+    {
+      "path": "data/processed/geometry_priors.json",
+      "exists": true,
+      "bytes": 1434,
+      "sha256": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f"
+    },
+    {
+      "path": "data/processed/geofuse_geometry_v2_priors.json",
+      "exists": true,
+      "bytes": 29648,
+      "sha256": "9f2517546c6e9b87cb9a7335c66b68a76f8ab548b4b1e66def29d04a3e986302"
+    },
+    {
+      "path": "utilities/top1_tbm.py",
+      "exists": true,
+      "bytes": 52261,
+      "sha256": "c8eb61cbb97c85ac0a58c37ce88881596f27fac9a9b072837d159b0726ee9d9e"
+    },
+    {
+      "path": "utilities/top1_4_4_hybrid_final_take.py",
+      "exists": true,
+      "bytes": 463486,
+      "sha256": "0c0e00685cbb131962b7eac7a1390e50b2b14c0a2828858df94318d79b2dca4c"
+    },
+    {
+      "path": "scripts/build_v4_preregistration_audit.py",
+      "exists": true,
+      "bytes": 17568,
+      "sha256": "af0dcaedb85798dc86baefcdf57981b5e89a76144283a64c5017f2ff90dd27af"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "master_rows": 5135,
+  "p0_prior_targets": 3397,
+  "known_development_exposed_train_v2": 107,
+  "later_date_scope": 878,
+  "later_length_scope": 525,
+  "later_technical_valid_pre_duplicate": 408,
+  "exact_sequence_representatives": 315,
+  "regenerated_mmseqs_clusters": 227,
+  "known_exposed_clusters": 90,
+  "provisional_after_repository_audit": 172,
+  "provisional_clusters_after_repository_audit": 137,
+  "provisional_untouched": 0,
+  "final_included": 0,
+  "casp15_development_targets": 12,
+  "warning": "No RNA is called untouched yet. Pretrained overlap and external/manual exposure audits remain pending.",
+  "master_ledger_sha256": "780e30cd25e10c610a52bd0e434002f134ba25f8012289a951a72f4b0a6fe549"
+}

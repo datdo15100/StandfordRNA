@@ -1,0 +1,32 @@
+{
+  "purpose": "V4 sequence-similarity clusters for dependence-aware inference",
+  "input_targets": 315,
+  "clusters": 227,
+  "threshold_identity": 0.8,
+  "threshold_coverage": 0.8,
+  "coverage_mode": 0,
+  "threads": 4,
+  "mmseqs_path": "/home/datdo/miniforge3/envs/rna-fold/bin/mmseqs",
+  "mmseqs_version": "18.8cc5c",
+  "mmseqs_sha256": "d6d1bf1b50c095eb0cb66f685a7fb1d9b8b69497e1e88416fd48f28e313cc773",
+  "input_fasta": "v4_mmseqs_input.fasta",
+  "input_fasta_sha256": "01ca8ed2110dd6c27524436fee977469165362d5db331da92741344c0a846a9e",
+  "cluster_tsv": "v4_mmseqs_sequence_similarity_clusters.tsv",
+  "cluster_tsv_sha256": "42255d8299e26de2747990c2bc909261320204a5080c38a318dbc49c924d40ee",
+  "command_template": [
+    "<MMSEQS_BINARY>",
+    "easy-cluster",
+    "v4_mmseqs_input.fasta",
+    "<TEMP>/cluster80",
+    "<TEMP>/tmp",
+    "--min-seq-id",
+    "0.8",
+    "-c",
+    "0.8",
+    "--cov-mode",
+    "0",
+    "--threads",
+    "4"
+  ],
+  "performance_or_predictor_access": false
+}

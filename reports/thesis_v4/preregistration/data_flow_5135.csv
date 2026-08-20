@@ -1,0 +1,12 @@
+stage_id,unit,count,rule,performance_accessed
+D0,target,5135,Kaggle train V2 master universe,False
+P0,target,3397,temporal cutoff before 2022-05-27; geometry-prior training role only,False
+L1,target,878,declared pretrained structural cutoff scope; provenance audit pending,False
+L2,target,525,sequence length 30 to 400,False
+L3,target,408,canonical AUGC and valid native C1' coverage,False
+L4,target,315,newest deterministic representative per exact normalized sequence,False
+L5,cluster,227,MMseqs 80% identity and 80% coverage sequence-similarity clusters,False
+L6-excluded,cluster,90,cluster contains at least one repository-known development-exposed target,False
+L7,target,172,repository-audit provisional pool; not yet untouched,False
+L7,cluster,137,dependence blocks in repository-audit provisional pool,False
+FINAL,target,UNKNOWN,requires pretrained-overlap and external/manual exposure audits,False

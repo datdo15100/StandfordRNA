@@ -1,0 +1,14 @@
+{
+  "ledger_targets": 3516,
+  "p0_production_prior_training_targets": 3397,
+  "native_scored_or_supervised": 3515,
+  "technical_failure_without_native_score": 1,
+  "later_technical_valid_targets": 419,
+  "historical_post_split_manifest_targets": 354,
+  "later_exposed_targets": 107,
+  "later_exposed_mmseqs_clusters": 91,
+  "later_targets_remaining_after_known_exposure_cluster_exclusion": 239,
+  "remaining_mmseqs_clusters": 143,
+  "remaining_targets_visible_in_historical_354_manifest": 195,
+  "warning": "This is a repository-artifact audit, not a final eligibility manifest. External/manual exposure and pretrained overlap remain to be audited."
+}
