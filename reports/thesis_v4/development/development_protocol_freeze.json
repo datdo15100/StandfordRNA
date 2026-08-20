@@ -1,0 +1,90 @@
+{
+  "status": "FROZEN_BEFORE_V4_DEVELOPMENT_SCORING",
+  "performance_accessed_by_this_script": false,
+  "cohort": {
+    "selection_rule": "all 20 targets in the historical medium-manifest calibration split",
+    "reason": "all were already native/per-target exposed and are eligible for development but never confirmatory evidence",
+    "target_n": 20,
+    "cluster_n": 17,
+    "manifest_path": "reports/thesis_v4/development/development_manifest.csv",
+    "manifest_sha256": "ea7d2f82a6d9e269d597a870ebe1bd6ac8015ad6b893f3da72f309591a95b400"
+  },
+  "common_control": {
+    "definition": "all 23,869 valid parsed RNA chains; target-specific temporal and self filters applied identically at query time",
+    "meta": {
+      "path": "data/processed/template_meta.parquet",
+      "sha256": "80463138acfce71663a25504fd641521a57f75670e33cef1923f7a69fd346402"
+    },
+    "coordinates": {
+      "path": "data/cache/template_coords.pkl",
+      "sha256": "d5ce6232d88e1d92050307f6313c8ad1c3f0792ffa9c57d01d2b71af2405980f"
+    },
+    "manifest": {
+      "path": "reports/thesis_v4/phase1_controlled_db/db_controlled_manifest.csv",
+      "sha256": "d0108aebd28e8fda3b72fc59e7305c58f4a4ed0c74baebcf3a4909f60c0d8a5b"
+    },
+    "chains": 23869,
+    "pdb_entries": 8613,
+    "all_coordinate_records_valid": true
+  },
+  "raw_boundary": "after coordinate transfer and frozen gap completion; before every refiner",
+  "candidate_budget": 5,
+  "h1": "J-controlled-TBM-raw versus Thesis-TBM-raw",
+  "h2": "5T versus 3T+2D using the exact same Thesis TBM ranked list",
+  "h3": "Geometry versus Simple using identical 3T+2D raw candidates and raw-selected native conformation",
+  "refiners": {
+    "Raw": "identity",
+    "John-original": "captured rules with candidate raw confidence",
+    "John-fixed": "captured rules with confidence=0.5",
+    "Simple": "300 Adam steps, lr=0.04, source=3.0, backbone=1.0, fixed strength; other terms off",
+    "Geometry": {
+      "steps": 300,
+      "lr": 0.04,
+      "w_source": 3.0,
+      "w_backbone": 1.0,
+      "w_clash": 0.3,
+      "w_rg": 0.02,
+      "w_angle": 0.3,
+      "w_torsion": 0.15,
+      "w_kink": 20.0,
+      "adaptive_strength": true,
+      "fixed_strength": 1.0,
+      "kink_floor_deg": 70.0,
+      "kink_margin_deg": 5.0,
+      "backbone_huber_delta": 2.0,
+      "rg_huber_delta": 5.0,
+      "sep_clash": 2,
+      "huber_delta": 2.0,
+      "grad_clip": 10.0
+    }
+  },
+  "fallback": {
+    "missing_tbm": "deterministic method-specific de-novo candidates",
+    "missing_drfold2_slot": "next Thesis TBM fallback while preserving all-target H2",
+    "refiner_failure": "raw candidate plus failure flag",
+    "whole_bank_failure": "bank TM=0"
+  },
+  "statistics": {
+    "target_unit": "RNA",
+    "block_unit": "regenerated MMseqs sequence-similarity cluster",
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "development_interpretation": "selection evidence only; not confirmatory H1-H3 claims"
+  },
+  "pretrained": {
+    "drfold2_candidate_manifest_path": "reports/thesis_v4/development/drfold2_candidate_manifest.csv",
+    "drfold2_candidate_manifest_sha256": "bc6cff22de0f9ef01fc418110e8c6c2ce5c564e4bc851e867fdcffae6272b4c6",
+    "rclm_membership": "UNAVAILABLE",
+    "complete_pretrained_time_safe_claim": false,
+    "audit_sha256": "e490165f9eeddb7845ff72c1fa0b86641433662ad9afca1a484519b3dfc5407f"
+  },
+  "source_files": {
+    "data/processed/geofuse_real_oof_v2/medium_manifest.csv": "1c05f7571f9ad780283eb1e59bd9fe859f1db74c6534faf608d677209c37fa49",
+    "reports/thesis_v4/preregistration/v4_master_rna_ledger.csv": "780e30cd25e10c610a52bd0e434002f134ba25f8012289a951a72f4b0a6fe549",
+    "reports/thesis_v4/preregistration/development_exposure_ledger.csv": "ae9946c485d57a9b9e54f294ca4c91060d9d3b8098497e2114e72997a307842f",
+    "reports/thesis_v4/phase1_controlled_db/db_controlled_freeze.json": "0e969d4877dffbf4673bb14ac003588bd03ed071c1a9175313d07c8667e8207f",
+    "reports/thesis_v4/phase1_p0/p0_reproduction_audit.json": "89fcda8af4b8ee05175f392bc1ac3559b55b7a433abbd02d835bdd00922bd9c3"
+  },
+  "base_commit": "2706d41bad9b3f919b7dd57d77b0fa068cf392fa"
+}

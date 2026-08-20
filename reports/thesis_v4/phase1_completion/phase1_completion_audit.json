@@ -1,0 +1,53 @@
+{
+  "phase": "V4 Phase 1 completion",
+  "performance_accessed": false,
+  "john_public_hybrid": {
+    "required_name": "reproduced publicly released John pipeline",
+    "capture_path": "utilities/top1_4_4_hybrid_final_take.py",
+    "capture_sha256": "0c0e00685cbb131962b7eac7a1390e50b2b14c0a2828858df94318d79b2dca4c",
+    "smoke": {
+      "captured_small_cohort_retained_index_range": [
+        0,
+        0
+      ],
+      "injected_hybrid_route": "boltz_conditioned_drfold2",
+      "injected_hybrid_candidate_count": 5,
+      "missing_artifact_route": "template",
+      "missing_artifact_reason": "boltz_conditioned_drfold2_artifacts_unavailable",
+      "outside_index_route": "template",
+      "outside_index_reason": "retained_index_outside_drfold_range",
+      "status": "EXECUTABLE_CONTROL_FLOW_MODEL_BRANCH_NOT_REPRODUCIBLE"
+    },
+    "boltz_status": "UNAVAILABLE_NOT_REPRODUCIBLE_WITH_AVAILABLE_ARTIFACTS",
+    "structural_conclusion": "The captured routing, padding and template fallback are executable. The Boltz-conditioned DRfold2 branch is not structurally reproducible because the original Boltz checkpoint/source configuration is absent."
+  },
+  "j_controlled_full": {
+    "status": "EXECUTABLE_TEMPLATE_FALLBACK_PARTIAL_HYBRID",
+    "definition": "Controlled John routing on DB-controlled; unavailable Boltz-conditioned DRfold2 requests enter the documented five-candidate template fallback.",
+    "use_for_component_attribution": false
+  },
+  "external_exposure": {
+    "scope": "conservative text/artifact scan outside the already frozen repository result-table audit",
+    "files_scanned": 65,
+    "provisional_targets_checked": 172,
+    "additional_targets_with_evidence": 0,
+    "manual_researcher_memory_status": "UNAVAILABLE_NOT_INDEPENDENTLY_VERIFIABLE",
+    "limitation": "Absence from accessible files is not proof that a target was never viewed. The audit can exclude positive evidence but cannot reconstruct unaudited human memory.",
+    "performance_accessed": false
+  },
+  "drfold2": {
+    "structural_provenance_status": "AUDITED_FROM_PAPER_AND_LOCAL_TRAINING_FASTA_IDENTITY_UNVERIFIED",
+    "structural_overlap_audit_status": "97 of 172 provisional targets pass 80/80 overlap filtering",
+    "rclm_status": "UNAVAILABLE_CORPUS_MEMBERSHIP_MANIFEST",
+    "rclm_public_scope": "RNAcentral release 22, approximately 30 million sequences, reported by the DRfold2 paper/code audit",
+    "claim_constraint": "Do not claim complete pretrained time-safety."
+  },
+  "boltz": {
+    "status": "UNAVAILABLE_NOT_REPRODUCIBLE_WITH_AVAILABLE_ARTIFACTS",
+    "primary_v4": false
+  },
+  "environment": {
+    "python": "3.12.13",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39"
+  }
+}

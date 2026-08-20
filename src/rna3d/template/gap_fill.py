@@ -138,3 +138,75 @@ def fill_gaps_linear(
             coords[last + offset] = coords[last] + direction * adj_dist * offset
             confidence[last + offset] = 0.1
     return coords, confidence
+
+
+def fill_gaps_john(
+    coords: np.ndarray,
+    mask: np.ndarray,
+    adj_dist: float = 5.9,
+) -> tuple[np.ndarray, np.ndarray]:
+    """John-notebook gap completion on an already frozen correspondence.
+
+    This ports the missing-coordinate loop from ``adapt_template_to_query`` but
+    accepts the same transferred coordinates/mask as the Linear and Curved V4
+    cells.  Consequently the gap ablation changes only completion geometry, not
+    alignment or which template residues were transferred.
+    """
+    output = np.asarray(coords, dtype=float).copy()
+    support = np.asarray(mask, dtype=bool)
+    confidence = support.astype(float)
+    length = len(output)
+    for index in range(length):
+        if support[index]:
+            continue
+        previous = next(
+            (value for value in range(index - 1, -1, -1) if np.isfinite(output[value]).all()),
+            None,
+        )
+        following = next(
+            (value for value in range(index + 1, length) if np.isfinite(output[value]).all()),
+            None,
+        )
+        if previous is not None and following is not None:
+            span = following - previous
+            distance = np.linalg.norm(output[following] - output[previous])
+            expected = span * adj_dist
+            if distance < expected * 0.7:
+                direction = output[following] - output[previous]
+                direction /= np.linalg.norm(direction) + 1e-10
+                for offset, position in enumerate(range(previous + 1, following), start=1):
+                    fraction = offset / span
+                    base = output[previous] + direction * expected * fraction
+                    perpendicular = np.cross(direction, [0.0, 0.0, 1.0])
+                    if np.linalg.norm(perpendicular) < 1e-6:
+                        perpendicular = np.cross(direction, [1.0, 0.0, 0.0])
+                    perpendicular /= np.linalg.norm(perpendicular) + 1e-10
+                    output[position] = base + perpendicular * (2.0 * np.sin(fraction * np.pi))
+                    confidence[position] = 0.3 * (1.0 - abs(2.0 * fraction - 1.0))
+            else:
+                for offset, position in enumerate(range(previous + 1, following), start=1):
+                    fraction = offset / span
+                    output[position] = (
+                        (1.0 - fraction) * output[previous]
+                        + fraction * output[following]
+                    )
+                    confidence[position] = 0.3 * (1.0 - abs(2.0 * fraction - 1.0))
+        elif previous is not None:
+            if previous > 0 and np.isfinite(output[previous - 1]).all():
+                direction = output[previous] - output[previous - 1]
+                direction /= np.linalg.norm(direction) + 1e-10
+            else:
+                direction = np.array([1.0, 0.0, 0.0])
+            for step in range(1, index - previous + 1):
+                output[previous + step] = output[previous] + direction * adj_dist * step
+                confidence[previous + step] = 0.1
+        elif following is not None:
+            direction = np.array([-1.0, 0.0, 0.0])
+            for step in range(following - index, 0, -1):
+                output[following - step] = output[following] - direction * adj_dist * step
+                confidence[following - step] = 0.1
+    if not np.isfinite(output).all():
+        z = np.arange(length, dtype=float) * adj_dist
+        output = np.stack([np.zeros(length), np.zeros(length), z], axis=1)
+        confidence[:] = 0.0
+    return output, confidence
