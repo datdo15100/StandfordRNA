@@ -1,0 +1,118 @@
+{
+  "status": "FROZEN_BEFORE_SELECTED_TBM_NATIVE_SCORING",
+  "performance_used_for_selection": "RQ1 development scores only",
+  "final_test_performance_accessed": false,
+  "decisions": {
+    "retrieval_source": {
+      "decision": "DROP_MMSEQS_USE_GLOBAL_ONLY_COMPOSITE_SCAN",
+      "evidence": {
+        "hypothesis": "T-SEARCH-development",
+        "target_n": 20,
+        "cluster_n": 17,
+        "mean_delta": -0.0030314999999999995,
+        "median_delta": 0.0,
+        "ci_lower": -0.010104999999999998,
+        "ci_upper": 0.0,
+        "raw_one_sided_p": 1.0,
+        "improved": 0,
+        "tied": 19,
+        "regressed": 1,
+        "bootstrap_replicates": 10000,
+        "permutation_replicates": 100000,
+        "seed": 20260819,
+        "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+      }
+    },
+    "composite_terms": {
+      "decision": "DROP_LOCAL_FEATURE_KMER_TERMS_USE_GLOBAL_ALIGNMENT_ONLY",
+      "evidence": {
+        "hypothesis": "T-COMP-development",
+        "target_n": 20,
+        "cluster_n": 17,
+        "mean_delta": -0.005735000000000002,
+        "median_delta": 0.0,
+        "ci_lower": -0.014844736842105266,
+        "ci_upper": -0.0004495986842105279,
+        "raw_one_sided_p": 0.972930270697293,
+        "improved": 4,
+        "tied": 11,
+        "regressed": 5,
+        "bootstrap_replicates": 10000,
+        "permutation_replicates": 100000,
+        "seed": 20260819,
+        "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+      }
+    },
+    "coverage": {
+      "decision": "DROP_AS_DEMONSTRATED_TERM",
+      "evidence": {
+        "hypothesis": "T-RANK-COVERAGE-development",
+        "target_n": 20,
+        "cluster_n": 17,
+        "mean_delta": 0.0205925,
+        "median_delta": 0.0,
+        "ci_lower": -0.0023656071428571437,
+        "ci_upper": 0.05224504285714284,
+        "raw_one_sided_p": 0.0984690153098469,
+        "improved": 8,
+        "tied": 4,
+        "regressed": 8,
+        "bootstrap_replicates": 10000,
+        "permutation_replicates": 100000,
+        "seed": 20260819,
+        "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+      }
+    },
+    "completeness": {
+      "decision": "DROP_AS_RANKING_TERM",
+      "evidence": {
+        "hypothesis": "T-RANK-COMPLETENESS-development",
+        "target_n": 20,
+        "cluster_n": 17,
+        "mean_delta": 0.0,
+        "median_delta": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "raw_one_sided_p": 1.0,
+        "improved": 0,
+        "tied": 20,
+        "regressed": 0,
+        "bootstrap_replicates": 10000,
+        "permutation_replicates": 100000,
+        "seed": 20260819,
+        "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+      }
+    },
+    "distinct_pdb": {
+      "decision": "KEEP_AS_DIVERSITY_SAFEGUARD_NOT_ACCURACY_CONTRIBUTION",
+      "evidence": {
+        "hypothesis": "T-RANK-DISTINCT-development",
+        "target_n": 20,
+        "cluster_n": 17,
+        "mean_delta": -0.001343000000000001,
+        "median_delta": 0.0,
+        "ci_lower": -0.0062012782738095264,
+        "ci_upper": 0.0031682352941176484,
+        "raw_one_sided_p": 0.7495625043749562,
+        "improved": 1,
+        "tied": 16,
+        "regressed": 3,
+        "bootstrap_replicates": 10000,
+        "permutation_replicates": 100000,
+        "seed": 20260819,
+        "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+      },
+      "tolerance": -0.005
+    },
+    "gap": {
+      "decision": "USE_LINEAR_COMPLETION",
+      "reason": "Curved completion did not show a stable improvement beyond Linear in any preregistered gap bin."
+    }
+  },
+  "method": "global-only retrieval; identity rank; distinct-PDB safeguard; linear gap completion",
+  "target_n": 20,
+  "fallback_slots": 0,
+  "candidate_manifest": "reports/thesis_v4/development/selected_tbm_candidate_manifest.csv",
+  "candidate_manifest_sha256": "9cb79539099817121d7a1f7b7c778a872d7c6c7997c070f00fc4ea48195bdb33",
+  "generation_code_sha256": "a43f0275a38c99ba0c3f574fe0d46ea22fada5e62c6f3d9ba6e3ebae9581c290"
+}

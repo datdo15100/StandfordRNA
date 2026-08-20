@@ -5,6 +5,6 @@ phase1_john,"public TBM plus hybrid control-flow audit",COMPLETE_WITH_PARTIAL_DA
 phase1_jcontrolled,"shared DB-controlled John baseline",DB_FROZEN_NATIVE_BLIND_SMOKE_PASS,False,reports/thesis_v4/phase1_controlled_db/db_controlled_freeze.json
 phase1_pretrained_provenance,"DRfold2 and Boltz provenance/overlap audit",COMPLETE_RCLM_UNAVAILABLE_BOLTZ_EXCLUDED,False,reports/thesis_v4/phase1_completion/phase1_completion_audit.json
 phase1_statistics,"cluster-aware inference implementation",IMPLEMENTED_AND_SYNTHETIC_TESTED,False,reports/thesis_v4/phase1_statistics/inference_config.json
-development,"20 exposed targets in 17 regenerated clusters; raw banks frozen before V4 scoring",RAW_CANDIDATES_FROZEN_READY_TO_SCORE,False,reports/thesis_v4/development/raw_candidate_freeze.json
+development,"RQ1 initial complete; gate-selected simplified TBM frozen before its score",RQ1_INITIAL_COMPLETE_SELECTED_TBM_FROZEN,True,reports/thesis_v4/development/selected_tbm_freeze.json
 confirmatory,"native-blind generation then single label opening",LOCKED,False,UNKNOWN
 kaggle_external,"complete frozen system only",LOCKED,False,UNKNOWN

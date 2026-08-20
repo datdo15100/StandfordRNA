@@ -546,6 +546,151 @@ def cmd_score_tbm(_: argparse.Namespace) -> None:
     print(json.dumps(effects["H1"], indent=2))
 
 
+def cmd_build_selected_tbm(args: argparse.Namespace) -> None:
+    """Apply frozen RQ1 gates, then freeze a simplified TBM before scoring it."""
+    selection_freeze = DEV / "selected_tbm_freeze.json"
+    if selection_freeze.exists() and not args.replace:
+        raise FileExistsError("selected TBM freeze exists")
+    if (RESULTS / "rq1_tbm" / "selected_h1_inference.json").exists():
+        raise RuntimeError("selected TBM has already been scored and cannot be regenerated")
+    rq1 = json.loads((RESULTS / "rq1_tbm" / "inference.json").read_text())
+    decisions = {
+        "retrieval_source": {
+            "decision": "DROP_MMSEQS_USE_GLOBAL_ONLY_COMPOSITE_SCAN",
+            "evidence": rq1["add_mmseqs_to_composite"],
+        },
+        "composite_terms": {
+            "decision": "DROP_LOCAL_FEATURE_KMER_TERMS_USE_GLOBAL_ALIGNMENT_ONLY",
+            "evidence": rq1["full_composite_vs_global"],
+        },
+        "coverage": {
+            "decision": "DROP_AS_DEMONSTRATED_TERM",
+            "evidence": rq1["coverage_beyond_identity"],
+        },
+        "completeness": {
+            "decision": "DROP_AS_RANKING_TERM",
+            "evidence": rq1["completeness_beyond_coverage"],
+        },
+        "distinct_pdb": {
+            "decision": "KEEP_AS_DIVERSITY_SAFEGUARD_NOT_ACCURACY_CONTRIBUTION",
+            "evidence": rq1["distinct_pdb"],
+            "tolerance": -0.005,
+        },
+        "gap": {
+            "decision": "USE_LINEAR_COMPLETION",
+            "reason": "Curved completion did not show a stable improvement beyond Linear in any preregistered gap bin.",
+        },
+    }
+    if rq1["distinct_pdb"]["mean_delta"] <= -0.005:
+        raise RuntimeError("distinct-PDB exceeded the preregistered TM harm tolerance")
+
+    manifest = read_manifest()
+    meta = db.load_meta()
+    coordinates = db.load_coords()
+    meta_index = meta.set_index("chain_key")
+    adj_dist = float(json.loads(P0_DISTANCE.read_text())["adjacent_c1"]["mean"])
+    artifacts = []
+    for target in manifest.itertuples(index=False):
+        components = component_frame(target, meta)
+        safe = components[components["release_date"] < str(target.date)]
+        keys = composite_rank(safe, (1.0, 0.0, 0.0, 0.0), 50)
+        items = [
+            item_from_key(key, target.sequence, meta_index, coordinates, adj_dist, "global_only")
+            for key in keys
+        ]
+        # Coverage/completeness are intentionally absent from this rank. Distinct
+        # PDB remains only as the preregistered low-harm diversity safeguard.
+        for item in items:
+            item["identity_only"] = item["identity"]
+        selected = select_items(items, "identity_only", distinct=True)
+        coords, fallbacks = pad_coords(
+            [item["linear"] for item in selected], target.sequence, "selected_tbm", target.target_id
+        )
+        confidence = [item["linear_conf"] for item in selected]
+        global_confidence = [item["identity"] for item in selected]
+        while len(confidence) < 5:
+            confidence.append(np.full(len(target.sequence), 0.1))
+            global_confidence.append(0.1)
+        target_dir = RAW_ROOT / target.target_id
+        path = target_dir / "selected_tbm.npz"
+        np.savez_compressed(
+            path,
+            coords=np.asarray(coords, np.float32),
+            confidence=np.asarray(confidence[:5], np.float32),
+            global_confidence=np.asarray(global_confidence[:5], np.float32),
+        )
+        metadata = {
+            "target_id": target.target_id,
+            "candidate_ids": [item["chain_key"] for item in selected],
+            "pdb_ids": [item["pdb_id"] for item in selected],
+            "fallback_slots": fallbacks,
+            "method": "global-only retrieval; identity rank; distinct-PDB safeguard; linear gap",
+        }
+        meta_path = target_dir / "selected_tbm.json"
+        meta_path.write_text(json.dumps(metadata, indent=2) + "\n")
+        artifacts.append(
+            {
+                "target_id": target.target_id,
+                "path": str(path.relative_to(REPO)),
+                "sha256": sha256(path),
+                "metadata_sha256": sha256(meta_path),
+                "candidate_count": len(coords),
+                "fallback_slots": fallbacks,
+                "distinct_pdb_count": len(set(metadata["pdb_ids"])),
+            }
+        )
+    artifact = pd.DataFrame(artifacts)
+    artifact_path = DEV / "selected_tbm_candidate_manifest.csv"
+    artifact.to_csv(artifact_path, index=False)
+    document = {
+        "status": "FROZEN_BEFORE_SELECTED_TBM_NATIVE_SCORING",
+        "performance_used_for_selection": "RQ1 development scores only",
+        "final_test_performance_accessed": False,
+        "decisions": decisions,
+        "method": "global-only retrieval; identity rank; distinct-PDB safeguard; linear gap completion",
+        "target_n": len(artifact),
+        "fallback_slots": int(artifact["fallback_slots"].sum()),
+        "candidate_manifest": str(artifact_path.relative_to(REPO)),
+        "candidate_manifest_sha256": sha256(artifact_path),
+        "generation_code_sha256": sha256(Path(__file__)),
+    }
+    selection_freeze.write_text(json.dumps(document, indent=2) + "\n")
+    print(json.dumps(document, indent=2))
+
+
+def cmd_score_selected_tbm(_: argparse.Namespace) -> None:
+    manifest = read_manifest()
+    labels = labels_for(manifest)
+    expected = pd.read_csv(DEV / "selected_tbm_candidate_manifest.csv").set_index("target_id")
+    rows = []
+    for target in manifest.itertuples(index=False):
+        selected_path = RAW_ROOT / target.target_id / "selected_tbm.npz"
+        if sha256(selected_path) != expected.loc[target.target_id, "sha256"]:
+            raise RuntimeError(f"selected TBM changed for {target.target_id}")
+        refs = references_for(labels, target.target_id)
+        with np.load(selected_path, allow_pickle=False) as selected, np.load(
+            RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False
+        ) as original:
+            selected_tm = score_bank(selected["coords"], refs, target.sequence)
+            john_tm = score_bank(original["j_coords"], refs, target.sequence)
+        rows.append(
+            {
+                "target_id": target.target_id,
+                "cluster_id": target.mmseqs_sequence_similarity_cluster,
+                "j_controlled_tbm": john_tm,
+                "selected_thesis_tbm": selected_tm,
+                "h1_delta": selected_tm - john_tm,
+            }
+        )
+    frame = pd.DataFrame(rows)
+    inference = inference_document("H1-selected-development", frame, "h1_delta")
+    output = RESULTS / "rq1_tbm"
+    frame.to_csv(output / "selected_h1_target_scores.csv", index=False)
+    (output / "selected_h1_inference.json").write_text(json.dumps(inference, indent=2) + "\n")
+    print(frame.mean(numeric_only=True).to_string())
+    print(json.dumps(inference, indent=2))
+
+
 def self_tm(coords: np.ndarray, sequence: str) -> tuple[float, float]:
     values = []
     for left in range(len(coords)):
@@ -564,8 +709,10 @@ def cmd_score_bank(_: argparse.Namespace) -> None:
     rows = []
     for target in manifest.itertuples(index=False):
         refs = references_for(labels, target.target_id)
-        with np.load(RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False) as payload:
-            template = payload["thesis_coords"]
+        with np.load(RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False) as payload, np.load(
+            RAW_ROOT / target.target_id / "selected_tbm.npz", allow_pickle=False
+        ) as selected:
+            template = selected["coords"]
             deep = payload["deep_coords"]
             banks = {
                 "5T": template[:5],
@@ -696,13 +843,15 @@ def cmd_score_refinement(args: argparse.Namespace) -> None:
     for number, target in enumerate(manifest.itertuples(index=False), start=1):
         started = time.time()
         refs = references_for(labels, target.target_id)
-        with np.load(RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False) as payload:
+        with np.load(RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False) as payload, np.load(
+            RAW_ROOT / target.target_id / "selected_tbm.npz", allow_pickle=False
+        ) as selected:
             banks = {
                 "J-controlled": (payload["j_coords"], payload["j_conf"], payload["j_global_conf"]),
                 "Thesis-3T+2D": (
-                    np.concatenate([payload["thesis_coords"][:3], payload["deep_coords"][:2]]),
-                    np.concatenate([payload["thesis_conf"][:3], payload["deep_conf"][:2]]),
-                    np.concatenate([payload["thesis_global_conf"][:3], payload["deep_global_conf"][:2]]),
+                    np.concatenate([selected["coords"][:3], payload["deep_coords"][:2]]),
+                    np.concatenate([selected["confidence"][:3], payload["deep_conf"][:2]]),
+                    np.concatenate([selected["global_confidence"][:3], payload["deep_global_conf"][:2]]),
                 ),
             }
             for bank, (raw_coords, confidence, global_confidence) in banks.items():
@@ -864,6 +1013,10 @@ def parser() -> argparse.ArgumentParser:
     raw.add_argument("--replace", action="store_true")
     raw.set_defaults(func=cmd_build_raw)
     commands.add_parser("score-tbm").set_defaults(func=cmd_score_tbm)
+    selected = commands.add_parser("build-selected-tbm")
+    selected.add_argument("--replace", action="store_true")
+    selected.set_defaults(func=cmd_build_selected_tbm)
+    commands.add_parser("score-selected-tbm").set_defaults(func=cmd_score_selected_tbm)
     commands.add_parser("score-bank").set_defaults(func=cmd_score_bank)
     refine = commands.add_parser("score-refinement")
     refine.add_argument("--device", default="cuda")

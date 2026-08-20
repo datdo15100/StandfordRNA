@@ -1,0 +1,13 @@
+setting,mean_best5_tm,availability
+j_controlled_tbm,0.38933349999999994,1.0
+composite_only,0.3908145,1.0
+full_composite,0.3908145,1.0
+global_only,0.3965495,1.0
+mmseqs_only,0.340864,1.0
+mmseqs_plus_composite,0.387783,1.0
+rank_distinct_pdb,0.387783,1.0
+rank_identity,0.3685335,1.0
+rank_identity_coverage,0.389126,1.0
+rank_with_completeness,0.389126,1.0
+thesis_final,0.387783,1.0
+unsafe_dates,0.42231700000000005,1.0
