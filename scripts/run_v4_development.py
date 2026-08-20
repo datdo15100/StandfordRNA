@@ -691,6 +691,126 @@ def cmd_score_selected_tbm(_: argparse.Namespace) -> None:
     print(json.dumps(inference, indent=2))
 
 
+def cmd_build_retained_tbm(args: argparse.Namespace) -> None:
+    """Freeze the gate-consistent engineering TBM retained for RQ2/RQ3."""
+    freeze_path = DEV / "retained_tbm_freeze.json"
+    if freeze_path.exists() and not args.replace:
+        raise FileExistsError("retained TBM freeze exists")
+    if (RESULTS / "rq1_tbm" / "retained_h1_inference.json").exists():
+        raise RuntimeError("retained TBM was already scored")
+    selected_result = json.loads((RESULTS / "rq1_tbm" / "selected_h1_inference.json").read_text())
+    manifest = read_manifest()
+    meta = db.load_meta()
+    coordinates = db.load_coords()
+    meta_index = meta.set_index("chain_key")
+    adj_dist = float(json.loads(P0_DISTANCE.read_text())["adjacent_c1"]["mean"])
+    rows = []
+    for target in manifest.itertuples(index=False):
+        components = component_frame(target, meta)
+        safe = components[components["release_date"] < str(target.date)]
+        keys = composite_rank(safe, (1.0, 0.0, 0.0, 0.0), 50)
+        items = [
+            item_from_key(key, target.sequence, meta_index, coordinates, adj_dist, "global_only")
+            for key in keys
+        ]
+        for item in items:
+            item["identity_coverage"] = item["identity"] * item["coverage"]
+        retained = select_items(items, "identity_coverage", distinct=True)
+        coords, fallbacks = pad_coords(
+            [item["linear"] for item in retained], target.sequence, "retained_tbm", target.target_id
+        )
+        confidence = [item["linear_conf"] for item in retained]
+        global_confidence = [item["identity_coverage"] for item in retained]
+        while len(confidence) < 5:
+            confidence.append(np.full(len(target.sequence), 0.1))
+            global_confidence.append(0.1)
+        path = RAW_ROOT / target.target_id / "retained_tbm.npz"
+        np.savez_compressed(
+            path,
+            coords=np.asarray(coords, np.float32),
+            confidence=np.asarray(confidence[:5], np.float32),
+            global_confidence=np.asarray(global_confidence[:5], np.float32),
+        )
+        metadata = {
+            "target_id": target.target_id,
+            "candidate_ids": [item["chain_key"] for item in retained],
+            "pdb_ids": [item["pdb_id"] for item in retained],
+            "fallback_slots": fallbacks,
+            "method": "global-only retrieval; identity*coverage rank; distinct-PDB safeguard; linear gap",
+        }
+        meta_path = path.with_suffix(".json")
+        meta_path.write_text(json.dumps(metadata, indent=2) + "\n")
+        rows.append(
+            {
+                "target_id": target.target_id,
+                "path": str(path.relative_to(REPO)),
+                "sha256": sha256(path),
+                "metadata_sha256": sha256(meta_path),
+                "fallback_slots": fallbacks,
+                "distinct_pdb_count": len(set(metadata["pdb_ids"])),
+            }
+        )
+    artifacts = pd.DataFrame(rows)
+    manifest_path = DEV / "retained_tbm_candidate_manifest.csv"
+    artifacts.to_csv(manifest_path, index=False)
+    freeze = {
+        "status": "FROZEN_BEFORE_RETAINED_TBM_NATIVE_SCORING",
+        "final_test_performance_accessed": False,
+        "development_evidence_seen": [
+            "initial RQ1 component ablations",
+            "strict simplification H1-selected development result",
+        ],
+        "strict_simplification_result": selected_result,
+        "method": "global-only retrieval; identity*coverage rank; distinct-PDB safeguard; linear gap",
+        "claim_contract": {
+            "global_only": "development-supported replacement for full composite",
+            "coverage": "retained engineering heuristic; not a demonstrated contribution",
+            "distinct_pdb": "diversity safeguard; not an accuracy contribution",
+            "linear_gap": "simplest non-inferior development completion",
+        },
+        "candidate_manifest": str(manifest_path.relative_to(REPO)),
+        "candidate_manifest_sha256": sha256(manifest_path),
+        "target_n": len(artifacts),
+        "fallback_slots": int(artifacts["fallback_slots"].sum()),
+        "generation_code_sha256": sha256(Path(__file__)),
+    }
+    freeze_path.write_text(json.dumps(freeze, indent=2) + "\n")
+    print(json.dumps(freeze, indent=2))
+
+
+def cmd_score_retained_tbm(_: argparse.Namespace) -> None:
+    manifest = read_manifest()
+    labels = labels_for(manifest)
+    expected = pd.read_csv(DEV / "retained_tbm_candidate_manifest.csv").set_index("target_id")
+    rows = []
+    for target in manifest.itertuples(index=False):
+        retained_path = RAW_ROOT / target.target_id / "retained_tbm.npz"
+        if sha256(retained_path) != expected.loc[target.target_id, "sha256"]:
+            raise RuntimeError(f"retained TBM changed for {target.target_id}")
+        refs = references_for(labels, target.target_id)
+        with np.load(retained_path, allow_pickle=False) as retained, np.load(
+            RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False
+        ) as original:
+            retained_tm = score_bank(retained["coords"], refs, target.sequence)
+            john_tm = score_bank(original["j_coords"], refs, target.sequence)
+        rows.append(
+            {
+                "target_id": target.target_id,
+                "cluster_id": target.mmseqs_sequence_similarity_cluster,
+                "j_controlled_tbm": john_tm,
+                "retained_thesis_tbm": retained_tm,
+                "h1_delta": retained_tm - john_tm,
+            }
+        )
+    frame = pd.DataFrame(rows)
+    inference = inference_document("H1-retained-development", frame, "h1_delta")
+    output = RESULTS / "rq1_tbm"
+    frame.to_csv(output / "retained_h1_target_scores.csv", index=False)
+    (output / "retained_h1_inference.json").write_text(json.dumps(inference, indent=2) + "\n")
+    print(frame.mean(numeric_only=True).to_string())
+    print(json.dumps(inference, indent=2))
+
+
 def self_tm(coords: np.ndarray, sequence: str) -> tuple[float, float]:
     values = []
     for left in range(len(coords)):
@@ -710,9 +830,9 @@ def cmd_score_bank(_: argparse.Namespace) -> None:
     for target in manifest.itertuples(index=False):
         refs = references_for(labels, target.target_id)
         with np.load(RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False) as payload, np.load(
-            RAW_ROOT / target.target_id / "selected_tbm.npz", allow_pickle=False
-        ) as selected:
-            template = selected["coords"]
+            RAW_ROOT / target.target_id / "retained_tbm.npz", allow_pickle=False
+        ) as retained:
+            template = retained["coords"]
             deep = payload["deep_coords"]
             banks = {
                 "5T": template[:5],
@@ -844,14 +964,14 @@ def cmd_score_refinement(args: argparse.Namespace) -> None:
         started = time.time()
         refs = references_for(labels, target.target_id)
         with np.load(RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False) as payload, np.load(
-            RAW_ROOT / target.target_id / "selected_tbm.npz", allow_pickle=False
-        ) as selected:
+            RAW_ROOT / target.target_id / "retained_tbm.npz", allow_pickle=False
+        ) as retained:
             banks = {
                 "J-controlled": (payload["j_coords"], payload["j_conf"], payload["j_global_conf"]),
                 "Thesis-3T+2D": (
-                    np.concatenate([selected["coords"][:3], payload["deep_coords"][:2]]),
-                    np.concatenate([selected["confidence"][:3], payload["deep_conf"][:2]]),
-                    np.concatenate([selected["global_confidence"][:3], payload["deep_global_conf"][:2]]),
+                    np.concatenate([retained["coords"][:3], payload["deep_coords"][:2]]),
+                    np.concatenate([retained["confidence"][:3], payload["deep_conf"][:2]]),
+                    np.concatenate([retained["global_confidence"][:3], payload["deep_global_conf"][:2]]),
                 ),
             }
             for bank, (raw_coords, confidence, global_confidence) in banks.items():
@@ -1017,6 +1137,10 @@ def parser() -> argparse.ArgumentParser:
     selected.add_argument("--replace", action="store_true")
     selected.set_defaults(func=cmd_build_selected_tbm)
     commands.add_parser("score-selected-tbm").set_defaults(func=cmd_score_selected_tbm)
+    retained = commands.add_parser("build-retained-tbm")
+    retained.add_argument("--replace", action="store_true")
+    retained.set_defaults(func=cmd_build_retained_tbm)
+    commands.add_parser("score-retained-tbm").set_defaults(func=cmd_score_retained_tbm)
     commands.add_parser("score-bank").set_defaults(func=cmd_score_bank)
     refine = commands.add_parser("score-refinement")
     refine.add_argument("--device", default="cuda")

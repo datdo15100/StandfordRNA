@@ -1,0 +1,17 @@
+{
+  "hypothesis": "H1-selected-development",
+  "target_n": 20,
+  "cluster_n": 17,
+  "mean_delta": -0.010178999999999994,
+  "median_delta": 0.0,
+  "ci_lower": -0.03840780519480518,
+  "ci_upper": 0.010515837719298248,
+  "raw_one_sided_p": 0.6550834491655083,
+  "improved": 9,
+  "tied": 2,
+  "regressed": 9,
+  "bootstrap_replicates": 10000,
+  "permutation_replicates": 100000,
+  "seed": 20260819,
+  "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+}

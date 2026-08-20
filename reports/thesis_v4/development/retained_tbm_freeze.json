@@ -1,0 +1,37 @@
+{
+  "status": "FROZEN_BEFORE_RETAINED_TBM_NATIVE_SCORING",
+  "final_test_performance_accessed": false,
+  "development_evidence_seen": [
+    "initial RQ1 component ablations",
+    "strict simplification H1-selected development result"
+  ],
+  "strict_simplification_result": {
+    "hypothesis": "H1-selected-development",
+    "target_n": 20,
+    "cluster_n": 17,
+    "mean_delta": -0.010178999999999994,
+    "median_delta": 0.0,
+    "ci_lower": -0.03840780519480518,
+    "ci_upper": 0.010515837719298248,
+    "raw_one_sided_p": 0.6550834491655083,
+    "improved": 9,
+    "tied": 2,
+    "regressed": 9,
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+  },
+  "method": "global-only retrieval; identity*coverage rank; distinct-PDB safeguard; linear gap",
+  "claim_contract": {
+    "global_only": "development-supported replacement for full composite",
+    "coverage": "retained engineering heuristic; not a demonstrated contribution",
+    "distinct_pdb": "diversity safeguard; not an accuracy contribution",
+    "linear_gap": "simplest non-inferior development completion"
+  },
+  "candidate_manifest": "reports/thesis_v4/development/retained_tbm_candidate_manifest.csv",
+  "candidate_manifest_sha256": "b713b4ebb6d5dd8c6967266a40d6bb01405381006cb503f91e8470399d0e63af",
+  "target_n": 20,
+  "fallback_slots": 0,
+  "generation_code_sha256": "b7c55cfc68a5d42deee9f7a4a86622f54e5c4a8706c879efa1188f073f36608b"
+}
