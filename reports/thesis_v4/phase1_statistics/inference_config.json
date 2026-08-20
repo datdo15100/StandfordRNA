@@ -1,0 +1,39 @@
+{
+  "status": "IMPLEMENTED_AND_SYNTHETIC_TESTED",
+  "performance_accessed": false,
+  "statistical_unit": "RNA target",
+  "dependence_block": "regenerated MMseqs sequence-similarity cluster",
+  "point_estimate": "target-weighted arithmetic mean of paired target deltas",
+  "bootstrap": {
+    "replicates": 10000,
+    "rng": "NumPy PCG64",
+    "seed": 20260819,
+    "procedure": "resample K clusters with replacement; each sampled cluster carries all member target deltas; compute target-weighted mean"
+  },
+  "permutation": {
+    "replicates": 100000,
+    "rng": "NumPy PCG64",
+    "seed": 20260819,
+    "procedure": "one shared random sign for all target deltas in each cluster",
+    "p_value": "(1 + count(permuted_stat >= observed_stat)) / 100001"
+  },
+  "multiplicity": {
+    "method": "Holm step-down",
+    "family": ["H1", "H2", "H3 SW-RMSD9 superiority"],
+    "family_wise_alpha": 0.05
+  },
+  "h3_tm_safeguard": {
+    "delta": "TM_Geometry - TM_Simple",
+    "pass_rule": "lower cluster-bootstrap 95% CI bound > -0.005",
+    "included_in_holm_family": false
+  },
+  "implementation": {
+    "path": "src/rna3d/eval/v4_statistics.py",
+    "sha256": "7024fdc770f8b382d48bc89819685e6d375d0f035b0e280dd3ade70c4353ac39"
+  },
+  "tests": {
+    "path": "tests/test_v4_statistics.py",
+    "sha256": "8cde5cf2ad3dc065a226ed7456c5edc892434e1cb3939f77febfc3609ac9df05",
+    "result": "5/5 PASS"
+  }
+}

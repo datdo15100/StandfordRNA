@@ -1,0 +1,57 @@
+diff --git a/PotentialFold/Optimization.py b/PotentialFold/Optimization.py
+index 202d425..6ee12de 100644
+--- a/PotentialFold/Optimization.py
++++ b/PotentialFold/Optimization.py
+@@ -463,7 +463,7 @@ class Structure:
+                 rama=self.init_quat(ilter).data.numpy()
+                 #self.outpdb(torch.DoubleTensor(rama) ,self.saveprefix+f'_{str(ilter)}'+'.pdb',energystr='')
+                 # self.config=readconfig(os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib','vdw.json'))
+-                # rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,iprint=10)[0]
++                # rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np)[0]
+                 # rama = rama.flatten()
+             except:
+                 rama=self.init_quat_safe(ilter).data.numpy()
+@@ -471,7 +471,7 @@ class Structure:
+
+             for i in range(3):
+                 self.config=readconfig(os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib','vdw.json'))
+-                rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,iprint=10)[0]
++                rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np)[0]
+                 rama = rama.flatten()
+
+                 self.config=readconfig(self.foldconfig)
+@@ -483,12 +483,12 @@ class Structure:
+                 self.config['weight_cnnc'] =geoscale * self.config['weight_cnnc']
+                 self.config['weight_pnnp'] =geoscale * self.config['weight_pnnp']
+                 for i in range(3):
+-                    rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,iprint=10)[0]
++                    rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np)[0]
+
+                     line_min = lbfgs_rosetta.ArmijoLineMinimization(self.obj_func_np,self.obj_func_grad_np,True,len(rama),120)
+                     lbfgs_opt = lbfgs_rosetta.lbfgs(self.obj_func_np,self.obj_func_grad_np)
+                     rama=lbfgs_opt.run(rama,256,lbfgs_rosetta.absolute_converge_test,line_min,8000,self.obj_func_np,self.obj_func_grad_np,1e-9)
+-                    rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,iprint=10)[0]
++                    rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np)[0]
+
+                 newrama=rama+0.0
+                 newrama=torch.DoubleTensor(newrama)
+diff --git a/PotentialFold/Selection.py b/PotentialFold/Selection.py
+index 4df281f..831e0bf 100644
+--- a/PotentialFold/Selection.py
++++ b/PotentialFold/Selection.py
+@@ -550,13 +550,13 @@ class Structure:
+                 rama=self.init_quat(ilter).data.numpy()
+                 #self.outpdb(torch.DoubleTensor(rama) ,self.saveprefix+f'_{str(ilter)}'+'.pdb',energystr='')
+                 self.config=readconfig(os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib','vdw.json'))
+-                rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,iprint=10,maxfun=100)[0]
++                rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,maxfun=100)[0]
+                 rama = rama.flatten()
+             except:
+                 rama=self.init_quat_safe(ilter).data.numpy()
+                 #self.outpdb(torch.DoubleTensor(rama) ,self.saveprefix+f'_init'+str(ilter)+'.pdb',energystr='')
+                 self.config=readconfig(os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib','vdw.json'))
+-                rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,iprint=10,maxfun=100)[0]
++                rama = fmin_l_bfgs_b(func=self.obj_func_np, x0=rama,  fprime=self.obj_func_grad_np,maxfun=100)[0]
+                 rama = rama.flatten()
+
+             self.config=readconfig(self.foldconfig)

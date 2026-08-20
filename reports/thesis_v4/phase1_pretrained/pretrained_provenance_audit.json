@@ -1,0 +1,74 @@
+{
+  "phase": "V4 Phase 1 pretrained provenance and overlap audit",
+  "performance_accessed": false,
+  "audit_driver": {
+    "path": "scripts/audit_v4_pretrained_provenance.py",
+    "sha256": "b24241b1da9bdade52458c0c5a7df1e1756e9a147b48435ae31264e46cfaf82c"
+  },
+  "drfold2": {
+    "remote": "https://github.com/leeyang/DRfold2.git",
+    "commit": "3667d6ac44c5b14cff94c36e0371224acb2cdae5",
+    "tree": "22af904928ace988971d2f1bde0988d7bb8a5f3e",
+    "clean_source_path": "/home/datdo/.cache/rna3d/external/DRfold2_clean_3667d6a",
+    "clean_source_manifest": {
+      "path": "reports/thesis_v4/phase1_pretrained/drfold2_clean_source_manifest.csv",
+      "sha256": "cf4e2b58d41cf1334c83fb4aed473810186cbaf9b3f499ac06b7a2a0c2ec1cdf"
+    },
+    "local_checkout_dirty": true,
+    "tracked_patch": "reports/thesis_v4/phase1_pretrained/drfold2_local_tracked_diff.patch",
+    "tracked_patch_role": "removes deprecated SciPy iprint arguments; scientific equivalence still requires smoke validation",
+    "cfg97_checkpoints": {
+      "count": 20,
+      "manifest_sha256": "c50b6ccb18e64a44d76e6576adf4fa16496ed3c92110b0c1f7efab8ad44e88eb"
+    },
+    "rclm_checkpoint": {
+      "path": "/home/datdo/.cache/rna3d/external/DRfold2/model_hub/RCLM/epoch_67000",
+      "bytes": 190696493,
+      "sha256": "2b8d62e48d080f7fdff5eb03897cb91c214c53bcfddfa7171d1ae1a66bc055f5"
+    },
+    "local_structural_training_fasta": {
+      "path": "/home/datdo/.cache/rna3d/external/DRfold2/data/train.fasta",
+      "sha256": "fbd10e8c0a3511e6b70ad38afb6d86ca2b6111f5baaffba51e641cab4cb598a1",
+      "records": 10432,
+      "unique_headers": 10164,
+      "unique_sequences": 3414,
+      "minimum_length": 16,
+      "maximum_length": 4449,
+      "identity_to_published_data_zip": "UNVERIFIED"
+    },
+    "published_provenance": {
+      "paper": "https://doi.org/10.1371/journal.pbio.3003659",
+      "structural_training_release_rule": "RNA structures released before 2024",
+      "paper_test_exclusion_rule": "more than 80% sequence identity to test RNA excluded",
+      "rclm_corpus": "approximately 30M RNAcentral Release 22 sequences",
+      "rclm_training_batches": 67000
+    },
+    "v4_overlap": {
+      "candidate_targets": 172,
+      "exact_sequence_overlaps": 19,
+      "mmseqs_80_80_homolog_overlaps": 75,
+      "structural_overlap_pass": 97,
+      "overlap_table": "reports/thesis_v4/phase1_pretrained/drfold2_overlap_by_target.csv",
+      "overlap_table_sha256": "4e2a93624f36cd1432fcef18c6301405c5db8f201a90a414a51ee2fe3ab040e9",
+      "mmseqs_version": "18.8cc5c",
+      "mmseqs_sha256": "d6d1bf1b50c095eb0cb66f685a7fb1d9b8b69497e1e88416fd48f28e313cc773",
+      "command_template": "easy-search query structural_train --search-type 3 --min-seq-id 0.8 -c 0.8 --cov-mode 0 --max-seqs 1000"
+    },
+    "language_model_overlap": "RNAcentral Release 22 corpus manifest unavailable locally; exact/homolog target membership remains UNVERIFIED and no whole-model time-safe claim is allowed"
+  },
+  "boltz": {
+    "local_checkpoint_count": 0,
+    "local_checkpoint_status": "UNAVAILABLE",
+    "historical_candidate_count": 1,
+    "historical_candidate_paths": [
+      "data/cache/geofuse_candidates/validation/R1138/boltz__boltz1_top1_seed42__01.npz"
+    ],
+    "source_commit": "UNKNOWN",
+    "checkpoint_hash": "UNKNOWN",
+    "decision": "NOT ADMISSIBLE FOR PRIMARY OR MECHANISM EVIDENCE until source/checkpoint/training provenance is recovered"
+  },
+  "environment": {
+    "python": "3.12.13",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39"
+  }
+}

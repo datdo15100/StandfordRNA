@@ -1,0 +1,66 @@
+{
+  "phase": "V4 Phase 1 DB-controlled freeze",
+  "performance_accessed": false,
+  "audit_driver": {
+    "path": "scripts/freeze_v4_controlled_template_db.py",
+    "sha256": "1b032ec89cf7de065014ee1b31d709c99324fcad7f84bfdb9870e530a192eeac"
+  },
+  "database": {
+    "definition": "all 23,869 valid parsed RNA chains; target-specific temporal and self filters applied identically at query time",
+    "meta": {
+      "path": "data/processed/template_meta.parquet",
+      "sha256": "80463138acfce71663a25504fd641521a57f75670e33cef1923f7a69fd346402"
+    },
+    "coordinates": {
+      "path": "data/cache/template_coords.pkl",
+      "sha256": "d5ce6232d88e1d92050307f6313c8ad1c3f0792ffa9c57d01d2b71af2405980f"
+    },
+    "manifest": {
+      "path": "reports/thesis_v4/phase1_controlled_db/db_controlled_manifest.csv",
+      "sha256": "d0108aebd28e8fda3b72fc59e7305c58f4a4ed0c74baebcf3a4909f60c0d8a5b"
+    },
+    "chains": 23869,
+    "pdb_entries": 8613,
+    "all_coordinate_records_valid": true
+  },
+  "source_snapshot": {
+    "pdb_release_dates_sha256": "4e3a6dd4f56bec18247bf69192bb61e5313962293827ac42c3c61cd3dc25f50d",
+    "pdb_seqres_sha256": "242acaa99b71bac6435397b6c6e1b2b195506defa6b7161658c181fc6c60d708"
+  },
+  "j_controlled_native_blind_smoke": {
+    "target_id": "R1117v2",
+    "sequence_length": 30,
+    "target_cutoff": "2022-06-03",
+    "self_pdb_ids_excluded": [
+      "8FZA"
+    ],
+    "templates_after_common_filter": 16975,
+    "candidate_sources": [
+      "template",
+      "template",
+      "template",
+      "template",
+      "template"
+    ],
+    "template_ids": [
+      "3Q51_A",
+      "7REX_A",
+      "3BNQ_A",
+      "4V50_AW",
+      "7PDU_B"
+    ],
+    "candidate_coordinate_sha256": [
+      "4d04ac66b8ad82557b7dfe2aa11d981ced35d6934b7ac01af0ed4dd725265206",
+      "20de9b586454ecbdb1fcd5b435bae8b62c34d9f4c18b9ea8ccfa792d7dcd518f",
+      "75ad20b4233cd9e58a1022bc0b7d52a7fe7e34c4e8f92401b147874303ac4d5f",
+      "ae6b229ff5c5e0824f012ad16b5544804fc73f5677aceca131487270111f4021",
+      "c752cd276641631faf33524ab6dbfdc9d6e13cf4643d221a2f62eb0bd3745720"
+    ],
+    "base_seed": 42,
+    "seconds": 7.271483898162842
+  },
+  "environment": {
+    "python": "3.12.13",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39"
+  }
+}

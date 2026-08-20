@@ -1,0 +1,127 @@
+{
+  "phase": "V4 Phase 1 public John reproduction audit",
+  "baseline_name": "reproduced publicly released John pipeline",
+  "status": "PARTIAL_DATASET_REPRODUCTION_NATIVE_BLIND_SMOKE_PASS",
+  "performance_accessed": false,
+  "public_capture": {
+    "tbm_path": "utilities/top1_tbm.py",
+    "tbm_sha256": "c8eb61cbb97c85ac0a58c37ce88881596f27fac9a9b072837d159b0726ee9d9e",
+    "hybrid_path": "utilities/top1_4_4_hybrid_final_take.py",
+    "hybrid_sha256": "0c0e00685cbb131962b7eac7a1390e50b2b14c0a2828858df94318d79b2dca4c",
+    "reported_coordinate_groups_in_captured_output": 18815,
+    "exact_notebook_version": "UNKNOWN",
+    "exact_attached_dataset_versions": "UNKNOWN",
+    "exact_winning_submission_equivalence": "UNKNOWN"
+  },
+  "local_port": {
+    "audit_driver": {
+      "path": "scripts/audit_v4_john_reproduction.py",
+      "sha256": "e4e31b1222f90156e4863c8e34d85244e53bf5cfb44019a99cd60ce209dc4aa1"
+    },
+    "files": [
+      {
+        "path": "src/rna3d/baselines/top1.py",
+        "sha256": "dce77a957c49a5bec0764cb53e23a973bc5ab8d13921b157fb3773c7d1724778"
+      },
+      {
+        "path": "src/rna3d/refine/rule_based.py",
+        "sha256": "f3b96116161df7c235fb3afcd945c3075cf580618f361aa568375379064ba140"
+      },
+      {
+        "path": "src/rna3d/geometry/denovo.py",
+        "sha256": "387f06c7018eb2f0c2a72aef9ff980d3aa7f4361d147168ffa1e73622f7cd7a3"
+      }
+    ],
+    "raw_boundary": "after coordinate transfer and gap completion; before John rule refiner and Gaussian jitter",
+    "base_seed": 42,
+    "seed_contract": "SHA-256-derived 32-bit seeds replace process-randomized Python hash and global NumPy state"
+  },
+  "local_john_style_database": {
+    "meta_path": "data/processed/top1_template_meta.parquet",
+    "meta_sha256": "8e96ffb4e759e9aca200e0df3f4382e5bb681f1ea5094283c559b8f7701b4a8f",
+    "coords_path": "data/cache/top1_template_coords.pkl",
+    "coords_sha256": "b419405d7ee1447a470ada812f53fffc373674be10c2715ccd619e975656210a",
+    "unique_sequences": 7155,
+    "unique_pdb_ids": 4881,
+    "minimum_length": 8,
+    "median_length": 55.0,
+    "maximum_length": 4449
+  },
+  "native_blind_smoke": {
+    "target_id": "R1117v2",
+    "sequence_length": 30,
+    "cutoff": "2022-06-03",
+    "direct_self_pdb_ids_excluded": [
+      "8FZA"
+    ],
+    "allowed_template_count": 4866,
+    "candidate_count": 5,
+    "candidate_sources": [
+      "template",
+      "template",
+      "template",
+      "template",
+      "template"
+    ],
+    "template_ids": [
+      "3Q51_A",
+      "1KOS_A",
+      "3BNQ_A",
+      "4P3T_A",
+      "6BSI_R"
+    ],
+    "confidences": [
+      0.6687908842122482,
+      0.5841146422047514,
+      0.5727008804778188,
+      0.5558727675321157,
+      0.4729959640172412
+    ],
+    "candidate_coordinate_sha256": [
+      "4d04ac66b8ad82557b7dfe2aa11d981ced35d6934b7ac01af0ed4dd725265206",
+      "609c0538f4bd9f6f8def09ee579c3ea8dcded1205e05c64dcc19a4f70a077958",
+      "75ad20b4233cd9e58a1022bc0b7d52a7fe7e34c4e8f92401b147874303ac4d5f",
+      "287b20e650f28e162666bb768da66b885ebfacd7ca88dcbfa4b2ad089a97d96b",
+      "92df9f1119cb4cd4054a3752b308bffe8fed21963ccb37b31c96121ff5936021"
+    ],
+    "repeatable_within_process": true,
+    "artifact_path": "data/processed/v4_john_smoke/R1117v2_raw_candidates.npy",
+    "artifact_sha256": "40851256fc39cfee63e9c671d896ac5891c9cbf852866e068d8ea3f66395d1ca",
+    "first_pass_seconds": 2.229083776473999
+  },
+  "known_deviations": [
+    {
+      "id": "DATASET-UNIVERSE",
+      "status": "CONFIRMED",
+      "detail": "Local John-style database has 7,155 unique sequences, not the captured notebook's 18,815 coordinate groups.",
+      "consequence": "J-original-local is a partial data reproduction; it is not an exact notebook or winning-submission reproduction."
+    },
+    {
+      "id": "DATASET-NORMALIZATION",
+      "status": "CONFIRMED",
+      "detail": "Local reconstruction canonicalizes modified residues and keeps the earliest release representative per exact sequence.",
+      "consequence": "The local input table differs from the public attached dataset."
+    },
+    {
+      "id": "RANDOMNESS",
+      "status": "CONTROLLED_DEVIATION",
+      "detail": "Public code uses process-randomized hash(target_id) and global NumPy/Python random state.",
+      "consequence": "V4 freezes SHA-256-derived seeds and records this execution-only deviation."
+    },
+    {
+      "id": "RAW-BOUNDARY",
+      "status": "CONTROLLED_ADDITION",
+      "detail": "V4 exposes candidates before John rule refinement and Gaussian jitter.",
+      "consequence": "H1 can compare candidate generation without conflating refinement."
+    }
+  ],
+  "environment": {
+    "python": "3.12.13",
+    "numpy": "2.5.1",
+    "pandas": "3.0.3",
+    "scipy": "1.18.0",
+    "scikit_learn": "1.9.0",
+    "biopython": "1.87",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39"
+  }
+}

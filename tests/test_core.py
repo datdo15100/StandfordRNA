@@ -17,7 +17,12 @@ from rna3d.template.confidence import template_confidence, temporal_valid
 from rna3d.template.gap_fill import fill_gaps, fill_gaps_linear
 from rna3d.paths import processed
 from rna3d.template.mmseqs_search import mmseqs_bin
-from rna3d.baselines.top1 import composite_similarity, composite_similarity_components
+from rna3d.baselines.top1 import (
+    build_raw_candidates,
+    composite_similarity,
+    composite_similarity_components,
+    predict_structures,
+)
 
 
 class TransformTests(unittest.TestCase):
@@ -72,6 +77,27 @@ class TemplateConfidenceTests(unittest.TestCase):
         np.testing.assert_allclose(linear[:, 1:], 0.0, atol=1e-12)
         self.assertGreater(float(np.abs(current[:, 1:]).max()), 0.0)
         np.testing.assert_allclose(current[mask], linear[mask])
+
+    def test_john_raw_fallback_is_process_independent_for_fixed_seed(self) -> None:
+        first = build_raw_candidates("AUGCAUGC", "SMOKE", [], n=2, base_seed=17)
+        second = build_raw_candidates("AUGCAUGC", "SMOKE", [], n=2, base_seed=17)
+
+        self.assertEqual([item.source for item in first], ["de_novo_fallback"] * 2)
+        for left, right in zip(first, second):
+            np.testing.assert_array_equal(left.coords, right.coords)
+
+    def test_john_refined_prediction_is_repeatable_for_fixed_seed(self) -> None:
+        sequence = "AUGCAUGC"
+        coords = np.column_stack(
+            [np.arange(len(sequence), dtype=float) * 5.9, np.zeros(len(sequence)), np.zeros(len(sequence))]
+        )
+        templates = [("TEMPLATE_A", sequence, coords)]
+
+        first = predict_structures(sequence, "SMOKE", templates, n=2, base_seed=23)
+        second = predict_structures(sequence, "SMOKE", templates, n=2, base_seed=23)
+
+        for left, right in zip(first, second):
+            np.testing.assert_array_equal(left, right)
 
 
 class PortablePathTests(unittest.TestCase):

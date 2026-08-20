@@ -15,6 +15,8 @@ leakage the notebook is exposed to on the CASP15 public targets.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+import hashlib
 import warnings
 
 import numpy as np
@@ -27,6 +29,22 @@ from ..geometry.denovo import de_novo_structure
 from ..refine.rule_based import refine_rule_based
 
 warnings.filterwarnings("ignore")
+
+
+@dataclass(frozen=True)
+class RawTop1Candidate:
+    """John-style candidate at the preregistered pre-refinement boundary."""
+
+    coords: np.ndarray
+    source: str
+    template_id: str | None
+    confidence: float
+
+
+def _stable_seed(*parts: object) -> int:
+    """Return a process-independent 32-bit seed for frozen V4 reproduction."""
+    payload = "|".join(map(str, parts)).encode("utf-8")
+    return int.from_bytes(hashlib.sha256(payload).digest()[:4], "big")
 
 
 # --------------------------------------------------------------------------- #
@@ -245,23 +263,71 @@ def adapt_template_to_query(query: str, template_seq: str, template_coords: np.n
     return np.nan_to_num(coords)
 
 
-def predict_structures(query: str, target_id: str, templates: list[tuple],
-                       n: int = 5) -> list[np.ndarray]:
-    """Their predict_rna_structures: template candidates + rule refine + de novo fill."""
-    preds = []
+def build_raw_candidates(
+    query: str,
+    target_id: str,
+    templates: list[tuple],
+    n: int = 5,
+    *,
+    base_seed: int = 0,
+) -> list[RawTop1Candidate]:
+    """Build candidates after transfer/gap completion and before any refiner/jitter.
+
+    The public notebook uses Python's process-randomized ``hash`` for de novo seeds.
+    V4 replaces only that execution detail with SHA-256-derived seeds so a fallback
+    candidate is reproducible across processes and machines.
+    """
+    candidates: list[RawTop1Candidate] = []
     similar = find_similar_sequences(query, templates, top_n=n)
     for tid, tseq, score, tcoords in similar:
         adapted = adapt_template_to_query(query, tseq, tcoords)
         if adapted is None:
             continue
-        refined = refine_rule_based(adapted, query, confidence=score)
-        scale = max(0.05, 0.8 - score)
-        rng = np.random.default_rng(abs(hash((target_id, len(preds)))) % (2**32))
-        preds.append(refined + rng.normal(0, scale, refined.shape))
-        if len(preds) >= n:
+        candidates.append(
+            RawTop1Candidate(
+                coords=np.asarray(adapted, dtype=float),
+                source="template",
+                template_id=str(tid),
+                confidence=float(score),
+            )
+        )
+        if len(candidates) >= n:
             break
-    while len(preds) < n:
-        seed = abs(hash(target_id)) % 10000 + len(preds) * 1000
-        dn = de_novo_structure(query, seed=seed)
-        preds.append(refine_rule_based(dn, query, confidence=0.2))
+    while len(candidates) < n:
+        index = len(candidates)
+        seed = _stable_seed("john-controlled", base_seed, target_id, "de-novo", index)
+        candidates.append(
+            RawTop1Candidate(
+                coords=de_novo_structure(query, seed=seed),
+                source="de_novo_fallback",
+                template_id=None,
+                confidence=0.2,
+            )
+        )
+    return candidates[:n]
+
+
+def predict_structures(
+    query: str,
+    target_id: str,
+    templates: list[tuple],
+    n: int = 5,
+    *,
+    base_seed: int = 0,
+) -> list[np.ndarray]:
+    """Run the John-style refiner and jitter on frozen raw candidates."""
+    preds = []
+    for index, candidate in enumerate(
+        build_raw_candidates(query, target_id, templates, n=n, base_seed=base_seed)
+    ):
+        refined = refine_rule_based(
+            candidate.coords, query, confidence=candidate.confidence
+        )
+        if candidate.source == "template":
+            scale = max(0.05, 0.8 - candidate.confidence)
+            rng = np.random.default_rng(
+                _stable_seed("john-controlled", base_seed, target_id, "jitter", index)
+            )
+            refined = refined + rng.normal(0, scale, refined.shape)
+        preds.append(refined)
     return preds[:n]

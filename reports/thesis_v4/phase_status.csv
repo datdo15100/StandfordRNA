@@ -1,0 +1,10 @@
+phase,scope,status,native_performance_opened,evidence
+preregistration,"protocol and 5,135-row master ledger",FROZEN,False,"commit 7739ff6; tag v4-preregistration-2026-08-20"
+phase1_p0,"reproduce P0-production",PASS,False,reports/thesis_v4/phase1_p0/p0_reproduction_audit.json
+phase1_john,"public capture audit and native-blind local smoke",PARTIAL_DATASET_REPRODUCTION_NATIVE_BLIND_SMOKE_PASS,False,reports/thesis_v4/phase1_john/john_reproduction_audit.json
+phase1_jcontrolled,"shared DB-controlled John baseline",DB_FROZEN_NATIVE_BLIND_SMOKE_PASS,False,reports/thesis_v4/phase1_controlled_db/db_controlled_freeze.json
+phase1_pretrained_provenance,"DRfold2 and Boltz provenance/overlap audit",AUDITED_WITH_UNRESOLVED_PROVENANCE,False,reports/thesis_v4/phase1_pretrained/pretrained_provenance_audit.json
+phase1_statistics,"cluster-aware inference implementation",IMPLEMENTED_AND_SYNTHETIC_TESTED,False,reports/thesis_v4/phase1_statistics/inference_config.json
+development,"component experiments and keep/drop gates",LOCKED,False,UNKNOWN
+confirmatory,"native-blind generation then single label opening",LOCKED,False,UNKNOWN
+kaggle_external,"complete frozen system only",LOCKED,False,UNKNOWN

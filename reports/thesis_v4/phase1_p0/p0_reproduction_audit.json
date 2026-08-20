@@ -1,0 +1,106 @@
+{
+  "phase": "V4 Phase 1 P0-production reproduction",
+  "performance_accessed": false,
+  "target_count": 3397,
+  "cutoff_rule": "temporal_cutoff < 2022-05-27",
+  "manifest": {
+    "path": "reports/thesis_v4/phase1_p0/p0_production_target_manifest.csv",
+    "sha256": "e09096fcbcc38095aab299962eabd41df395b43a56ebc54fdb0c799db9b1ff09"
+  },
+  "production": {
+    "distance_rg": {
+      "path": "data/processed/geometry_priors.json",
+      "sha256": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f"
+    },
+    "angle_torsion": {
+      "path": "data/processed/geofuse_geometry_v2_priors.json",
+      "sha256": "9f2517546c6e9b87cb9a7335c66b68a76f8ab548b4b1e66def29d04a3e986302"
+    },
+    "geometry_config": {
+      "steps": 300,
+      "lr": 0.04,
+      "w_source": 3.0,
+      "w_backbone": 1.0,
+      "w_clash": 0.3,
+      "w_rg": 0.02,
+      "w_angle": 0.3,
+      "w_torsion": 0.15,
+      "w_kink": 20.0,
+      "adaptive_strength": true,
+      "fixed_strength": 1.0,
+      "kink_floor_deg": 70.0,
+      "kink_margin_deg": 5.0,
+      "backbone_huber_delta": 2.0,
+      "rg_huber_delta": 5.0,
+      "sep_clash": 2,
+      "huber_delta": 2.0,
+      "grad_clip": 10.0
+    }
+  },
+  "rebuild": {
+    "distance_rg": {
+      "path": "data/processed/v4_p0_rebuild/geometry_priors.json",
+      "sha256": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f",
+      "seconds": 51.42158555984497
+    },
+    "angle_torsion": {
+      "path": "data/processed/v4_p0_rebuild/geofuse_geometry_v2_priors.json",
+      "sha256": "eb38ba8e2635cdc2ff1e76b05d06af189d9d33d07825f0368aa77616d732d44f",
+      "seconds": 31.28340220451355
+    }
+  },
+  "comparison": {
+    "absolute_tolerance": 1e-10,
+    "distance_rg_match": true,
+    "distance_rg_max_absolute_error": 0.0,
+    "distance_rg_mismatch_count": 0,
+    "angle_torsion_match_excluding_runtime": true,
+    "angle_torsion_max_absolute_error": 0.0,
+    "angle_torsion_mismatch_count_excluding_runtime": 0,
+    "first_distance_rg_mismatches": [],
+    "first_angle_torsion_mismatches": []
+  },
+  "inputs": [
+    {
+      "path": "data/stanford-rna-3d-folding/train_sequences.v2.csv",
+      "sha256": "efe6c57cd753f7704167b8ca5ebd73eb46f4da7fbc55dcf29ed59771d9282499"
+    },
+    {
+      "path": "data/stanford-rna-3d-folding/train_labels.v2.csv",
+      "sha256": "47f622f1c7e671a790a0f985527dbf23f62da5d459872ccf5ddcf511630dc876"
+    }
+  ],
+  "code": [
+    {
+      "path": "scripts/run_v4_phase1_p0_audit.py",
+      "sha256": "4a7e02bfb4c15824a8e2378185550ae6c0853757259850e929e8fa82cacc57ad"
+    },
+    {
+      "path": "scripts/run_phase2_priors.py",
+      "sha256": "ea1209e1bde1bdb4bb1d6960c98cffd4210b8aaa7e27c531b714d032994efa05"
+    },
+    {
+      "path": "scripts/build_geofuse_geometry_v2_priors.py",
+      "sha256": "97839ce1dd043e7d1f6fed54ca74cc98c6033fe6954ee2ad0eedb741861e0822"
+    },
+    {
+      "path": "src/rna3d/geometry/priors.py",
+      "sha256": "b16c8778c048244ce1c595f5e5f8c8d7897fae4f5beef0e708e3adc12f56678d"
+    },
+    {
+      "path": "src/rna3d/geofuse/geometry_v2.py",
+      "sha256": "a4317fe4e1d1229cd2304e9a0d3911c20dae98d187fc01593c829a3500fd88ad"
+    },
+    {
+      "path": "src/rna3d/geofuse/refine_v2.py",
+      "sha256": "abd15fe6b1667a26b6460290e0187135656acd2fec256ae61f2ae456a5b89a50"
+    }
+  ],
+  "environment": {
+    "python": "3.12.13",
+    "numpy": "2.5.1",
+    "pandas": "3.0.3",
+    "scipy": "1.18.0",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39"
+  }
+}
