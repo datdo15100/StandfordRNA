@@ -1334,9 +1334,11 @@ def cmd_score_selected_refiner(args: argparse.Namespace) -> None:
 
 
 def cmd_summarize(_: argparse.Namespace) -> None:
-    h1 = json.loads((RESULTS / "rq1_tbm" / "inference.json").read_text())["H1"]
+    h1 = json.loads((RESULTS / "rq1_tbm" / "retained_h1_inference.json").read_text())
     h2 = json.loads((RESULTS / "rq2_candidate_source" / "inference.json").read_text())["H2"]
-    h3_doc = json.loads((RESULTS / "rq3_refinement" / "inference_and_decision.json").read_text())
+    selected_path = RESULTS / "rq3_refinement" / "selected_inference_and_decision.json"
+    h3_doc = json.loads(selected_path.read_text())
+    refiner_freeze = json.loads((DEV / "selected_refiner_freeze.json").read_text())
     summary = {
         "scope": "V4 development only; all targets were previously exposed",
         "confirmatory_claims_allowed": False,
@@ -1344,9 +1346,12 @@ def cmd_summarize(_: argparse.Namespace) -> None:
         "H2": h2,
         "H3": h3_doc["H3"],
         "H3_tm_safeguard": h3_doc["tm_safeguard"],
+        "holm_primary_family": h3_doc["development_holm"],
         "development_component_decisions": {
             "refiner": h3_doc["selected_final_refiner"],
             "geometry_gate_pass": h3_doc["development_gate_pass"],
+            "geometry_config": h3_doc["selected_config"],
+            "mechanism_decisions": refiner_freeze["decisions"],
         },
     }
     (RESULTS / "development_summary.json").write_text(json.dumps(summary, indent=2) + "\n")

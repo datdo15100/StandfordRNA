@@ -1,0 +1,125 @@
+{
+  "scope": "V4 development only; all targets were previously exposed",
+  "confirmatory_claims_allowed": false,
+  "H1": {
+    "hypothesis": "H1-retained-development",
+    "target_n": 20,
+    "cluster_n": 17,
+    "mean_delta": 0.005649500000000006,
+    "median_delta": 0.0004149999999999987,
+    "ci_lower": -0.003045352272727271,
+    "ci_upper": 0.017032333333333344,
+    "raw_one_sided_p": 0.15577844221557785,
+    "improved": 10,
+    "tied": 2,
+    "regressed": 8,
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+  },
+  "H2": {
+    "hypothesis": "H2-development",
+    "target_n": 20,
+    "cluster_n": 17,
+    "mean_delta": 0.015693000000000002,
+    "median_delta": 0.0,
+    "ci_lower": -0.005645901960784317,
+    "ci_upper": 0.041944189285714285,
+    "raw_one_sided_p": 0.13711862881371187,
+    "improved": 8,
+    "tied": 11,
+    "regressed": 1,
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+  },
+  "H3": {
+    "hypothesis": "H3-selected-development",
+    "target_n": 20,
+    "cluster_n": 17,
+    "mean_delta": 0.023447905086121573,
+    "median_delta": 0.019482878563637784,
+    "ci_lower": 0.006885900643625681,
+    "ci_upper": 0.040616205092162266,
+    "raw_one_sided_p": 0.0076899231007689925,
+    "improved": 15,
+    "tied": 0,
+    "regressed": 5,
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+  },
+  "H3_tm_safeguard": {
+    "hypothesis": "H3-selected-TM-safeguard-development",
+    "target_n": 20,
+    "cluster_n": 17,
+    "mean_delta": 0.0007869999999999946,
+    "median_delta": 0.0011999999999999789,
+    "ci_lower": -0.0031768026315789548,
+    "ci_upper": 0.004331724404761899,
+    "raw_one_sided_p": 0.35153648463515363,
+    "improved": 14,
+    "tied": 0,
+    "regressed": 6,
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+  },
+  "holm_primary_family": {
+    "H3": {
+      "rank": 1,
+      "raw_p": 0.0076899231007689925,
+      "holm_adjusted_p": 0.02306976930230698,
+      "step_down_threshold": 0.016666666666666666,
+      "reject": true
+    },
+    "H2": {
+      "rank": 2,
+      "raw_p": 0.13711862881371187,
+      "holm_adjusted_p": 0.27423725762742374,
+      "step_down_threshold": 0.025,
+      "reject": false
+    },
+    "H1": {
+      "rank": 3,
+      "raw_p": 0.15577844221557785,
+      "holm_adjusted_p": 0.27423725762742374,
+      "step_down_threshold": 0.05,
+      "reject": false
+    }
+  },
+  "development_component_decisions": {
+    "refiner": "Geometry-selected",
+    "geometry_gate_pass": true,
+    "geometry_config": {
+      "steps": 300,
+      "lr": 0.04,
+      "w_source": 3.0,
+      "w_backbone": 1.0,
+      "w_clash": 0.3,
+      "w_rg": 0.0,
+      "w_angle": 0.3,
+      "w_torsion": 0.15,
+      "w_kink": 20.0,
+      "adaptive_strength": true,
+      "fixed_strength": 1.0,
+      "context_mode": "global",
+      "kink_floor_deg": 70.0,
+      "kink_margin_deg": 5.0,
+      "backbone_huber_delta": 2.0,
+      "rg_huber_delta": 5.0,
+      "sep_clash": 2,
+      "huber_delta": 2.0,
+      "grad_clip": 10.0
+    },
+    "mechanism_decisions": {
+      "confidence": "adaptive strength",
+      "angle_torsion_context": "global unconditional prior",
+      "rg": "off"
+    }
+  }
+}
