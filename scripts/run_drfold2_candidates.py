@@ -21,6 +21,7 @@ import sys
 import time
 
 import numpy as np
+import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -140,7 +141,17 @@ def expected_ret_count(repo: Path, mode: str) -> int:
 
 
 def select_sequences(args: argparse.Namespace):
-    sequences = io.load_sequences(args.split)
+    if args.manifest:
+        sequences = pd.read_csv(args.manifest, dtype=str)
+        required = {"target_id", "sequence"}
+        missing_columns = required - set(sequences.columns)
+        if missing_columns:
+            raise ValueError(f"manifest is missing columns: {sorted(missing_columns)}")
+        if "seq_len" not in sequences:
+            sequences["seq_len"] = sequences["sequence"].str.len()
+        sequences["seq_len"] = sequences["seq_len"].astype(int)
+    else:
+        sequences = io.load_sequences(args.split)
     if args.target_ids:
         requested = {item.strip() for item in args.target_ids.split(",") if item.strip()}
         missing = requested - set(sequences["target_id"])
@@ -387,6 +398,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, required=True, help="installed official DRfold2 repo")
     parser.add_argument("--output-root", type=Path, required=True)
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="optional native-blind CSV with target_id, sequence and optional seq_len",
+    )
     parser.add_argument("--split", default="validation", choices=["train", "train_v2", "validation", "test"])
     parser.add_argument("--mode", choices=sorted(CONFIGS), default="cfg97")
     parser.add_argument("--target-ids", help="comma-separated target IDs")

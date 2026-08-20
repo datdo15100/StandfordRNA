@@ -1,29 +1,38 @@
 # Thesis V4 working draft
 
-V4 là bản thảo mới, không sửa đè V3. Scientific spine là phân rã pipeline theo objective
-TM-score: TBM, candidate-source allocation, refinement và complete-system external check.
+V4 is maintained in English only. The active manuscript is `thesis_en.tex`; no
+Vietnamese V4 manuscript is maintained.
+
+The scientific spine is a controlled decomposition of the pipeline under the
+best-of-five TM-score objective:
+
+1. template retrieval, ranking, and reconstruction;
+2. fixed-budget candidate-source allocation;
+3. same-candidate geometric refinement;
+4. confirmatory local evaluation and a complete-system external check.
 
 ## Evidence state
 
-- Preregistration frozen: commit `7739ff6`, tag `v4-preregistration-2026-08-20`.
-- Master train-V2 ledger: 5.135 RNA; CASP15 nằm trong development ledger riêng.
-- P0-production reproduction: PASS, numeric maximum absolute error 0 cho cả hai priors.
-- Final-test native performance: chưa mở.
-- Results có `Working-draft evidence gate` là shell nội bộ, không phải kết luận và phải
-  được thay bằng frozen V4 evidence trước bản thesis cuối.
+- Preregistration: commit `7739ff6`, tag `v4-preregistration-2026-08-20`.
+- Master train-V2 ledger: 5,135 RNA records; CASP15 is managed in a separate
+  development ledger.
+- P0-production reproduction: PASS with maximum absolute numeric error zero.
+- Development RQ1, RQ2, and RQ3 experiments: complete.
+- Final method and manifest: frozen at 97 targets in 86 sequence-similarity clusters.
+- Final native performance: not opened.
 
-V3 chỉ được dùng làm reference cho giọng viết, kiến thức nền và citation còn đúng. Không
-số liệu V3 nào được tự động chuyển vào Results V4.
+V3 is used only as a reference for verified background, citation material, and writing
+style. V3 results and claims are not automatically migrated into V4.
 
 ## Build
 
-Tài liệu dùng XeLaTeX và Times New Roman. Trong WSL, preamble có fallback tới font
-Windows ở `/mnt/c/Windows/Fonts`. File tài liệu tham khảo hiện dùng lại bibliography đã
-audit của V3 bằng relative input; citation provenance được audit lại khi method section
-được freeze.
+The manuscript uses XeLaTeX and Times New Roman. Under WSL, the preamble falls back to
+the Windows font directory at `/mnt/c/Windows/Fonts`. The current environment does not
+include a TeX engine, so source structure is validated but PDF compilation is not part
+of the frozen research run.
 
 ```text
 cd reports/thesis_v4
-xelatex thesis_vi.tex
-xelatex thesis_vi.tex
+xelatex thesis_en.tex
+xelatex thesis_en.tex
 ```

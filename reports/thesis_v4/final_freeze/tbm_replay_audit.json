@@ -1,0 +1,154 @@
+{
+  "status": "PASS_ALL_20_EXACT",
+  "native_performance_accessed": false,
+  "target_n": 20,
+  "arrays_checked": [
+    "coords",
+    "confidence",
+    "global_confidence"
+  ],
+  "manifest_sha256": "ea7d2f82a6d9e269d597a870ebe1bd6ac8015ad6b893f3da72f309591a95b400",
+  "pipeline_module_sha256": "ea0ec718697c02cc2f1fae9c146ca91c3d1e2eda9b1042f1a5702fa9faafe92a",
+  "targets": [
+    {
+      "target_id": "8QEQ_R",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "e3b900cf5857b5e983666b8361b2dea52b745de73f1407afa5a49e44308d3674"
+    },
+    {
+      "target_id": "8T2Y_tA",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "edfb80fb677154ba595dc931bb8bf6005e12451b4c745f4e409f0d604ba31fbc"
+    },
+    {
+      "target_id": "8VB6_F",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "e9ebb0a00db3070f74e73e28af2f5ac5822e90b6b8672638cd8eb409f30e181d"
+    },
+    {
+      "target_id": "8VBH_F",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "d966f4cf873ac11c8be66ad27503a3dbbf72c11298754ccb190dfc441fc7739f"
+    },
+    {
+      "target_id": "8ZOL_A",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "ac5d413b45beb2c7c93f7e914c29097dfab78776b3abf90333fb207a0bf528e4"
+    },
+    {
+      "target_id": "9FI8_hB",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "d448c5c917c1d53e2799c7cf55d492502ef3bf4e7e781b4fdde099c8216a5c29"
+    },
+    {
+      "target_id": "9FI8_hL",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "aea3e4e0eb02692e767993d89bf85aac38684489d3134ce2dd6b28c33d8066ec"
+    },
+    {
+      "target_id": "9FIA_bJ",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "29fece834ff3f8a4753c838c251f02e6cbf0f3f72002e1eaee3f180a6d21f5b6"
+    },
+    {
+      "target_id": "9G6K_l1",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "7864274d02b9c82c26183faf29e480157f382b9195d2e4a7aeb1767300463999"
+    },
+    {
+      "target_id": "9G6K_l3",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "a7e9dcb26c127bf58776894bd585d74c1442d12edd91bff64937abd0b442893e"
+    },
+    {
+      "target_id": "9G6K_l9",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "ffc191a4e14d61a20cc89c068630502d19b23ff313676a309d2d92f05229a56b"
+    },
+    {
+      "target_id": "9G6K_lA",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "39c0e2f5b667899b57edf62d98bafb5b247a028aa7311db6bdbd31af11fd2416"
+    },
+    {
+      "target_id": "9G6K_lB",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "47a41ff2d4a0b8ff50a4bea39750d525dc83e7ca2e7e84e1b84b2ce9db61bab0"
+    },
+    {
+      "target_id": "9G6K_lK",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "7fd1592ba23ed1d8c09f48ecd17a5b5cc348a417266774e0dd7db819481367b5"
+    },
+    {
+      "target_id": "8UP5_T",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "e17fa3754285b49f486ef09dcc9538667314622dc1b87b3823a5aa084178b036"
+    },
+    {
+      "target_id": "9D85_T",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "e17fa3754285b49f486ef09dcc9538667314622dc1b87b3823a5aa084178b036"
+    },
+    {
+      "target_id": "8Y03_G",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "9b7c4bd080b027b356a91a90a9035a5137f4974a3f9144142efcab47a9474164"
+    },
+    {
+      "target_id": "8Y08_B",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "9b7c4bd080b027b356a91a90a9035a5137f4974a3f9144142efcab47a9474164"
+    },
+    {
+      "target_id": "8Y0B_B",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "1ded49e6b877817aa11bd8540235585041d3e38f71aee17c5302b4637be95a1b"
+    },
+    {
+      "target_id": "8RR3_T",
+      "coords": true,
+      "confidence": true,
+      "global_confidence": true,
+      "expected_sha256": "cbda99ae3e9d3098772197701ac076f753d749927cd22cd7093eed808d1f3155"
+    }
+  ]
+}

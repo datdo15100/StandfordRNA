@@ -1,0 +1,15 @@
+component,decision,development_basis
+P0 production prior,KEEP,exactly reproduced; no P1 was selected
+MMseqs retrieval branch,DROP,no TM or availability gain on development
+full composite score,DROP,global-only retrieval was better on development
+global-only exhaustive retrieval,KEEP,development-supported simplification
+identity by coverage rank,KEEP_HEURISTIC,positive but inconclusive; not a demonstrated contribution
+template completeness rank,DROP,zero incremental effect beyond coverage
+distinct-PDB selection,KEEP_SAFEGUARD,redundancy safeguard; no accuracy claim
+linear gap completion,KEEP,simplest method not beaten by curved completion
+3T+2D allocation,KEEP_CONFIRMATORY,positive but inconclusive H2 development evidence
+Boltz,DROP,required artifacts and provenance unavailable
+adaptive source strength,KEEP,fixed control narrowly failed the TM preservation gate
+candidate-derived angle/torsion context,DROP,did not beat unconditional global prior
+Rg objective,DROP,no clear independent benefit
+selected Geometry,KEEP,passed development H3 and TM preservation gate

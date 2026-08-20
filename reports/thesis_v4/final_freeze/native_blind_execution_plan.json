@@ -1,0 +1,10 @@
+{
+  "status": "python scripts/run_v4_final_native_blind.py status",
+  "final_performance_accessed": false,
+  "validate": "python scripts/run_v4_final_native_blind.py validate",
+  "tbm": "python scripts/run_v4_final_native_blind.py build-tbm",
+  "drfold2": "python scripts/run_drfold2_candidates.py --repo /home/datdo/.cache/rna3d/external/DRfold2 --output-root data/cache/v4_final_drfold2 --manifest reports/thesis_v4/final_freeze/final_target_manifest.csv --mode cfg97 --e2e-only --e2e-candidates 2",
+  "assemble": "python scripts/run_v4_final_native_blind.py assemble-raw --drfold-root data/cache/v4_final_drfold2",
+  "refine": "python scripts/run_v4_final_native_blind.py refine --device cuda --workers 8",
+  "evaluation": "BLOCKED_NOT_IMPLEMENTED_BEFORE_FINAL_OPENING_RECEIPT"
+}

@@ -1,0 +1,9 @@
+{
+  "checkpoint": "MANDATORY_USER_REVIEW_BEFORE_FINAL_LABEL_OPENING",
+  "final_performance_accessed": false,
+  "method_frozen": true,
+  "manifest_frozen": true,
+  "generation_setup_ready": true,
+  "evaluation_authorized": false,
+  "required_next_receipt": "user authorization plus final freeze commit and tag"
+}

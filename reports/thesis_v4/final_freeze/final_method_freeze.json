@@ -1,0 +1,177 @@
+{
+  "status": "FROZEN_BEFORE_FINAL_CONFIRMATORY_NATIVE_PERFORMANCE_OPENING",
+  "final_test_native_performance_accessed": false,
+  "freeze_date": "2026-08-20",
+  "target_manifest": {
+    "path": "reports/thesis_v4/final_freeze/final_target_manifest.csv",
+    "sha256": "b41814adac636f1ea37f86722664297365a85237ef5acf5c9317e96f18e0dc29",
+    "target_n": 97,
+    "cluster_n": 86,
+    "selection": "all 97 provisional targets passing DRfold2 structural exact/homolog screen and accessible exposure audit",
+    "sampling": "none"
+  },
+  "final_pipeline": {
+    "template_method": "global-only exhaustive retrieval; identity*coverage rank; distinct-PDB safeguard; linear gap completion",
+    "candidate_bank": "3T+2D, fixed N=5; missing D slots use the next frozen T candidates",
+    "pretrained_source": "direct DRfold2 cfg97 20-checkpoint e2e candidates, top two by mean pLDDT",
+    "refiner": "Geometry-selected",
+    "geometry_config": {
+      "steps": 300,
+      "lr": 0.04,
+      "w_source": 3.0,
+      "w_backbone": 1.0,
+      "w_clash": 0.3,
+      "w_rg": 0.0,
+      "w_angle": 0.3,
+      "w_torsion": 0.15,
+      "w_kink": 20.0,
+      "adaptive_strength": true,
+      "fixed_strength": 1.0,
+      "context_mode": "global",
+      "kink_floor_deg": 70.0,
+      "kink_margin_deg": 5.0,
+      "backbone_huber_delta": 2.0,
+      "rg_huber_delta": 5.0,
+      "sep_clash": 2,
+      "huber_delta": 2.0,
+      "grad_clip": 10.0
+    },
+    "prior": "P0-production"
+  },
+  "confirmatory_comparisons": {
+    "H1": "retained Thesis 5T raw minus J-controlled 5T raw",
+    "H2": "Thesis 3T+2D raw minus Thesis 5T raw",
+    "H3": "Simple minus selected Geometry on SW-RMSD9, plus Geometry minus Simple bank TM safeguard",
+    "factorial": "Raw, John-original, John-fixed, Simple, selected Geometry on identical raw banks"
+  },
+  "statistics": {
+    "target_unit": "RNA",
+    "dependence_block": "MMseqs sequence-similarity cluster",
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "holm_family": [
+      "H1",
+      "H2",
+      "H3"
+    ],
+    "h3_tm_noninferiority_margin": -0.005
+  },
+  "limitations": {
+    "rclm_membership": "UNAVAILABLE; no complete pretrained-model time-safety claim",
+    "external_memory": "researcher memory could not be independently audited; later positive evidence must trigger exclusion before opening",
+    "john_hybrid": "partial public artifact reproduction only; not exact winning submission",
+    "boltz": "excluded because model artifacts and provenance were unavailable"
+  },
+  "artifact_hashes": {
+    "master_ledger": {
+      "path": "reports/thesis_v4/preregistration/v4_master_rna_ledger.csv",
+      "sha256": "780e30cd25e10c610a52bd0e434002f134ba25f8012289a951a72f4b0a6fe549"
+    },
+    "train_sequences_v2": {
+      "path": "data/stanford-rna-3d-folding/train_sequences.v2.csv",
+      "sha256": "efe6c57cd753f7704167b8ca5ebd73eb46f4da7fbc55dcf29ed59771d9282499"
+    },
+    "structural_overlap_audit": {
+      "path": "reports/thesis_v4/phase1_pretrained/drfold2_overlap_by_target.csv",
+      "sha256": "4e2a93624f36cd1432fcef18c6301405c5db8f201a90a414a51ee2fe3ab040e9"
+    },
+    "external_exposure_audit": {
+      "path": "reports/thesis_v4/phase1_completion/external_exposure_audit.csv",
+      "sha256": "4362d95be8a088bd746167e81434c6107495b56eb6daa332ab6dfe9c03e26dd7"
+    },
+    "development_summary": {
+      "path": "reports/thesis_v4/development/results/development_summary.json",
+      "sha256": "8b9c63cbf4091a80e66e4c565b0e7f58842c6420fd1a092fa386c64d02886dc1"
+    },
+    "selected_refiner_pre_score_freeze": {
+      "path": "reports/thesis_v4/development/selected_refiner_freeze.json",
+      "sha256": "c2bd03bd4f391a923f4c6bbee01b95d878018dc7067178cdab077e5d64c15c7f"
+    },
+    "selected_refiner_result": {
+      "path": "reports/thesis_v4/development/results/rq3_refinement/selected_inference_and_decision.json",
+      "sha256": "bab7dd2c0c4b75848677615a03f0149e783d25ac70d290d1764c6ab00db9a11b"
+    },
+    "retained_tbm_freeze": {
+      "path": "reports/thesis_v4/development/retained_tbm_freeze.json",
+      "sha256": "16e49a7d0ead5f66cdb96f18905eadf6d1d056cc2fa07a76e66db7a26c578ff1"
+    },
+    "controlled_db_freeze": {
+      "path": "reports/thesis_v4/phase1_controlled_db/db_controlled_freeze.json",
+      "sha256": "0e969d4877dffbf4673bb14ac003588bd03ed071c1a9175313d07c8667e8207f"
+    },
+    "template_meta": {
+      "path": "data/processed/template_meta.parquet",
+      "sha256": "80463138acfce71663a25504fd641521a57f75670e33cef1923f7a69fd346402"
+    },
+    "template_coordinates": {
+      "path": "data/cache/template_coords.pkl",
+      "sha256": "d5ce6232d88e1d92050307f6313c8ad1c3f0792ffa9c57d01d2b71af2405980f"
+    },
+    "p0_distance_rg": {
+      "path": "data/processed/geometry_priors.json",
+      "sha256": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f"
+    },
+    "p0_angle_torsion": {
+      "path": "data/processed/geofuse_geometry_v2_priors.json",
+      "sha256": "9f2517546c6e9b87cb9a7335c66b68a76f8ab548b4b1e66def29d04a3e986302"
+    },
+    "drfold2_checkpoint_manifest": {
+      "path": "reports/thesis_v4/phase1_pretrained/drfold2_cfg97_checkpoint_manifest.csv",
+      "sha256": "c50b6ccb18e64a44d76e6576adf4fa16496ed3c92110b0c1f7efab8ad44e88eb"
+    },
+    "drfold2_provenance": {
+      "path": "reports/thesis_v4/phase1_pretrained/pretrained_provenance_audit.json",
+      "sha256": "e490165f9eeddb7845ff72c1fa0b86641433662ad9afca1a484519b3dfc5407f"
+    },
+    "statistics_implementation": {
+      "path": "src/rna3d/eval/v4_statistics.py",
+      "sha256": "7024fdc770f8b382d48bc89819685e6d375d0f035b0e280dd3ade70c4353ac39"
+    },
+    "drfold2_generation_runner": {
+      "path": "scripts/run_drfold2_candidates.py",
+      "sha256": "2366edde128336ff04139c8246ddf3dfc9ec5fd15e6b72c4aaf6871e208aded3"
+    },
+    "pretrained_structure_import": {
+      "path": "src/rna3d/geofuse/structure_io.py",
+      "sha256": "c84074fbec0dfb1b1f5a5c78eada7d2a3c8755632336338e16c5b78d492c6f73"
+    },
+    "geometry_refiner": {
+      "path": "src/rna3d/geofuse/refine_v2.py",
+      "sha256": "21144b6a8aa7b7d11587e9cc30871b32cc4ba0ee8ca1b8c242054a29e3dc68d2"
+    },
+    "john_rule_refiner": {
+      "path": "src/rna3d/refine/rule_based.py",
+      "sha256": "f3b96116161df7c235fb3afcd945c3075cf580618f361aa568375379064ba140"
+    },
+    "john_tbm_baseline": {
+      "path": "src/rna3d/baselines/top1.py",
+      "sha256": "dce77a957c49a5bec0764cb53e23a973bc5ab8d13921b157fb3773c7d1724778"
+    },
+    "gap_completion": {
+      "path": "src/rna3d/template/gap_fill.py",
+      "sha256": "59ab0fce0213ab2b6be94188fc222278c62b194a09a8883223c4d872332349b1"
+    },
+    "coordinate_alignment": {
+      "path": "src/rna3d/template/align.py",
+      "sha256": "275684e8834c2161a690e7808309eb246a39e1d6eccf666f28df758cccc62fd0"
+    },
+    "de_novo_fallback": {
+      "path": "src/rna3d/geometry/denovo.py",
+      "sha256": "387f06c7018eb2f0c2a72aef9ff980d3aa7f4361d147168ffa1e73622f7cd7a3"
+    },
+    "environment": {
+      "path": "environment.yml",
+      "sha256": "fb21b0a2ffd8b059655a553e509a75aadeaa78e9b734638c526dc1a3b8961079"
+    }
+  },
+  "generation_code": {
+    "runner_path": "scripts/run_v4_final_native_blind.py",
+    "runner_sha256": "9a6b0300187e8ff6e85ec8ffb643a5b45db10fbc095b74c3d2fc8160f28bee5c",
+    "pipeline_module_path": "src/rna3d/pipeline/v4_frozen.py",
+    "pipeline_module_sha256": "ea0ec718697c02cc2f1fae9c146ca91c3d1e2eda9b1042f1a5702fa9faafe92a",
+    "development_tbm_replay": "20/20 exact coordinate, residue-confidence and global-confidence arrays"
+  },
+  "base_commit_before_final_freeze": "3408d5b19d03ebf8d25c73d77203e5a0117b39f4",
+  "opening_rule": "STOP. Do not load final native coordinates or compute TM, SW-RMSD, lDDT, or diagnostics until user reviews this freeze."
+}
