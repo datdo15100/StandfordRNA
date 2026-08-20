@@ -1,0 +1,17 @@
+{
+  "hypothesis": "H1-retained-development",
+  "target_n": 20,
+  "cluster_n": 17,
+  "mean_delta": 0.005649500000000006,
+  "median_delta": 0.0004149999999999987,
+  "ci_lower": -0.003045352272727271,
+  "ci_upper": 0.017032333333333344,
+  "raw_one_sided_p": 0.15577844221557785,
+  "improved": 10,
+  "tied": 2,
+  "regressed": 8,
+  "bootstrap_replicates": 10000,
+  "permutation_replicates": 100000,
+  "seed": 20260819,
+  "evidence_role": "development component-selection evidence; not confirmatory final evidence"
+}
