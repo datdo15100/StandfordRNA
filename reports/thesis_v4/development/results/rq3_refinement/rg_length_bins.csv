@@ -1,0 +1,3 @@
+length_bin,hypothesis,target_n,cluster_n,mean_delta,median_delta,ci_lower,ci_upper,raw_one_sided_p,improved,tied,regressed,bootstrap_replicates,permutation_replicates,seed,evidence_role
+30-79,Rg-30-79,18,15,0.00023944444444444954,6.0000000000004494e-05,2.1052631578959366e-05,0.0004937534722222233,0.03684963150368496,12,1,5,10000,100000,20260819,development component-selection evidence; not confirmatory final evidence
+80-149,Rg-80-149,2,2,-0.0008300000000000113,-0.0008300000000000113,-0.0018400000000000083,0.00017999999999998573,0.7482125178748212,1,0,1,10000,100000,20260819,development component-selection evidence; not confirmatory final evidence

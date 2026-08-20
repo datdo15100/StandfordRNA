@@ -11,6 +11,7 @@ Nothing in this script reads or writes the V4 final-test manifest.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, replace
 import hashlib
 import json
@@ -35,7 +36,7 @@ from rna3d.baselines.top1 import (
 from rna3d.data import io
 from rna3d.eval.local_metrics import local_accuracy_metrics, sliding_window_c1_rmsd
 from rna3d.eval.usalign import score_target
-from rna3d.eval.v4_statistics import primary_inference
+from rna3d.eval.v4_statistics import holm_step_down, primary_inference
 from rna3d.geofuse.candidate import CandidateCache
 from rna3d.geofuse.geometry_v2 import geometry_v2_metrics
 from rna3d.geofuse.refine_v2 import GeometryV2Config, refine_structure_v2
@@ -975,12 +976,40 @@ def cmd_score_refinement(args: argparse.Namespace) -> None:
                 ),
             }
             for bank, (raw_coords, confidence, global_confidence) in banks.items():
+                active_variants = (
+                    variants
+                    if bank == "Thesis-3T+2D"
+                    else {name: variants[name] for name in ("Simple", "Geometry")}
+                )
                 setting_coords: dict[str, list[np.ndarray]] = {
                     "Raw": [],
                     "John-original": [],
                     "John-fixed": [],
-                    **{name: [] for name in variants},
+                    **{name: [] for name in active_variants},
                 }
+                geometry_outputs: dict[tuple[int, str], tuple[np.ndarray, bool, str]] = {}
+                with ThreadPoolExecutor(max_workers=args.workers) as executor:
+                    futures = {}
+                    for index, raw in enumerate(raw_coords):
+                        for setting, cfg in active_variants.items():
+                            future = executor.submit(
+                                run_geometry_cached,
+                                target.target_id,
+                                bank,
+                                index,
+                                setting,
+                                raw,
+                                target.sequence,
+                                confidence[index],
+                                float(global_confidence[index]),
+                                cfg,
+                                priors_v1,
+                                priors_v2,
+                                args.device,
+                            )
+                            futures[future] = (index, setting)
+                    for future in as_completed(futures):
+                        geometry_outputs[futures[future]] = future.result()
                 for index, raw in enumerate(raw_coords):
                     ref_index, raw_tm = best_raw_reference(raw, refs, target.sequence)
                     reference = refs[ref_index]
@@ -989,21 +1018,8 @@ def cmd_score_refinement(args: argparse.Namespace) -> None:
                         "John-original": refine_rule_based(raw, target.sequence, confidence=float(global_confidence[index])),
                         "John-fixed": refine_rule_based(raw, target.sequence, confidence=0.5),
                     }
-                    for setting, cfg in variants.items():
-                        coords, failed, reason = run_geometry_cached(
-                            target.target_id,
-                            bank,
-                            index,
-                            setting,
-                            raw,
-                            target.sequence,
-                            confidence[index],
-                            float(global_confidence[index]),
-                            cfg,
-                            priors_v1,
-                            priors_v2,
-                            args.device,
-                        )
+                    for setting in active_variants:
+                        coords, failed, reason = geometry_outputs[(index, setting)]
                         outputs[setting] = coords
                         failure_rows.append(
                             {
@@ -1105,6 +1121,218 @@ def cmd_score_refinement(args: argparse.Namespace) -> None:
     print(json.dumps(decision, indent=2))
 
 
+def cmd_freeze_selected_refiner(args: argparse.Namespace) -> None:
+    """Apply mechanism gates and freeze one combined Geometry configuration."""
+    freeze_path = DEV / "selected_refiner_freeze.json"
+    if freeze_path.exists() and not args.replace:
+        raise FileExistsError("selected refiner freeze exists")
+    if (RESULTS / "rq3_refinement" / "selected_inference_and_decision.json").exists():
+        raise RuntimeError("selected refiner has already been scored")
+    output = RESULTS / "rq3_refinement"
+    candidates = pd.read_csv(output / "candidate_metrics.csv")
+    banks = pd.read_csv(output / "bank_metrics.csv")
+    thesis_candidates = candidates[candidates["bank"] == "Thesis-3T+2D"]
+    thesis_banks = banks[banks["bank"] == "Thesis-3T+2D"]
+    sw = thesis_candidates.pivot_table(
+        index=["target_id", "cluster_id"], columns="setting", values="sw_rmsd_9", aggfunc="mean"
+    ).reset_index()
+    tm = thesis_banks.pivot(index=["target_id", "cluster_id"], columns="setting", values="best5_tm").reset_index()
+
+    controls = {
+        "confidence": "Geometry-fixed-strength",
+        "pair_context": "Geometry-global-prior",
+        "rg": "Geometry-no-Rg",
+    }
+    mechanism = {}
+    for name, control in controls.items():
+        sw_frame = sw.assign(delta=sw["Geometry"] - sw[control])
+        tm_frame = tm.assign(delta=tm[control] - tm["Geometry"])
+        sw_result = inference_document(f"{name}-control-SW", sw_frame, "delta")
+        tm_result = inference_document(f"{name}-control-TM", tm_frame, "delta")
+        mechanism[name] = {
+            "control": control,
+            "control_improves_sw_point": sw_result["mean_delta"] > 0,
+            "control_tm_preserved": tm_result["ci_lower"] > -0.005,
+            "sw": sw_result,
+            "tm": tm_result,
+        }
+
+    # Exact keep/drop interpretation from the preregistration: confidence and
+    # pair context stay only when they beat the simpler control; Rg stays only
+    # with a clear benefit. All three controls preserve TM here.
+    use_fixed = mechanism["confidence"]["control_improves_sw_point"] and mechanism["confidence"]["control_tm_preserved"]
+    use_global = mechanism["pair_context"]["control_improves_sw_point"] and mechanism["pair_context"]["control_tm_preserved"]
+    use_no_rg = (
+        not json.loads((output / "inference_and_decision.json").read_text())["mechanisms"]["rg_on_vs_off"]["ci_lower"] > 0
+        and mechanism["rg"]["control_tm_preserved"]
+    )
+    production = GeometryV2Config(**json.loads(P0_AUDIT.read_text())["production"]["geometry_config"])
+    selected = replace(
+        production,
+        adaptive_strength=not use_fixed,
+        fixed_strength=1.0,
+        context_mode="global" if use_global else "candidate_derived",
+        w_rg=0.0 if use_no_rg else production.w_rg,
+    )
+    freeze = {
+        "status": "FROZEN_BEFORE_SELECTED_REFINER_NATIVE_SCORING",
+        "final_test_performance_accessed": False,
+        "source_result_sha256": {
+            "candidate_metrics": sha256(output / "candidate_metrics.csv"),
+            "bank_metrics": sha256(output / "bank_metrics.csv"),
+            "full_geometry_decision": sha256(output / "inference_and_decision.json"),
+        },
+        "mechanism_gates": mechanism,
+        "decisions": {
+            "confidence": "fixed strength" if use_fixed else "adaptive strength",
+            "angle_torsion_context": "global unconditional prior" if use_global else "candidate-derived pair context",
+            "rg": "off" if use_no_rg else "on",
+        },
+        "selected_config": asdict(selected),
+        "next_gate": "Combined selected Geometry must pass SW-RMSD9 superiority plus TM preservation versus Simple; otherwise Simple is final.",
+        "generation_code_sha256": sha256(Path(__file__)),
+    }
+    freeze_path.write_text(json.dumps(freeze, indent=2) + "\n")
+    print(json.dumps(freeze, indent=2))
+
+
+def cmd_score_selected_refiner(args: argparse.Namespace) -> None:
+    freeze = json.loads((DEV / "selected_refiner_freeze.json").read_text())
+    cfg = GeometryV2Config(**freeze["selected_config"])
+    manifest = read_manifest()
+    labels = labels_for(manifest)
+    priors_v1 = json.loads(P0_DISTANCE.read_text())
+    priors_v2 = json.loads(P0_GEOMETRY.read_text())
+    candidate_rows, bank_rows, failure_rows = [], [], []
+    for number, target in enumerate(manifest.itertuples(index=False), start=1):
+        started = time.time()
+        refs = references_for(labels, target.target_id)
+        with np.load(RAW_ROOT / target.target_id / "raw_banks.npz", allow_pickle=False) as payload, np.load(
+            RAW_ROOT / target.target_id / "retained_tbm.npz", allow_pickle=False
+        ) as retained:
+            banks = {
+                "J-controlled": (payload["j_coords"], payload["j_conf"], payload["j_global_conf"]),
+                "Thesis-3T+2D": (
+                    np.concatenate([retained["coords"][:3], payload["deep_coords"][:2]]),
+                    np.concatenate([retained["confidence"][:3], payload["deep_conf"][:2]]),
+                    np.concatenate([retained["global_confidence"][:3], payload["deep_global_conf"][:2]]),
+                ),
+            }
+            tasks = {}
+            with ThreadPoolExecutor(max_workers=args.workers) as executor:
+                for bank, (raw_coords, confidence, global_confidence) in banks.items():
+                    for index, raw in enumerate(raw_coords):
+                        future = executor.submit(
+                            run_geometry_cached,
+                            target.target_id,
+                            bank,
+                            index,
+                            "Geometry-selected",
+                            raw,
+                            target.sequence,
+                            confidence[index],
+                            float(global_confidence[index]),
+                            cfg,
+                            priors_v1,
+                            priors_v2,
+                            args.device,
+                        )
+                        tasks[future] = (bank, index)
+                outputs = {tasks[future]: future.result() for future in as_completed(tasks)}
+            for bank, (raw_coords, _, _) in banks.items():
+                refined_bank = []
+                for index, raw in enumerate(raw_coords):
+                    coords, failed, reason = outputs[(bank, index)]
+                    refined_bank.append(coords)
+                    ref_index, raw_tm = best_raw_reference(raw, refs, target.sequence)
+                    reference = refs[ref_index]
+                    candidate_rows.append(
+                        {
+                            "target_id": target.target_id,
+                            "cluster_id": target.mmseqs_sequence_similarity_cluster,
+                            "seq_len": int(target.seq_len),
+                            "bank": bank,
+                            "candidate_index": index,
+                            "setting": "Geometry-selected",
+                            "raw_reference_index": ref_index,
+                            "raw_candidate_tm": raw_tm,
+                            "candidate_tm_same_reference": score_bank(np.asarray([coords]), [reference], target.sequence),
+                            **local_accuracy_metrics(coords, reference, windows=(9, 15)),
+                            **geometry_v2_metrics(coords, target.sequence, priors_v1, priors_v2),
+                        }
+                    )
+                    failure_rows.append(
+                        {
+                            "target_id": target.target_id,
+                            "bank": bank,
+                            "candidate_index": index,
+                            "setting": "Geometry-selected",
+                            "failed": failed,
+                            "reason": reason,
+                        }
+                    )
+                bank_rows.append(
+                    {
+                        "target_id": target.target_id,
+                        "cluster_id": target.mmseqs_sequence_similarity_cluster,
+                        "seq_len": int(target.seq_len),
+                        "bank": bank,
+                        "setting": "Geometry-selected",
+                        "best5_tm": score_bank(np.stack(refined_bank), refs, target.sequence),
+                    }
+                )
+        print(f"[{number:02d}/{len(manifest)} {target.target_id}] selected-refiner sec={time.time()-started:.1f}", flush=True)
+
+    output = RESULTS / "rq3_refinement"
+    selected_candidates = pd.DataFrame(candidate_rows)
+    selected_banks = pd.DataFrame(bank_rows)
+    selected_failures = pd.DataFrame(failure_rows)
+    selected_candidates.to_csv(output / "selected_candidate_metrics.csv", index=False)
+    selected_banks.to_csv(output / "selected_bank_metrics.csv", index=False)
+    selected_failures.to_csv(output / "selected_failures.csv", index=False)
+
+    original_candidates = pd.read_csv(output / "candidate_metrics.csv")
+    original_banks = pd.read_csv(output / "bank_metrics.csv")
+    simple_c = original_candidates[
+        (original_candidates["bank"] == "Thesis-3T+2D") & (original_candidates["setting"] == "Simple")
+    ]
+    selected_c = selected_candidates[selected_candidates["bank"] == "Thesis-3T+2D"]
+    keys = ["target_id", "cluster_id", "candidate_index"]
+    paired_c = simple_c[keys + ["sw_rmsd_9"]].merge(
+        selected_c[keys + ["sw_rmsd_9"]], on=keys, suffixes=("_simple", "_selected")
+    )
+    target_c = paired_c.groupby(["target_id", "cluster_id"], as_index=False)[["sw_rmsd_9_simple", "sw_rmsd_9_selected"]].mean()
+    target_c["h3_delta"] = target_c["sw_rmsd_9_simple"] - target_c["sw_rmsd_9_selected"]
+    h3 = inference_document("H3-selected-development", target_c, "h3_delta")
+
+    simple_b = original_banks[
+        (original_banks["bank"] == "Thesis-3T+2D") & (original_banks["setting"] == "Simple")
+    ][["target_id", "cluster_id", "best5_tm"]]
+    selected_b = selected_banks[selected_banks["bank"] == "Thesis-3T+2D"][["target_id", "cluster_id", "best5_tm"]]
+    target_b = simple_b.merge(selected_b, on=["target_id", "cluster_id"], suffixes=("_simple", "_selected"))
+    target_b["tm_delta"] = target_b["best5_tm_selected"] - target_b["best5_tm_simple"]
+    tm_guard = inference_document("H3-selected-TM-safeguard-development", target_b, "tm_delta")
+
+    h1 = json.loads((RESULTS / "rq1_tbm" / "retained_h1_inference.json").read_text())
+    h2 = json.loads((RESULTS / "rq2_candidate_source" / "inference.json").read_text())["H2"]
+    holm = holm_step_down({"H1": h1["raw_one_sided_p"], "H2": h2["raw_one_sided_p"], "H3": h3["raw_one_sided_p"]})
+    gate = h3["ci_lower"] > 0 and tm_guard["ci_lower"] > -0.005 and bool(holm["H3"]["reject"])
+    decision = {
+        "H3": h3,
+        "tm_safeguard": tm_guard,
+        "development_holm": holm,
+        "development_gate_pass": gate,
+        "selected_final_refiner": "Geometry-selected" if gate else "Simple",
+        "rule_applied": "No rescue after this combined keep/drop configuration; failure selects Simple.",
+        "failure_count": int(selected_failures["failed"].sum()),
+        "selected_config": asdict(cfg),
+    }
+    target_c.to_csv(output / "selected_h3_target_deltas.csv", index=False)
+    target_b.to_csv(output / "selected_tm_safeguard_target_deltas.csv", index=False)
+    (output / "selected_inference_and_decision.json").write_text(json.dumps(decision, indent=2) + "\n")
+    print(json.dumps(decision, indent=2))
+
+
 def cmd_summarize(_: argparse.Namespace) -> None:
     h1 = json.loads((RESULTS / "rq1_tbm" / "inference.json").read_text())["H1"]
     h2 = json.loads((RESULTS / "rq2_candidate_source" / "inference.json").read_text())["H2"]
@@ -1144,7 +1372,15 @@ def parser() -> argparse.ArgumentParser:
     commands.add_parser("score-bank").set_defaults(func=cmd_score_bank)
     refine = commands.add_parser("score-refinement")
     refine.add_argument("--device", default="cuda")
+    refine.add_argument("--workers", type=int, default=4)
     refine.set_defaults(func=cmd_score_refinement)
+    freeze_refiner = commands.add_parser("freeze-selected-refiner")
+    freeze_refiner.add_argument("--replace", action="store_true")
+    freeze_refiner.set_defaults(func=cmd_freeze_selected_refiner)
+    selected_refiner = commands.add_parser("score-selected-refiner")
+    selected_refiner.add_argument("--device", default="cuda")
+    selected_refiner.add_argument("--workers", type=int, default=8)
+    selected_refiner.set_defaults(func=cmd_score_selected_refiner)
     commands.add_parser("summarize").set_defaults(func=cmd_summarize)
     return result
 
