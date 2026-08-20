@@ -1,0 +1,17 @@
+{
+  "status": "FROZEN_BEFORE_V4_DEVELOPMENT_NATIVE_SCORING",
+  "performance_accessed": false,
+  "raw_version": "v4-dev-raw-1",
+  "development_manifest_sha256": "ea7d2f82a6d9e269d597a870ebe1bd6ac8015ad6b893f3da72f309591a95b400",
+  "raw_candidate_manifest": "reports/thesis_v4/development/raw_candidate_manifest.csv",
+  "raw_candidate_manifest_sha256": "063618cd0c430e9916fdf0e2e7c9508e11a32834083248ac2b2c2e2de83fb836",
+  "target_n": 20,
+  "all_have_five_j_outputs": true,
+  "all_have_five_thesis_outputs_after_fallback": true,
+  "all_have_two_drfold2": true,
+  "db_meta_sha256": "80463138acfce71663a25504fd641521a57f75670e33cef1923f7a69fd346402",
+  "db_coords_sha256": "d5ce6232d88e1d92050307f6313c8ad1c3f0792ffa9c57d01d2b71af2405980f",
+  "mmseqs_hits_sha256": "39c41a0d0b70eaa031f49e140b48563de6f1ddc5e6a0ddb201f77303dd8b91f5",
+  "p0_distance_sha256": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f",
+  "generation_code_sha256": "7821cee8c19843c12f1d3b7f2db96f64f8e67bac2c1238210be16af4287c727a"
+}

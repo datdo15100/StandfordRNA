@@ -32,6 +32,9 @@ class GeometryV2Config:
     # the default ``True`` preserves the original Geometry-v2 behaviour.
     adaptive_strength: bool = True
     fixed_strength: float = 1.0
+    # ``candidate_derived`` is the production behavior. ``global`` is the
+    # preregistered unconditional-prior mechanism control.
+    context_mode: str = "candidate_derived"
     kink_floor_deg: float = 70.0
     kink_margin_deg: float = 5.0
     backbone_huber_delta: float = 2.0
@@ -200,6 +203,8 @@ def refine_structure_v2(
 ) -> tuple[np.ndarray, dict]:
     """Project a raw candidate onto context-conditioned empirical geometry."""
     cfg = cfg or GeometryV2Config()
+    if cfg.context_mode not in {"candidate_derived", "global"}:
+        raise ValueError("context_mode must be 'candidate_derived' or 'global'")
     x0 = np.asarray(coords, dtype=np.float32)
     if x0.shape != (len(sequence), 3) or not np.isfinite(x0).all():
         raise ValueError("Geometry v2 requires a complete finite C1' candidate")
@@ -252,19 +257,32 @@ def refine_structure_v2(
             "rg": rg_huber_loss(current, rg_target, cfg.rg_huber_delta)
             if len(sequence) >= 3
             else current.new_zeros(()),
-            "angle": _context_geometry_loss(
-                torch_pseudo_angles(current),
-                angle_context,
-                angle_pair_count,
-                priors_v2,
-                "angle",
+            "angle": (
+                _context_geometry_loss(
+                    torch_pseudo_angles(current),
+                    angle_context,
+                    angle_pair_count,
+                    priors_v2,
+                    "angle",
+                )
+                if cfg.context_mode == "candidate_derived"
+                else histogram_nll_loss(
+                    torch_pseudo_angles(current), priors_v2["contexts"]["global"]["angle"]
+                )
             ),
-            "torsion": _context_geometry_loss(
-                torch_signed_pseudo_torsions(current),
-                torsion_context,
-                torsion_pair_count,
-                priors_v2,
-                "torsion",
+            "torsion": (
+                _context_geometry_loss(
+                    torch_signed_pseudo_torsions(current),
+                    torsion_context,
+                    torsion_pair_count,
+                    priors_v2,
+                    "torsion",
+                )
+                if cfg.context_mode == "candidate_derived"
+                else histogram_nll_loss(
+                    torch_signed_pseudo_torsions(current),
+                    priors_v2["contexts"]["global"]["torsion"],
+                )
             ),
         }
         angles = torch_pseudo_angles(current)

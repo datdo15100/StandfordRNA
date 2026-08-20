@@ -1,0 +1,15 @@
+{
+  "status": "FROZEN_BEFORE_V4_DEVELOPMENT_NATIVE_SCORING",
+  "performance_accessed_before_amendment": false,
+  "scientific_hypotheses_changed": false,
+  "items": [
+    {
+      "id": "PAIR-CONTEXT-CONTROL",
+      "detail": "Expose context_mode='global' as the preregistered unconditional angle/torsion-prior control. The production/default Geometry behavior remains context_mode='candidate_derived'."
+    },
+    {
+      "id": "DEVELOPMENT-HYPOTHESIS-LABEL",
+      "detail": "H1-H3 statistics on the 20 exposed targets are development component-selection evidence only. The frozen untouched evaluation remains the only confirmatory test."
+    }
+  ]
+}
