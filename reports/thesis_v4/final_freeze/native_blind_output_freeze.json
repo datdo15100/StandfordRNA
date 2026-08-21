@@ -1,0 +1,26 @@
+{
+  "status": "NATIVE_BLIND_FINAL_OUTPUTS_FROZEN_BEFORE_LABEL_OPENING",
+  "created_at_utc": "2026-08-21T07:31:14.678214+00:00",
+  "final_performance_accessed": false,
+  "frozen_commit": "4ea1044cca5e2ebcb5e1b76ab02d955e84d21758",
+  "frozen_tag": "v4-pre-final-opening-2026-08-20",
+  "target_manifest_sha256": "b41814adac636f1ea37f86722664297365a85237ef5acf5c9317e96f18e0dc29",
+  "method_freeze_sha256": "34abad2d13823466e61a8e5592531ba4bcfed38e3ad68b9484d319a4541be609",
+  "output_manifest_path": "reports/thesis_v4/final_freeze/native_blind_output_manifest.csv",
+  "output_manifest_sha256": "d9f7a78f11bb1a9a5835e1125b94c3c5f7358d0994dc4f5cfd4e711fc7998b63",
+  "artifact_file_count": 3011,
+  "artifact_total_bytes": 8940335598,
+  "completeness": {
+    "target_n": 97,
+    "tbm_banks": 97,
+    "raw_banks": 97,
+    "refined_banks": 97,
+    "drfold_ret": 1940,
+    "drfold_selected_pdb": 194,
+    "drfold_confidence": 194,
+    "drfold_prior": 194,
+    "drfold_fallback_targets": 0,
+    "refinement_failure_count": 0
+  },
+  "method_change_after_freeze": false
+}

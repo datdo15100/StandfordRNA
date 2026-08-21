@@ -1,0 +1,52 @@
+{
+  "status": "KAGGLE_V4_VERSION_2_RUNNING_NATIVE_BLIND",
+  "updated_at_utc": "2026-08-21T08:04:50Z",
+  "scientific_role": "whole-pipeline external hidden check only; no component attribution",
+  "scientific_method_changed": false,
+  "frozen_scientific_commit": "4ea1044cca5e2ebcb5e1b76ab02d955e84d21758",
+  "kernel": {
+    "ref": "datdo151000/rna3d-thesis-v4-frozen-pipeline",
+    "active_version": 2,
+    "gpu": true,
+    "internet": false,
+    "competition": "stanford-rna-3d-folding"
+  },
+  "deployment_contract": {
+    "candidate_bank": "3 retained Thesis templates plus 2 direct DRfold2 cfg97 candidates; missing D slots use the next frozen T candidates",
+    "refiner": "Selected Geometry with the exact final_method_freeze.json configuration",
+    "native_labels_used_during_generation": false,
+    "post_confirmatory_retuning": false
+  },
+  "hashes": {
+    "deployment_adapter": "5f983db65605308c59edc9bf122f843e7fb7b454c4beba665dec0355568d5f3b",
+    "kernel_notebook_v2": "7712f4fbe12fc1d536f291d5800df2ba672ad2cf4c5bfe87379f8346c2cd7676",
+    "kernel_metadata": "6b3a0200eb6251270e6183ade0c61c5966979c1320d3a5044a4ef895349272b0",
+    "runtime_archive": "6ec3963d0109ce571255de65af53f5541ee91cfc1e943e710dd21097a0b2fff7",
+    "tbm_artifact_archive": "b42f3a733fc9de8df9898c053498afe6e6cf190117f7fec8d28c092471a38726",
+    "template_metadata_inside_artifact": "80463138acfce71663a25504fd641521a57f75670e33cef1923f7a69fd346402",
+    "template_coordinates_inside_artifact": "d5ce6232d88e1d92050307f6313c8ad1c3f0792ffa9c57d01d2b71af2405980f",
+    "p0_distance_inside_artifact": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f",
+    "p0_angle_torsion_inside_runtime": "9f2517546c6e9b87cb9a7335c66b68a76f8ab548b4b1e66def29d04a3e986302",
+    "frozen_pipeline_module_inside_runtime": "ea0ec718697c02cc2f1fae9c146ca91c3d1e2eda9b1042f1a5702fa9faafe92a"
+  },
+  "local_equivalence_replay": {
+    "target_id": "8P8B_5",
+    "raw_3t2d_bank_byte_identical": true,
+    "selected_geometry_candidate_index": 0,
+    "selected_geometry_array_byte_identical": true,
+    "selected_geometry_max_absolute_coordinate_difference": 0.0
+  },
+  "technical_runs": [
+    {
+      "version": 1,
+      "status": "ERROR_BEFORE_INFERENCE",
+      "scientific_outputs_created": false,
+      "reason": "The newly uploaded Kaggle Dataset was mounted as an unpacked directory, while notebook version 1 searched only for the source tar archive.",
+      "resolution": "Notebook version 2 accepts either the unpacked runtime root or the archive. No method, model, data, configuration or fallback rule changed."
+    },
+    {
+      "version": 2,
+      "status": "RUNNING_NATIVE_BLIND"
+    }
+  ]
+}

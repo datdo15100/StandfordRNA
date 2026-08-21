@@ -1,0 +1,66 @@
+{
+  "receipt": "EXPLICIT_FINAL_NATIVE_LABEL_OPENING_AUTHORIZATION",
+  "created_at_utc": "2026-08-21T07:31:14.728499+00:00",
+  "operator": "datdo with Codex",
+  "user_authorization": "GO for the confirmatory final evaluation",
+  "native_labels_opened_at_receipt_creation": false,
+  "allowed_openings": 1,
+  "base_commit_before_final_freeze": "3408d5b19d03ebf8d25c73d77203e5a0117b39f4",
+  "final_freeze_commit": "4ea1044cca5e2ebcb5e1b76ab02d955e84d21758",
+  "final_freeze_tag": "v4-pre-final-opening-2026-08-20",
+  "target_n": 97,
+  "cluster_n": 86,
+  "target_manifest_sha256": "b41814adac636f1ea37f86722664297365a85237ef5acf5c9317e96f18e0dc29",
+  "method_freeze_sha256": "34abad2d13823466e61a8e5592531ba4bcfed38e3ad68b9484d319a4541be609",
+  "native_blind_output_freeze_sha256": "069e14dfa6b72bc397527013cf3e00733e53a3b56bb46fffbb01e2502a2e9e9a",
+  "native_blind_output_manifest_sha256": "d9f7a78f11bb1a9a5835e1125b94c3c5f7358d0994dc4f5cfd4e711fc7998b63",
+  "evaluator_hashes": {
+    "native_blind_execution_audit": {
+      "path": "reports/thesis_v4/final_freeze/native_blind_execution_audit.json",
+      "sha256": "c357e1483a87bdea107ec783425c2c5c2d67e55ba2d0b2c75eea08506153cc45"
+    },
+    "confirmatory_orchestrator": {
+      "path": "scripts/run_v4_confirmatory_evaluation.py",
+      "sha256": "951815a2f9aa8b6cda7034a53da422a42222646dd590d598f58aaa3f49087e1c"
+    },
+    "statistics": {
+      "path": "src/rna3d/eval/v4_statistics.py",
+      "sha256": "7024fdc770f8b382d48bc89819685e6d375d0f035b0e280dd3ade70c4353ac39"
+    },
+    "tm_wrapper": {
+      "path": "src/rna3d/eval/usalign.py",
+      "sha256": "cd9e462ca30694d5164be2a8a2ffc1c04244301ec9b84915e0eaf3a2130beb6f"
+    },
+    "usalign_binary": {
+      "path": "external/binaries/USalign",
+      "sha256": "7fb696c3198a8a01a283a9af165408338025f6ee35ace1d14c9c76636f0a9f14"
+    },
+    "local_metrics": {
+      "path": "src/rna3d/eval/local_metrics.py",
+      "sha256": "1ffd3c267fb50e175047bf5c688a81412c35b56660f4381c2373f4bae6b07395"
+    },
+    "geometry_diagnostics": {
+      "path": "src/rna3d/geofuse/geometry_v2.py",
+      "sha256": "a4317fe4e1d1229cd2304e9a0d3911c20dae98d187fc01593c829a3500fd88ad"
+    },
+    "native_io": {
+      "path": "src/rna3d/data/io.py",
+      "sha256": "53ae712d0b358f38bafe6d7c117f9679069a0dba40c33a9354451427aa69fa1e"
+    }
+  },
+  "statistics": {
+    "target_unit": "RNA",
+    "dependence_block": "MMseqs sequence-similarity cluster",
+    "bootstrap_replicates": 10000,
+    "permutation_replicates": 100000,
+    "seed": 20260819,
+    "holm_family": [
+      "H1",
+      "H2",
+      "H3"
+    ],
+    "h3_tm_noninferiority_margin": -0.005
+  },
+  "scientific_method_change_after_output_freeze": false,
+  "next_action": "Run evaluate once; do not retune or overwrite results"
+}

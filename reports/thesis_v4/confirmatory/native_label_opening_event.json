@@ -1,0 +1,17 @@
+{
+  "event": "FINAL_NATIVE_LABEL_OPENING",
+  "opened_at_utc": "2026-08-21T07:32:25.677803+00:00",
+  "opening_number": 1,
+  "allowed_openings": 1,
+  "opening_receipt_sha256": "1d412ac47401ed7982ff48f6d3335e777c6f00d93477a323fa27951fe2381800",
+  "target_manifest_sha256": "b41814adac636f1ea37f86722664297365a85237ef5acf5c9317e96f18e0dc29",
+  "method_change_after_opening": false,
+  "evaluation_completed": true,
+  "native_label_path": "data/stanford-rna-3d-folding/train_labels.v2.csv",
+  "native_label_sha256": "47f622f1c7e671a790a0f985527dbf23f62da5d459872ccf5ddcf511630dc876",
+  "opened_target_n": 97,
+  "label_rows_for_frozen_targets": 11005,
+  "evaluation_completed_at_utc": "2026-08-21T07:40:36.164324+00:00",
+  "primary_inference_path": "reports/thesis_v4/confirmatory/primary_inference.json",
+  "primary_inference_sha256": "5f4466879199972e16edfe47e8fe80e3b044f911257add07eaf03bbca0627563"
+}

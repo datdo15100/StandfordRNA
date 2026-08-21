@@ -6,5 +6,5 @@ phase1_jcontrolled,"shared DB-controlled John baseline",DB_FROZEN_NATIVE_BLIND_S
 phase1_pretrained_provenance,"DRfold2 and Boltz provenance/overlap audit",COMPLETE_RCLM_UNAVAILABLE_BOLTZ_EXCLUDED,False,reports/thesis_v4/phase1_completion/phase1_completion_audit.json
 phase1_statistics,"cluster-aware inference implementation",IMPLEMENTED_AND_SYNTHETIC_TESTED,False,reports/thesis_v4/phase1_statistics/inference_config.json
 development,"RQ1, RQ2 and RQ3 complete; all keep/drop gates applied; final Geometry configuration selected",COMPLETE_COMPONENT_DECISIONS_APPLIED,True,reports/thesis_v4/development/results/development_summary.json
-confirmatory,"97 targets in 86 clusters; method and native-blind generation contract frozen; awaiting mandatory review before labels",READY_AT_PRE_OPENING_CHECKPOINT,False,reports/thesis_v4/final_freeze/final_method_freeze.json
-kaggle_external,"complete frozen system only",LOCKED,False,UNKNOWN
+confirmatory,"97 targets in 86 clusters; H1 fails negatively, H2 passes, and H3 passes local superiority plus the TM safeguard",COMPLETE_NO_RETUNING,True,reports/thesis_v4/confirmatory/primary_inference.json
+kaggle_external,"complete frozen system only",RUNNING_NATIVE_BLIND,False,"datdo151000/rna3d-thesis-v4-frozen-pipeline version 1"

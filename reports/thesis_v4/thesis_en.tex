@@ -105,22 +105,26 @@ RMSD over nine residues, or SW-RMSD9, as the primary local metric and requires a
 predeclared TM-score preservation margin. RNA targets are the statistical units, and
 regenerated MMseqs sequence-similarity clusters are the dependence blocks.
 
-On a development cohort of 20 exposed RNAs in 17 clusters, the retained thesis TBM
-had a mean TM-score 0.006 above J-controlled TBM, but the confidence interval crossed
-zero. The $3T+2D$ bank was 0.016 above $5T$ and was less redundant, but this result was
-also inconclusive. In contrast, the frozen selected Geometry configuration reduced
-SW-RMSD9 by 0.023~\angstrom{} relative to Simple, with Holm-adjusted $p=0.023$, while
-remaining within the preregistered TM-score preservation margin. Raw $3T+2D$ still
-had a slightly higher mean TM-score than the refined bank. The supported contribution
-is therefore improved local native accuracy beyond simple smoothing, not a demonstrated
-TM-score increase relative to Raw.
+Development experiments on 20 exposed RNAs selected the final components but did not
+establish generalization. The frozen method was therefore evaluated once on 97
+confirmatory RNAs in 86 sequence-similarity clusters. H1 failed: retained thesis TBM
+reduced mean TM-score by 0.0255 relative to J-controlled TBM, a 6.358\% decrease, with
+a cluster-bootstrap 95\% confidence interval of $[-0.0471,-0.0072]$. H2 passed:
+replacing two of five template slots with direct DRfold2 candidates increased mean
+TM-score by 0.0342, or 9.098\%, with interval $[0.0155,0.0543]$. The mixed bank also
+had lower self-similarity and fewer near-duplicate pairs, supporting source
+complementarity rather than DRfold2-only superiority.
 
-The final method retains the exactly reproduced production prior, a simplified
-global-only TBM branch, a $3T+2D$ candidate bank, and the selected Geometry refiner.
-Unsupported complexity is removed or labelled as a heuristic or safeguard. A final
-manifest of 97 RNAs in 86 sequence-similarity clusters and a native-blind generation
-contract have been frozen. Confirmatory native performance is intentionally absent
-from this checkpoint draft because the final labels have not been opened.
+H3 also passed. Selected Geometry reduced SW-RMSD9 by 0.0205~\angstrom{} relative to
+Simple, or 0.473\%, with interval $[0.0141,0.0266]$. It also increased bank-level
+TM-score by 0.00218, or 0.532\%, and passed the preregistered $-0.005$ preservation
+margin. Supporting metrics were mixed: SW-RMSD15 improved, global \cprime{} RMSD and
+candidate TM were inconclusive, and \cprime{}-lDDT decreased. The final contribution
+is therefore specific. Fixed-budget candidate-source diversification provides the
+main confirmed TM-score gain, while Geometry provides a smaller confirmed
+SW-RMSD9 improvement beyond simple smoothing. The thesis TBM replacement is a
+negative result and is not claimed as an improvement over the inherited controlled
+baseline.
 
 \noindent\textbf{Keywords:} RNA three-dimensional structure, template-based modelling,
 DRfold2, geometric refinement, TM-score, SW-RMSD, temporal leakage.
@@ -679,7 +683,7 @@ The final structural-overlap audit retains 97 of 172 provisional targets. No add
 exposure is found in the accessible audit. RCLM corpus membership remains unavailable,
 and complete pretrained time-safety is not claimed.
 
-\section{RQ1: TBM decomposition}
+\section{Development RQ1: TBM decomposition}
 
 On 20 development targets in 17 clusters, J-controlled TBM reaches mean best-of-five
 TM 0.389 and retained thesis TBM reaches 0.395. The paired delta is $+0.0056$, or
@@ -719,7 +723,7 @@ bin. Linear is therefore selected as the simplest noninferior method. Allowing u
 dates increases TM by 0.0315 with interval $[0.0086,0.0569]$. This result demonstrates
 the importance of temporal filtering rather than supporting an unsafe method.
 
-\section{RQ2: candidate-source diversification}
+\section{Development RQ2: candidate-source diversification}
 
 \begin{table}[H]
 \centering
@@ -740,8 +744,8 @@ $2D$ & 100\% & 0.288 & 0.501 & 0\% \\
 The primary $3T+2D$ versus $5T$ delta is $+0.0157$, or $+3.97\%$ relative to the
 $5T$ mean. Its interval is $[-0.0056,0.0419]$, and raw $p=0.1371$. Eight targets
 improve, 11 tie, and one regresses. H2 does not pass and is reported as positive but
-inconclusive. The allocation is retained for confirmatory evaluation because this was
-the preregistered development decision, not because an improvement has been proven.
+inconclusive. The allocation was retained in the frozen method because this was the
+preregistered development decision, not because improvement had already been proven.
 
 Mean self-TM decreases from 0.453 to 0.380, a 16.05\% reduction, while the fraction of
 near-duplicate pairs falls from 8\% to 2\%. These native-blind measures support the
@@ -750,7 +754,7 @@ mechanism of wider hypothesis coverage. However, $2D$ reaches only 0.288 compare
 defensible mechanism is independent-source complementarity rather than DRfold2-specific
 superiority.
 
-\section{RQ3: refinement beyond Simple}
+\section{Development RQ3: refinement beyond Simple}
 
 The production Geometry configuration first reduces SW-RMSD9 relative to Simple by
 0.0220~\angstrom{}, with interval $[0.0060,0.0388]$. The mechanism gates then remove
@@ -792,7 +796,7 @@ does not demonstrate a TM gain relative to Raw. John fixed has the lowest SW-RMS
 the table but reduces mean TM to 0.398. This result illustrates why a local metric
 cannot replace the global competition objective.
 
-\section{Primary family and development decisions}
+\section{Development primary family and component decisions}
 
 H3 has the smallest raw $p$-value, 0.00769, and passes the first Holm threshold
 $0.05/3$. Its adjusted $p$-value is 0.02307. H2 has raw $p=0.13712$ and fails the next
@@ -812,7 +816,7 @@ Full composite & Remove & Global-only is better on development \\
 Identity $\times$ coverage & Keep & Engineering heuristic, not demonstrated contribution \\
 Distinct PDB & Keep & Diversity safeguard \\
 Linear gap completion & Keep & Simplest method not beaten by curved completion \\
-$3T+2D$ allocation & Keep for confirmatory test & Positive but inconclusive H2 evidence \\
+$3T+2D$ allocation & Keep in frozen method & Positive but inconclusive development evidence \\
 Boltz & Remove & Required artifacts unavailable \\
 Adaptive strength & Keep & Fixed control fails TM preservation margin \\
 Candidate-derived context & Remove & Does not beat unconditional prior \\
@@ -822,19 +826,132 @@ Selected Geometry & Keep & H3 and TM safeguard pass \\
 \end{tabularx}
 \end{table}
 
-\section{Mandatory checkpoint before confirmatory evaluation}
+\section{Confirmatory execution and opening receipt}
 
-The final manifest contains 97 targets in 86 MMseqs sequence-similarity clusters. No
-sampling is applied. The final system combines P0-production, the retained global-only
-TBM, a $3T+2D$ bank, and selected Geometry. The manifest, method, database, priors,
-DRfold2 checkpoints, fallback rules, statistics, and native-blind generation code are
-frozen by hash.
+The confirmatory manifest contains 97 targets in 86 MMseqs sequence-similarity
+clusters, with no sampling. Candidate generation used the frozen commit, database,
+priors, DRfold2 checkpoints, fallback rules and per-target seeds. Before native labels
+were introduced, the execution produced and hashed 3,011 scientific files totalling
+8.940~GB. The completeness gate found 97 TBM banks, 97 raw banks, 97 refinement
+factorials, 194 direct DRfold2 candidates and zero generation failures or fallback
+targets.
 
-At this checkpoint, zero final TBM, hybrid, or refined outputs have been generated and
-no final native performance has been opened. The native-blind runner contains only
-validation, TBM generation, raw-bank assembly, refinement, and status commands. It has
-no label-loading or evaluation path. Confirmatory TM-score, SW-RMSD9, and lDDT are
-therefore intentionally absent from this chapter.
+An explicit opening receipt then recorded the output-manifest hash, evaluator code,
+US-align binary, local metrics, cluster-aware statistics and the authorization for one
+native-label opening. The labels were opened once, all 97 targets were evaluated, and
+no method or statistical procedure was changed. The evaluator reported zero scoring
+failures. Development and confirmatory results remain separate in every artifact.
+
+\section{Confirmatory RQ1: controlled TBM comparison}
+
+J-controlled $5T$ raw candidates achieve mean best-of-five TM 0.401, whereas retained
+thesis $5T$ raw candidates achieve 0.376. The paired effect
+$\mathrm{TM}_{\mathrm{Thesis}}-\mathrm{TM}_{\mathrm{J-controlled}}$ is $-0.0255$, a
+6.358\% decrease relative to J-controlled. The 95\% cluster-bootstrap interval is
+$[-0.0471,-0.0072]$. The one-sided raw $p$-value for the preregistered positive
+direction is 0.995940, and Holm does not reject H1. Forty-three targets improve, three
+tie and 51 regress.
+
+H1 therefore fails with a negative confirmatory effect. The retained thesis TBM
+cannot be presented as more accurate than J-controlled TBM. This conclusion is
+stronger than the development result, which had a small positive point estimate but
+wide uncertainty. The direction does not generalize.
+
+The preregistered length sensitivity is descriptive. The 30–79 nt stratum is near
+neutral at $+0.0007$. The 80–149 nt stratum is $-0.0453$ with an interval below zero.
+The 150–249 nt and 250–400 nt strata are also negative but less precise. These
+results help locate the failure but do not replace the all-target H1 test.
+
+\section{Confirmatory RQ2: fixed-budget source diversification}
+
+\begin{table}[H]
+\centering
+\caption{Confirmatory fixed-budget candidate-source results. Self-TM and the
+near-duplicate fraction are native-blind diversity measures.}
+\begin{tabularx}{\textwidth}{Xrrrr}
+\toprule
+Bank & Mean best TM & Mean self-TM & Near-duplicate pairs & Availability \\
+\midrule
+$5T$ & 0.376 & 0.518 & 0.149 & 100\% \\
+$3T+2D$ & 0.410 & 0.369 & 0.054 & 100\% \\
+$2T$ & 0.348 & 0.533 & 0.124 & 100\% \\
+$1T+1D$ & 0.392 & 0.266 & 0.010 & 100\% \\
+$2D$ & 0.333 & 0.466 & 0.021 & 100\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Replacing two template slots with two direct DRfold2 candidates increases mean
+best-of-five TM from 0.376 to 0.410. The paired effect is $+0.0342$, or 9.098\%
+relative to $5T$, with cluster-bootstrap interval $[0.0155,0.0543]$. The raw
+one-sided $p$-value is 0.000190 and Holm-adjusted $p=0.000380$. Forty-seven targets
+improve, 33 tie and 17 regress. H2 passes.
+
+Mean pairwise self-TM decreases by 28.644\%, and the near-duplicate pair fraction
+decreases by 64.138\%. The matched-$N$ results explain why this is a diversity claim.
+The $2D$ bank scores 0.333 compared with 0.348 for $2T$, so direct DRfold2 is not
+uniformly stronger in isolation. In contrast, $1T+1D$ scores 0.392. Combining
+independent sources covers different structural hypotheses and raises the chance that
+one of the five predictions is close to the native fold.
+
+\section{Confirmatory RQ3: Geometry beyond Simple}
+
+Selected Geometry reduces mean candidate-level SW-RMSD9 from 4.325~\angstrom{} to
+4.305~\angstrom{}. The target-level paired reduction is 0.0205~\angstrom{}, or
+0.473\%, with cluster-bootstrap interval $[0.0141,0.0266]$. The raw one-sided
+$p$-value is 0.000010 and Holm-adjusted $p=0.000030$. Geometry improves 73 targets
+and regresses 24. The preregistered local-superiority test passes.
+
+At bank level, Geometry increases mean TM from 0.410 for Simple to 0.412. The paired
+effect is $+0.00218$, or 0.532\%, with interval $[0.00097,0.00366]$. This lower bound
+is above the preregistered noninferiority margin of $-0.005$. H3 therefore passes both
+the local-superiority gate and the global TM safeguard.
+
+\begin{table}[H]
+\centering
+\caption{Frozen same-candidate confirmatory refinement factorial. John fixed is the
+main John cell; John original is retained as a confidence sensitivity.}
+\begin{tabularx}{\textwidth}{Xrrrrr}
+\toprule
+Candidate bank & Raw & John original & John fixed & Simple & Geometry \\
+\midrule
+J-controlled TM & 0.401 & 0.398 & 0.393 & 0.399 & 0.402 \\
+Thesis $3T+2D$ TM & 0.410 & 0.407 & 0.404 & 0.410 & 0.412 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+John fixed reduces bank TM by 0.0086 on J-controlled candidates and by 0.0065 on
+thesis candidates. John original is less damaging but remains below Raw. Simple is
+approximately neutral relative to Raw on the thesis bank, with effect $-0.00040$ and
+an interval crossing zero. Geometry is $+0.00178$ above Raw with interval
+$[0.00037,0.00336]$. These secondary comparisons support the same conclusion as the
+primary Geometry-versus-Simple test without replacing it.
+
+\section{Supporting metrics and sensitivity}
+
+Supporting native metrics do not all move in the same direction. Geometry improves
+SW-RMSD15 over Simple by 0.0143~\angstrom{}, with interval
+$[0.0087,0.0200]$. Global \cprime{} RMSD changes by only 0.0028~\angstrom{}, with an
+interval crossing zero. Same-reference candidate TM changes by $+0.00018$ and is also
+inconclusive. In contrast, \cprime{}-lDDT decreases by 0.00521, with interval
+$[-0.00671,-0.00369]$. The H3 claim must therefore remain tied to the preregistered
+SW-RMSD9 effect and TM safeguard. It is inaccurate to state that Geometry improves
+every independent local metric.
+
+All 97 targets have two direct DRfold2 outputs and all pass the frozen structural
+overlap screen, so source-available and complete-case sensitivities equal the primary
+population. H2 and H3 effects are strongest in the 80–149 nt stratum and remain
+positive in the larger preregistered bins. The 30–79 nt strata are inconclusive.
+These analyses describe effect heterogeneity and do not alter the primary decisions.
+
+\section{Confirmatory primary family}
+
+H3 has raw $p=0.000010$ and Holm-adjusted $p=0.000030$. H2 has raw
+$p=0.000190$ and Holm-adjusted $p=0.000380$. Both pass the step-down family and have
+confidence intervals above zero. H1 has raw $p=0.995940$ in the preregistered positive
+direction and does not pass. The final decisions are therefore H1 fail, H2 pass and H3
+pass, with the H3 TM safeguard also passing.
 
 \chapter{Discussion}
 
@@ -847,81 +964,90 @@ the controlled replacement and evaluation of specific groups of decisions under 
 shared protocol.
 
 The retained thesis TBM is simpler than both the public four-part composite and the
-initial thesis pipeline. Global-only retrieval is retained because it outperforms full
-composite on the development cohort. MMseqs and completeness are removed. Coverage is
-kept as a heuristic, and distinct PDB is explicitly described as a diversity
-safeguard. The full TBM group does not pass H1, so the thesis does not state that it is
-more accurate than controlled John.
+initial thesis pipeline. Development evidence removed MMseqs, full composite scoring,
+completeness and curved gaps. Coverage remains a heuristic, while distinct-PDB
+selection remains a diversity safeguard. This simplification was a valid development
+decision, but the confirmatory result shows that the resulting TBM bank is less
+accurate than J-controlled TBM. Simpler does not mean superior, and no thesis TBM
+accuracy contribution is claimed.
 
 The candidate bank differs from John's public hybrid routing. John routes a target
 mostly to one source, whereas the thesis reserves slots for both sources in every
-target. The fixed-$N$ experiment estimates this allocation effect without rewarding
-the hybrid bank for simply having more candidates. Its point estimate is encouraging
-but inconclusive.
+eligible target. The fixed-$N$ experiment estimates this allocation effect without
+rewarding the mixed bank for having more candidates. This is the largest confirmed
+TM-score contribution in V4: $3T+2D$ raises mean TM by 0.0342 relative to $5T$.
 
 The refiner is also different from John's three-rule procedure. Geometry uses a
-continuous optimization objective with source anchoring and learned empirical priors.
-The same-candidate factorial shows that a refiner can improve local accuracy while
-reducing global TM. The contribution must therefore be stated at the structural scale
-actually supported by the evidence.
+continuous optimization objective with source anchoring and empirical priors. In the
+confirmatory same-candidate factorial, Geometry improves SW-RMSD9 beyond Simple and
+slightly raises bank TM. The effect is much smaller than the source-allocation gain,
+and the unfavorable lDDT result prevents a blanket local-quality claim.
 
 \section{Interpretation of RQ1}
 
-RQ1 rejects a simple narrative in which adding more retrieval mechanisms necessarily
-improves TBM. MMseqs adds neither availability nor score in the development cohort.
-The full composite contains more signals but performs below its global-only component.
-This may reflect noise in local alignment, sequence-composition features, or 3-mer
-overlap for this target distribution. The experiment supports removing those signals,
-but it does not establish that they are useless for every RNA database.
+RQ1 produces a negative confirmatory result. Retained thesis TBM is 0.0255 below
+J-controlled TBM, corresponding to a 6.358\% decrease. The development cohort did not
+predict this direction. The correct interpretation is that development successfully
+identified unnecessary internal thesis components but did not produce a TBM bank that
+generalizes beyond the controlled baseline.
 
-Coverage has a positive mean effect but substantial uncertainty. Keeping it as a
-heuristic is a conservative engineering decision rather than a statistical claim.
-Distinct-PDB selection slightly lowers the point estimate but remains within the
-predeclared tolerance. Its purpose is to avoid spending several of five slots on
-nearly identical evidence.
+Coverage and distinct-PDB selection remain correctly labelled. Coverage is an
+engineering heuristic selected from development, not a confirmed accuracy term.
+Distinct-PDB selection prevents spending several slots on the same PDB evidence, but
+its role is robustness and diversity. Neither item rescues the failed H1 group.
 
-The unsafe-date diagnostic is one of the clearest RQ1 findings. Future templates raise
-the measured score by more than any legitimate TBM component. This demonstrates why
-temporal filtering is part of the scientific method, not merely data cleaning.
+The unsafe-date development diagnostic remains important. Future templates raise the
+measured score by more than any legitimate development component. Temporal filtering
+is therefore part of the scientific method, not merely data cleaning, even though the
+time-safe thesis TBM does not beat J-controlled TBM.
 
 \section{Interpretation of RQ2}
 
-The $3T+2D$ point estimate suggests that an independent source can help a best-of-five
-objective. Lower self-TM and fewer near duplicates show that the mixed bank covers more
-distinct hypotheses. Nevertheless, DRfold2-only candidates are weak on average in this
-cohort, and H2 uncertainty remains large. The evidence supports complementarity as a
-mechanism to test, not DRfold2 as a universally stronger predictor.
+The $3T+2D$ effect generalizes. Its 9.098\% relative TM increase is accompanied by a
+28.644\% reduction in mean self-TM and a 64.138\% reduction in near-duplicate pairs.
+These native-blind diversity changes provide a coherent mechanism: different sources
+cover different folds, and best-of-five scoring rewards coverage.
 
-The absence of a reproducible Boltz source limits the mechanism analysis. If another
-independent predictor produced a similar fixed-$N$ effect, the stronger conclusion
-would concern independent-source diversity. Without that comparison, the thesis keeps
-the source-specific claim narrow and records the limitation.
+The mechanism is not that DRfold2 is always stronger. The confirmatory $2D$ bank is
+below $2T$, while $1T+1D$ is above both. The evidence supports combining independent
+sources under a fixed budget. It does not support replacing all templates with
+DRfold2, nor does it prove that DRfold2 is uniquely responsible for the effect.
+
+The absence of a reproducible Boltz source limits the mechanism analysis. A matched
+Boltz experiment could test whether another independent predictor produces the same
+effect. Without that comparison, independent-source complementarity is the strongest
+supported interpretation, while the implementation evidence remains specific to
+direct DRfold2 candidates.
 
 \section{Interpretation of RQ3}
 
-RQ3 is the only primary development hypothesis that passes Holm correction. Its
-primary evidence is SW-RMSD9, which uses the native structure but is not optimized
-directly by Geometry. Improvements in angle likelihood, torsion likelihood, clashes,
-or kink count would not provide the same independence because those quantities are
-inside the objective.
+RQ3 passes on both development and confirmatory data. Its primary evidence is
+SW-RMSD9, which uses the native structure but is not optimized directly by Geometry.
+Improvements in angle likelihood, torsion likelihood, clashes or kink count cannot
+provide the same evidence because these quantities are inside the objective.
 
-The effect is statistically supported but small, approximately half a percent in mean
-SW-RMSD9. TM is preserved relative to Simple but is not improved relative to Raw. The
-appropriate conclusion is that selected Geometry corrects local structure beyond a
-basic smoother without a large global-fold penalty under the preregistered comparison.
-It is not a second fold predictor and is not the main source of the development TM
-point gain.
+The confirmatory SW-RMSD9 reduction is statistically supported but small, 0.473\%.
+Bank TM is 0.532\% above Simple and 0.00178 above Raw. Geometry therefore does more
+than satisfy a noninferiority boundary on this population, although its TM contribution
+is much smaller than the source-allocation contribution. It is a refiner, not a second
+fold predictor.
 
-John fixed further clarifies the trade-off. It gives the lowest SW-RMSD9 but a much
-lower bank TM. Local correction alone is insufficient. A competitive refiner must be
-judged jointly by an independent local metric and a global-fold safeguard.
+The supporting metrics place an important boundary around this claim. SW-RMSD15 also
+improves, while global \cprime{} RMSD and candidate TM are inconclusive. \cprime{}-lDDT
+decreases. Geometry therefore improves the preregistered window-based measure and
+bank-level TM but does not improve every definition of local structural accuracy.
+
+John fixed further clarifies the trade-off. It gives low windowed error but lowers
+bank TM. Local correction alone is insufficient. A competitive refiner must be judged
+jointly by an independent local metric and the global-fold objective.
 
 \section{Threats to validity}
 
-The development cohort contains only 20 targets and was previously exposed. It is
-appropriate for component selection but cannot establish generalization. Cluster-aware
-inference reduces the effect of correlated sequence groups, although 17 clusters still
-produce wide intervals for H1 and H2.
+The development cohort contains only 20 previously exposed targets. It is appropriate
+for component selection but not for confirmatory claims. The separate 97-target set
+provides stronger evidence about generalization, and cluster-aware inference accounts
+for 86 sequence-similarity clusters. It does not establish performance on every RNA
+length, experimental condition or biological class.
 
 The public John reproduction is partial. The original data universe, dependency state,
 and exact winning submission are unavailable, and the Boltz-conditioned branch cannot
@@ -933,11 +1059,17 @@ sequence membership is unresolved. The final set cannot establish complete pretr
 time-safety. Researcher memory also cannot be independently reconstructed; the
 external audit can only cover accessible text and artifacts.
 
-The final confirmatory pool uses train-V2 labels that are locally available but remain
-unopened for performance until the method freeze. Procedural separation, hashes, and
-a native-blind runner reduce researcher degrees of freedom, but they do not create a
-truly inaccessible external test server. Kaggle remains the external hidden benchmark
-for the complete deployed pipeline.
+The final confirmatory pool uses train-V2 labels that were locally available but kept
+unopened for performance until the output freeze and explicit opening receipt.
+Procedural separation, hashes and a native-blind runner reduce researcher degrees of
+freedom, but they do not create a truly inaccessible external test server. Kaggle
+remains the external hidden benchmark for the complete deployed pipeline.
+
+The independent local metrics disagree about Geometry. SW-RMSD9 and SW-RMSD15 improve,
+but \cprime{}-lDDT decreases. This disagreement is not treated as a technical failure.
+It indicates that a refiner can improve windowed superposition error while altering
+pair-distance preservation in an unfavorable way. The thesis therefore avoids a
+universal geometry-quality claim.
 
 \chapter{Reproducibility}
 
@@ -954,7 +1086,7 @@ The retained TBM implementation is replayed against all 20 frozen development ba
 Coordinates, per-residue confidence, and global confidence match exactly for all 20
 targets. The replay reads no native coordinates and performs no structural scoring.
 
-The native-blind execution sequence is fixed as follows:
+The native-blind execution followed this sequence:
 
 \begin{enumerate}
   \item validate every frozen input and code hash;
@@ -965,6 +1097,13 @@ The native-blind execution sequence is fixed as follows:
   \item hash the generated outputs and stop;
   \item introduce the native evaluator only after an explicit final-opening receipt.
 \end{enumerate}
+
+The execution froze 3,011 scientific files totalling 8.940~GB. It produced all 97
+TBM, raw and refined banks, 194 selected DRfold2 candidates and zero generation
+failures. Target-level parallel execution was checked against serial execution on
+8BU8\_A; all ten refinement arrays were byte-identical. The receipt then authorized
+one native-label opening. Evaluation covered all 97 targets with zero scoring failures,
+and the result files record the unmodified H1, H2, H3 and supporting analyses.
 
 The result ledger is updated immediately after each experiment. Method descriptions,
 results, and interpretations are refreshed from the same frozen artifact rather than
@@ -979,23 +1118,30 @@ pipeline. The main methodological contribution is controlled decomposition under
 shared data and evaluation rules rather than a claim that the complete system was
 designed independently of the public winning-team work.
 
-Development evidence does not demonstrate that the retained thesis TBM is more
-accurate than J-controlled TBM. It does support a simpler global-only retrieval stage
-and identifies coverage and distinct PDB as a heuristic and safeguard. A $3T+2D$ bank
-has a positive but inconclusive TM point estimate and substantially lower redundancy
-than $5T$, supporting independent-source diversity as a mechanism that requires
-confirmatory testing.
+The 97-target confirmatory evaluation does not support H1 and instead gives negative
+evidence. Retained thesis TBM is 0.0255 below J-controlled TBM, a 6.358\% decrease.
+Internal simplification does not translate into a stronger TBM baseline. Coverage must
+remain a heuristic, distinct-PDB selection a diversity safeguard, and the thesis TBM
+group an unsuccessful controlled replacement.
 
-Selected Geometry passes the preregistered local-accuracy and TM-preservation gates
-relative to Simple. It reduces SW-RMSD9 but does not improve mean TM relative to Raw.
-The final claim is consequently specific: geometric refinement improves local native
-accuracy beyond simple smoothing while preserving the global fold within the declared
-comparison margin.
+H2 passes. Replacing two of five template slots with direct DRfold2 candidates raises
+mean TM by 0.0342, or 9.098\%. Lower self-TM and fewer near-duplicate pairs, together
+with the matched-$N$ results, support independent-source complementarity. The finding
+does not mean that DRfold2-only prediction is superior to template-only prediction.
 
-Unsupported components have been removed, safeguards have been labelled accurately,
-and the complete method is frozen on 97 confirmatory targets in 86 clusters. The
-confirmatory and Kaggle results are not inferred from development deltas. They remain
-separate evidence about the frozen complete pipeline.
+H3 also passes. Selected Geometry reduces SW-RMSD9 beyond Simple by
+0.0205~\angstrom{}, or 0.473\%, and raises bank TM by 0.00218, or 0.532\%. SW-RMSD15
+supports the effect, but global \cprime{} RMSD and candidate TM are inconclusive and
+\cprime{}-lDDT decreases. Geometry is therefore a small, metric-specific confirmed
+refinement contribution rather than a universal improvement in local geometry.
+
+The thesis conclusion is deliberately asymmetric. Candidate-source diversification
+is the main confirmed contribution to the competition TM-score objective. Geometry
+adds a smaller confirmed effect beyond simple smoothing. The thesis TBM replacement
+does not generalize and is not defended as a contribution. Unsupported complexity is
+removed, safeguards are labelled accurately, and negative and conflicting results
+remain visible. Kaggle is retained as a complete-system external benchmark and is not
+used to attribute any component-level effect.
 
 \input{../thesis_v3/references.tex}
 

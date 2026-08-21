@@ -1,0 +1,92 @@
+{
+  "status": "NATIVE_BLIND_EXECUTION_COMPLETE_BEFORE_FINAL_LABEL_OPENING",
+  "completed_at_utc": "2026-08-21T07:28:18Z",
+  "final_performance_accessed": false,
+  "frozen_commit": "4ea1044cca5e2ebcb5e1b76ab02d955e84d21758",
+  "frozen_tag": "v4-pre-final-opening-2026-08-20",
+  "scientific_method_changed": false,
+  "execution_only_parallelization": {
+    "reason": "Target-level computations are independent and the serial GPU runs left sufficient compute and memory capacity for disjoint workers.",
+    "contract": "Every worker used the exact frozen commit, runner, method configuration, input hashes, target manifest, candidate order, stable per-target seeds and fallback rules. Only target scheduling changed.",
+    "native_blind_runner_sha256": "9a6b0300187e8ff6e85ec8ffb643a5b45db10fbc095b74c3d2fc8160f28bee5c",
+    "drfold2_runner_sha256": "2366edde128336ff04139c8246ddf3dfc9ec5fd15e6b72c4aaf6871e208aded3"
+  },
+  "tbm": {
+    "target_n": 97,
+    "worker_partitions": 8,
+    "partition_target_counts": [12, 12, 12, 12, 12, 13, 12, 12],
+    "completion": "97/97",
+    "errors": 0,
+    "generation_manifest_sha256": "5e3ed21c6cb654bb8e7afc89d71b33591fb9f6dc8b368d8f83bc6b1dd4407db0",
+    "serial_parallel_replay": {
+      "target_id": "8BU8_A",
+      "npz_sha256": "fe04e8488e4e142540e2e61915f69c6fd484a401c9009d7bfb1819886ebbf170",
+      "json_sha256": "efc6c44a262a3211b0edf2413c199fa7f891ff140f62dd0504cd75233624134a",
+      "byte_identical": true
+    }
+  },
+  "drfold2": {
+    "target_n": 97,
+    "completion": "97/97",
+    "checkpoint_outputs": 1940,
+    "selected_candidates": 194,
+    "confidence_files": 194,
+    "prior_files": 194,
+    "failed_targets": 0,
+    "timeout_targets": 0,
+    "fallback_targets": 0,
+    "selected_candidate_hashes_unique": 194,
+    "bookkeeping_note": "Disjoint target workers shared run_status.json, whose last-writer-wins content is not a scientific artifact. Completeness and the final freeze are reconstructed from the disjoint per-target files rather than this status file.",
+    "documented_technical_repair": {
+      "target_id": "8WUS_B",
+      "event": "A cached export was interrupted after its e2e_relax directory was recreated. The unchanged 20 checkpoint ret files remained complete. The exact frozen single-target export was rerun to restore the two ranked outputs.",
+      "method_changed": false,
+      "ranking_manifest_sha256": "8eaa698d7a526030dcb526a414f5e6a1e5ce5ff6ae5ec2db9046f4e5f0c7ad05",
+      "model_1_sha256": "a70eb1ebe420a3fd0359b8d8d06a46be6d9131c0288c1d68485d70227290572a",
+      "model_2_sha256": "50a69f921fe5fbe5a49f8da2a3ade7ade8a22be96c7141174d6db291bb7845bc",
+      "top_global_confidence": 0.28651127219200134
+    }
+  },
+  "raw_candidate_banks": {
+    "target_n": 97,
+    "five_template_banks": 97,
+    "three_template_two_drfold_banks": 97,
+    "fallback_targets": 0,
+    "generation_manifest_sha256": "d5c130a65cfa985cceb7164f762078d38bddf409e242af7824a89648a626b665"
+  },
+  "refinement_factorial": {
+    "target_n": 97,
+    "banks_per_target": 2,
+    "settings": ["Raw", "John_original", "John_fixed", "Simple", "Geometry"],
+    "geometry_or_simple_optimization_calls": 1940,
+    "worker_partitions": 3,
+    "partition_rule": "zero-based final-manifest row index modulo 3",
+    "partition_target_counts": [33, 32, 32],
+    "copied_outputs": 97,
+    "copy_byte_mismatches": 0,
+    "refinement_failures": 0,
+    "generation_manifest_sha256": "6a225115f403957567ebb84078e898149c888255ec3c09d087b02524710ab4d0",
+    "failure_ledger_sha256": "a912d73de8d16d9293ad02e3a4f6c7d02043f32f5dd79f1c5311e951cb2dc9a5",
+    "serial_parallel_replay": {
+      "target_id": "8BU8_A",
+      "refined_npz_sha256": "522173b0fd61530ec3a6ebc9fe5217673b6ee2630f06276e8c41ec3139890f16",
+      "all_ten_arrays_exact": true,
+      "maximum_absolute_difference": 0.0
+    },
+    "interrupted_preliminary_run": "The initial serial process completed four target files and was interrupted before writing target five. All 97 final files, including the first four, were replaced from complete frozen partitions before hashing. No preliminary file enters the final freeze."
+  },
+  "final_completeness_gate": {
+    "tbm_banks": 97,
+    "raw_banks": 97,
+    "refined_banks": 97,
+    "drfold_checkpoint_outputs": 1940,
+    "drfold_selected_pdb": 194,
+    "drfold_confidence": 194,
+    "drfold_prior": 194,
+    "drfold_fallback_targets": 0,
+    "refinement_failure_count": 0,
+    "coordinates_finite_and_shape_valid": true,
+    "source_allocation_valid": true,
+    "native_labels_loaded": false
+  }
+}
