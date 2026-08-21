@@ -1,0 +1,16 @@
+{
+  "adapter_code_sha256": "8cdce412550cce4798f8dd9a9c192375dbfd2fe9ba315c677e4112d2c1102ee5",
+  "all_values_equal_after_sort_by_id": true,
+  "candidate_or_coordinate_changed": false,
+  "created_utc": "2026-08-21T21:05:22.365749+00:00",
+  "id_set_equal": true,
+  "kaggle_score_observed_before_amendment": false,
+  "method_freeze_sha256": "14b5929cd6dbf21bc4c272fa3a51059b6909691c68dd1974daf5f202743f3b41",
+  "ordered_submission_sha256": "edb5ac4b1d484ea7292eea6747a87b8e64a8c174227eaaaa116adb59970c6109",
+  "original_submission_sha256": "e819f68d90696b6c08ce05b52f47c0ee2ed59039cc5e8dfa92a4a1d7d4e79c21",
+  "reason": "First notebook attempt failed before scoring because the frozen CSV had the correct ID set but not sample-submission row order.",
+  "row_n": 2515,
+  "sample_submission_sha256": "2ee049bf95be6ae20921c3a7ee1bcc6dc8a89eabdb65f907f3e939cd076c8e93",
+  "scientific_method_changed": false,
+  "status": "V5_KAGGLE_TECHNICAL_ROW_ORDER_AMENDMENT_BEFORE_SCORE"
+}

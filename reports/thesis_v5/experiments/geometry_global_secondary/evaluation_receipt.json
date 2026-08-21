@@ -1,0 +1,12 @@
+{
+  "bank_metrics_sha256": "11619e77718beae1a177a5c9a0736d1e683bfca327a78c89c85b72c79589ae95",
+  "candidate_metrics_sha256": "ec4c75c9c04e6ba29a6667d337b2cc9ce59a0ecfa7b54900c47756bf50574ab8",
+  "cluster_n": 11,
+  "created_utc": "2026-08-21T21:10:28.871147+00:00",
+  "does_not_modify_frozen_kaggle_method": true,
+  "evaluation_code_sha256": "1d7f4154aae555e37daa96b4c6c52c3bde53827f3103b43f19a473d0b40de41b",
+  "evaluation_failure_n": 0,
+  "scientific_role": "secondary CASP15 development analysis",
+  "status": "V5_CASP15_GEOMETRY_GLOBAL_EVALUATION_COMPLETE",
+  "target_n": 12
+}

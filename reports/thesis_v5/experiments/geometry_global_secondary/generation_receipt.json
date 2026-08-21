@@ -1,0 +1,32 @@
+{
+  "config": {
+    "adaptive_strength": true,
+    "backbone_huber_delta": 2.0,
+    "context_mode": "global",
+    "fixed_strength": 1.0,
+    "grad_clip": 10.0,
+    "huber_delta": 2.0,
+    "kink_floor_deg": 70.0,
+    "kink_margin_deg": 5.0,
+    "lr": 0.04,
+    "rg_huber_delta": 5.0,
+    "sep_clash": 2,
+    "steps": 300,
+    "w_angle": 0.3,
+    "w_backbone": 1.0,
+    "w_clash": 0.3,
+    "w_kink": 20.0,
+    "w_rg": 0.0,
+    "w_source": 3.0,
+    "w_torsion": 0.15
+  },
+  "created_utc": "2026-08-21T21:09:37.069653+00:00",
+  "does_not_modify_frozen_kaggle_method": true,
+  "failure_n": 0,
+  "generation_code_sha256": "1d7f4154aae555e37daa96b4c6c52c3bde53827f3103b43f19a473d0b40de41b",
+  "manifest_sha256": "2f4a4c05ad452c8853c7b00834e99f73ac4e4de568060b12a3a0a4104369e6a3",
+  "raw_bank_freeze_sha256": "32ecf472df55053f916ae02295adcf24315f769f47422064f1d29c8c4ec4fb8c",
+  "scientific_role": "secondary CASP15 development analysis",
+  "status": "V5_CASP15_GEOMETRY_GLOBAL_FROZEN",
+  "target_n": 12
+}
