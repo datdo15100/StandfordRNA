@@ -1,0 +1,49 @@
+{
+  "status": "V5_FINAL_PIPELINE_FROZEN_BEFORE_KAGGLE_SCORE",
+  "frozen_utc": "2026-08-21T20:49:56Z",
+  "code_commit": "64c157344c76c0ab48d649696e0018aa71fcdf67",
+  "selection_evidence": {
+    "path": "reports/thesis_v5/experiments/V5_VERIFIED_EVIDENCE.json",
+    "sha256": "8f92d46905145db6e2dd1d7e00739727b9b10295f33ab25cb56805fa98ef2db8",
+    "casp15_mean_best_of_five_tm": 0.4643841666666667
+  },
+  "method": {
+    "candidate_budget": 5,
+    "allocation": "3T+2D",
+    "template_candidates": "first three candidates from exact reconstructed V3 TBM Raw bank",
+    "pretrained_candidates": "first two direct DRfold2 cfg_97 candidates ranked by mean pLDDT",
+    "pretrained_checkpoint_count": 20,
+    "pretrained_optimization": "none; no PotentialFold optimization",
+    "refinement": "none (Raw)",
+    "fallback": "when fewer than two direct DRfold2 candidates are available, fill missing slots with the next ranked V3 template candidates; never drop a target",
+    "temporal_filter": "strict template release_date < target temporal_cutoff",
+    "self_exclusion": "exclude all native/reference PDB IDs listed for the target",
+    "tbm_retrieval": "MMseqs2 over the full snapshot plus exhaustive historical 0.4 global + 0.3 local + 0.2 RNA-feature + 0.1 3-mer composite search over the 7,155-sequence derived view",
+    "tbm_ranking": "identity x query coverage x template completeness, stable tie order, distinct-PDB-first",
+    "tbm_gap_completion": "historical curved gap completion",
+    "long_target_behavior": "DRfold2 unavailable for R1138 (720 nt) in the frozen candidate cache; realized bank is 5T through the recorded fallback"
+  },
+  "frozen_inputs": {
+    "full_template_meta_sha256": "80463138acfce71663a25504fd641521a57f75670e33cef1923f7a69fd346402",
+    "full_template_coords_sha256": "d5ce6232d88e1d92050307f6313c8ad1c3f0792ffa9c57d01d2b71af2405980f",
+    "composite_meta_sha256": "8e96ffb4e759e9aca200e0df3f4382e5bb681f1ea5094283c559b8f7701b4a8f",
+    "composite_coords_sha256": "b419405d7ee1447a470ada812f53fffc373674be10c2715ccd619e975656210a",
+    "drfold_checkpoint_manifest_sha256": "c50b6ccb18e64a44d76e6576adf4fa16496ed3c92110b0c1f7efab8ad44e88eb",
+    "raw_bank_freeze_sha256": "32ecf472df55053f916ae02295adcf24315f769f47422064f1d29c8c4ec4fb8c",
+    "refined_bank_freeze_sha256": "b38551a7c6783178e6b5e1e19fd0141257d3d97970528453fa174091b64b1904"
+  },
+  "export": {
+    "submission_path": "data/interim/v5_final_raw/submission.csv",
+    "submission_sha256": "e819f68d90696b6c08ce05b52f47c0ee2ed59039cc5e8dfa92a4a1d7d4e79c21",
+    "candidate_bank_manifest_sha256": "656a67d0fa2cf4777e37356d5c4fae7726a00cd8e8e04ff0d987e3ca6db5b7ea",
+    "export_receipt_sha256": "be441ea6b7d06de0c91e24c8f68d42017f00d439b6fe69a57407c716e6059f6e",
+    "target_n": 12,
+    "row_n": 2515
+  },
+  "kaggle_status_at_freeze": {
+    "score_observed": false,
+    "submission_created": false,
+    "independence_limitation": "The downloaded Kaggle test_sequences.csv is byte-identical to validation_sequences.csv used for CASP15 development. A late leaderboard result is an official-scorer/deployment compatibility check, not an independent hidden-target evaluation."
+  },
+  "post_freeze_rule": "Do not change candidate generation, allocation, ordering, fallback, or refinement after observing the Kaggle score. Any technical rerun must retain this method and be documented."
+}
