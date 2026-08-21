@@ -1,0 +1,10 @@
+{
+  "status": "V5_CASP15_RQ2_DIVERSITY_COMPLETE",
+  "created_utc": "2026-08-21T20:35:23.156135+00:00",
+  "native_labels_loaded": false,
+  "target_n": 12,
+  "sequence_cluster_n": 11,
+  "target_metrics_sha256": "31edbf7a1c008c7fdf796c99446484f4f66284569e3ef67cd5d6ebecc10e833a",
+  "summary_sha256": "20a4ddd3846491ff467eef68ea9adb150bc6f80120f275fc20c4e7050f058f32",
+  "code_sha256": "9c1e81b132818aa8e54a4a307a16d9127e40c2c228fff111e95a5439ccfa4012"
+}

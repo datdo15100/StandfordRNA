@@ -1,0 +1,100 @@
+{
+  "status": "V5_DESIGN_INPUTS_AUDITED_BEFORE_FULL_CASP15_MATRIX",
+  "prediction_methods_run": false,
+  "v4_97_target_evidence_used": false,
+  "casp15_manifest": {
+    "path": "reports/thesis_v5/casp15_target_manifest.csv",
+    "sha256": "f482a3e2bc280cea8e8629a36bbbe0c1f7cedff43abd94918bbe0fb953d4bf52",
+    "target_n": 12,
+    "length_min": 30,
+    "length_median": 129.5,
+    "length_max": 720
+  },
+  "template_universe": {
+    "full_chain_rows": 23869,
+    "full_pdb_entries": 8613,
+    "full_coordinate_keys": 23869,
+    "composite_sequence_rows": 7155,
+    "composite_pdb_entries": 4881,
+    "composite_coordinate_keys": 7155,
+    "composite_is_full_key_subset": true
+  },
+  "artifacts": {
+    "casp15_sequences": {
+      "path": "data/stanford-rna-3d-folding/validation_sequences.csv",
+      "bytes": 9994,
+      "sha256": "42dc2e35aa92c2bd3d3d32a43bd505a3f12568d2ecde080d9783fb3e2eaa89e0"
+    },
+    "casp15_labels": {
+      "path": "data/stanford-rna-3d-folding/validation_labels.csv",
+      "bytes": 2490032,
+      "sha256": "5a9d6a71c74b0adb28413dbc99e1dae1c68be3db418a3bca919ef0596f412228"
+    },
+    "local_test_sequences_alias": {
+      "path": "data/stanford-rna-3d-folding/test_sequences.csv",
+      "bytes": 9994,
+      "sha256": "42dc2e35aa92c2bd3d3d32a43bd505a3f12568d2ecde080d9783fb3e2eaa89e0"
+    },
+    "sample_submission": {
+      "path": "data/stanford-rna-3d-folding/sample_submission.csv",
+      "bytes": 188943,
+      "sha256": "2ee049bf95be6ae20921c3a7ee1bcc6dc8a89eabdb65f907f3e939cd076c8e93"
+    },
+    "template_meta": {
+      "path": "data/processed/template_meta.parquet",
+      "bytes": 2470051,
+      "sha256": "80463138acfce71663a25504fd641521a57f75670e33cef1923f7a69fd346402"
+    },
+    "template_coordinates": {
+      "path": "data/cache/template_coords.pkl",
+      "bytes": 187575217,
+      "sha256": "d5ce6232d88e1d92050307f6313c8ad1c3f0792ffa9c57d01d2b71af2405980f"
+    },
+    "composite_meta": {
+      "path": "data/processed/top1_template_meta.parquet",
+      "bytes": 1440760,
+      "sha256": "8e96ffb4e759e9aca200e0df3f4382e5bb681f1ea5094283c559b8f7701b4a8f"
+    },
+    "composite_coordinates": {
+      "path": "data/cache/top1_template_coords.pkl",
+      "bytes": 61694230,
+      "sha256": "b419405d7ee1447a470ada812f53fffc373674be10c2715ccd619e975656210a"
+    },
+    "p0_distance_rg": {
+      "path": "data/processed/geometry_priors.json",
+      "bytes": 1434,
+      "sha256": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f"
+    },
+    "p0_angle_torsion": {
+      "path": "data/processed/geofuse_geometry_v2_priors.json",
+      "bytes": 29648,
+      "sha256": "9f2517546c6e9b87cb9a7335c66b68a76f8ab548b4b1e66def29d04a3e986302"
+    },
+    "usalign": {
+      "path": "external/binaries/USalign",
+      "bytes": 943912,
+      "sha256": "7fb696c3198a8a01a283a9af165408338025f6ee35ace1d14c9c76636f0a9f14"
+    },
+    "historical_tbm_runner": {
+      "path": "data/interim/kaggle_artifact_bundle/kaggle/inference_pipeline.py",
+      "bytes": 4004,
+      "sha256": "af98f4de753dce715a8e5a952b300a114a1aaed1a782b406613b2690115d3b25"
+    },
+    "historical_tbm_module": {
+      "path": "data/interim/kaggle_artifact_bundle/src/rna3d/pipeline/tbm.py",
+      "bytes": 5461,
+      "sha256": "beda3515d7666ea00907d31639cdcd60f18afeca42389240d955b263cb62affd"
+    },
+    "historical_hybrid_runner": {
+      "path": "kaggle/hybrid_inference.py",
+      "bytes": 14663,
+      "sha256": "4c5cb367d36c9a2450e7c03bd8752b8a45c340e77fad4bcd24ea7ffda35c5d09"
+    },
+    "drfold_checkpoint_manifest": {
+      "path": "reports/thesis_v4/phase1_pretrained/drfold2_cfg97_checkpoint_manifest.csv",
+      "bytes": 1674,
+      "sha256": "c50b6ccb18e64a44d76e6576adf4fa16496ed3c92110b0c1f7efab8ad44e88eb"
+    }
+  },
+  "code_sha256": "7580c5d37eda47c006bd8d4d6f8b34935552527ac3f3279a152fcd05437f1b80"
+}

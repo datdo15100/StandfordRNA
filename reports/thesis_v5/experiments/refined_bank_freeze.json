@@ -1,0 +1,28 @@
+{
+  "created_utc": "2026-08-21T20:40:09.716779+00:00",
+  "device": "cuda",
+  "extra_complete_cells": [
+    "J_5T__John_complete",
+    "V3_5T__V3_deployed_gradient"
+  ],
+  "factorial_banks": [
+    "J_5T",
+    "V3_5T",
+    "J_3T2D",
+    "V3_3T2D"
+  ],
+  "factorial_settings": [
+    "Raw",
+    "John_adaptive",
+    "John_fixed",
+    "Simple",
+    "Geometry_historical"
+  ],
+  "failure_count": 0,
+  "generation_code_sha256": "cf61dd02b87e17479ee5329741cf2ae0824ad8b60814c0cee1ee9e3372416b36",
+  "raw_bank_receipt_sha256": "32ecf472df55053f916ae02295adcf24315f769f47422064f1d29c8c4ec4fb8c",
+  "refined_manifest_sha256": "7e8fe1a10563ac35bf87cc0f1e974ed146776b1b741da1e8a20a33ec18973066",
+  "scientific_role": "CASP15 development/validation",
+  "status": "V5_CASP15_REFINEMENT_FACTORIAL_FROZEN",
+  "target_n": 12
+}

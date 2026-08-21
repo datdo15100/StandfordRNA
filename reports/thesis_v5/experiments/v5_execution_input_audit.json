@@ -1,0 +1,21 @@
+{
+  "created_utc": "2026-08-21T20:08:23.318177+00:00",
+  "design_audit_sha256": "c5791989f3ccd24d3e7506f90f7f67e69f733eb0c8ce006c432a286ae5bf7b33",
+  "design_audit_summary": {},
+  "drfold2": {
+    "all_finite": true,
+    "candidate_n": 55,
+    "target_n": 12,
+    "targets_with_at_least_two_direct_candidates": 11,
+    "targets_without_direct_candidates": [
+      "R1138"
+    ]
+  },
+  "input_snapshot_mismatches": {},
+  "p0_sha256": "6d75eadd5a209310b2ceeb398f157254c4983df49a1323cbd774c3767c73611f",
+  "p1_sha256": "9f2517546c6e9b87cb9a7335c66b68a76f8ab548b4b1e66def29d04a3e986302",
+  "status": "PASS",
+  "target_manifest_sha256": "f482a3e2bc280cea8e8629a36bbbe0c1f7cedff43abd94918bbe0fb953d4bf52",
+  "target_n": 12,
+  "usalign_sha256": "7fb696c3198a8a01a283a9af165408338025f6ee35ace1d14c9c76636f0a9f14"
+}

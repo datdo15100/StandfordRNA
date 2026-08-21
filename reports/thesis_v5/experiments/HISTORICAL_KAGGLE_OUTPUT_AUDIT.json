@@ -1,0 +1,35 @@
+{
+  "status": "EXACT_HISTORICAL_OUTPUTS_RECOVERED_FROM_KAGGLE",
+  "audited_utc": "2026-08-21T20:36:58Z",
+  "tbm_only": {
+    "submission_id": 54662648,
+    "kernel": "datdo151000/rna3d-thesis-composite-tbm-baseline",
+    "kernel_version": 4,
+    "public_tm": 0.60084,
+    "private_tm": 0.60175,
+    "output_path": "data/interim/v5_audit/historical_tbm_output/submission.csv",
+    "output_bytes": 734637,
+    "output_sha256": "4cd06576fa2c09c38477d7d35f0361121942a7e36759869264fa6bc0ed89da11",
+    "runtime_log_sha256": "4c344125a9c5bd1de1dfde516417da3588f2b5e7445c1df6776fe3fdc3d5e6a8"
+  },
+  "hybrid_geometry_v2": {
+    "submission_id": 55393315,
+    "kernel": "datdo151000/rna3d-thesis-hybrid-geometry-v2",
+    "kernel_version": 10,
+    "public_tm": 0.62809,
+    "private_tm": 0.61390,
+    "output_path": "data/interim/v5_audit/historical_hybrid_output/submission.csv",
+    "output_bytes": 740142,
+    "output_sha256": "54fe6e6598a1c2924ef7cbf03482f7ecf3c2e52e8726a1609569f777b1ac8c9a",
+    "output_manifest_sha256": "db704d647cdede80da44a027f0da3cca0d4de1c2010ab5e3ff949b7e38b09b33",
+    "runtime_log_sha256": "c2d63c016de8babc34abbabf6c21cc3a8c197314d32c3f16ac177bfc70607584"
+  },
+  "same_sandbox_reproduction": {
+    "historical_query_fasta_sha256": "2dab979d4b3821252e5f6712eac9b8561ab08fa1e5b3468e04192fd099231194",
+    "v5_query_fasta_sha256": "2dab979d4b3821252e5f6712eac9b8561ab08fa1e5b3468e04192fd099231194",
+    "historical_mmseqs_hits_sha256": "0332b381b40120384a9a541158697c4492db556d7f0c362bd0957ec0646bda30",
+    "v5_mmseqs_hits_sha256": "0332b381b40120384a9a541158697c4492db556d7f0c362bd0957ec0646bda30",
+    "interpretation": "The recovered historical V3 TBM notebook and V5 use byte-identical CASP15 query FASTA and MMseqs hit files. V5 additionally applies the explicit target-PDB exclusion required by the controlled sandbox."
+  },
+  "attribution_constraint": "These Kaggle scores are whole-system external outcomes. They are not subtracted from CASP15 results to attribute a component effect."
+}

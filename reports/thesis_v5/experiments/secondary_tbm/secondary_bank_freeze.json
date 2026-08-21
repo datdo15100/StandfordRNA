@@ -1,0 +1,53 @@
+{
+  "code_sha256": "2e3e94a62b9dd5cd668a75dde659def5dc3b05168c7b6ebe6c151770ea7ff893",
+  "core_raw_receipt_sha256": "32ecf472df55053f916ae02295adcf24315f769f47422064f1d29c8c4ec4fb8c",
+  "created_utc": "2026-08-21T20:25:20.160050+00:00",
+  "manifest_sha256": "19abf609c1c118d86ff1d66115dca3e966ab28f34afe5e29628c7e998ad2e1da",
+  "scientific_role": "secondary mechanism analysis on CASP15 development/validation",
+  "score_family": {
+    "ALIGNMENT_43": [
+      0.5714285714285714,
+      0.42857142857142855,
+      0.0,
+      0.0
+    ],
+    "FEATURE_KMER_21": [
+      0.0,
+      0.0,
+      0.6666666666666666,
+      0.3333333333333333
+    ],
+    "FEATURE_ONLY": [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    "FULL_4321": [
+      0.4,
+      0.3,
+      0.2,
+      0.1
+    ],
+    "GLOBAL_ONLY": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "KMER3_ONLY": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "LOCAL_ONLY": [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ]
+  },
+  "status": "V5_CASP15_SECONDARY_TBM_BANKS_FROZEN",
+  "target_n": 12
+}

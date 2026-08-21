@@ -1,0 +1,28 @@
+{
+  "created_utc": "2026-08-21T20:21:16.568884+00:00",
+  "design_audit_sha256": "c5791989f3ccd24d3e7506f90f7f67e69f733eb0c8ce006c432a286ae5bf7b33",
+  "environment": {
+    "numpy": "2.5.1",
+    "pandas": "3.0.3",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]"
+  },
+  "generation_code_sha256": "c9dd7fd278f64521211b1f319fbaab38b832e33b984a4f3e3e0f63665c649584",
+  "mmseqs_hits_sha256": "0332b381b40120384a9a541158697c4492db556d7f0c362bd0957ec0646bda30",
+  "raw_manifest_sha256": "c0e2f85ac33c1ba631eed53970822e1a5f044946f0909c9cfe1ea31112120426",
+  "scientific_role": "CASP15 development/validation; not untouched confirmation",
+  "status": "V5_CASP15_RAW_BANKS_FROZEN",
+  "target_manifest_sha256": "f482a3e2bc280cea8e8629a36bbbe0c1f7cedff43abd94918bbe0fb953d4bf52",
+  "target_n": 12,
+  "variants": [
+    "J_SS_RAW",
+    "V3_COMPOSITE_IC_LINEAR",
+    "V3_MMSEQS_IC_LINEAR",
+    "V3_MERGED_IC_LINEAR",
+    "V3_MERGED_ICS_LINEAR",
+    "V3_EXACT_RAW",
+    "V3_MERGED_I_LINEAR",
+    "V3_COMPOSITE_ICS_LINEAR",
+    "V3_MERGED_ICS_JOHN_GAP"
+  ]
+}

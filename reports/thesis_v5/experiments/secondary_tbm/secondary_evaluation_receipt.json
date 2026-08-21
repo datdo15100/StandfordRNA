@@ -1,0 +1,10 @@
+{
+  "candidate_allocation_sha256": "eb450e0af6005062f12926a77e7175bdde8519a838e336311b93059a8e4dc6c3",
+  "code_sha256": "b9a77fce1ac0c6315190d61dca8d363838adf7d5b376eddd8f126fc34e297be1",
+  "created_utc": "2026-08-21T20:33:47.903885+00:00",
+  "sequence_cluster_n": 11,
+  "status": "V5_CASP15_SECONDARY_TBM_COMPLETE",
+  "summary_sha256": "5224bc455c8cbd11e828fdf1df19393422cefffdc6b38c3594d759b317578bf2",
+  "target_n": 12,
+  "target_scores_sha256": "e5584247a971c61e968d792aa06204ffc23ed2863250810d31d55b1421bbde2b"
+}

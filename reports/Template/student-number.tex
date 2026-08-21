@@ -1,0 +1,359 @@
+% Master 2 Report LaTeX Template
+% ================================
+% 
+% CUSTOMIZATION INSTRUCTIONS:
+% 1. Replace the macro definitions with your actual information:
+%    - \studentname, \studentid, \studentemail
+%    - \internalSupervisor (always present, USTH)
+%    - \externalSupervisor, \externalSupervisorAffiliation (optional, leave empty if none)
+%    - \reporttitle, \academicyear
+% 
+% 2. Replace the sample bibliography entries in the filecontents environment
+%    with your actual papers from Google Scholar (export as BibTeX)
+% 
+% 3. Customize the document class options if needed (currently: 12pt, a4paper)
+% 
+% 4. Adjust geometry package margins if required
+% 
+% 5. Add your content to each section
+% 
+% COMPILATION:
+%   pdflatex -> biber -> pdflatex -> pdflatex
+%   (or use Overleaf/TeXstudio which handle this automatically)
+% ================================
+
+% Document class: report, 12pt font, A4 paper
+\documentclass[12pt, a4paper]{report}
+
+% Geometry package for A4 with margins
+\usepackage[a4paper, 
+            left=2.5cm, 
+            right=2.5cm, 
+            top=2.5cm, 
+            bottom=2.5cm,
+            bindingoffset=0cm]{geometry}
+
+% Line spacing: 1.5 times the baseline skip
+\usepackage{setspace}
+\onehalfspacing
+
+% English language support (UK/British English)
+\usepackage[UKenglish]{babel}
+
+% UTF-8 encoding
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Additional useful packages
+\usepackage{graphicx}       % For including images
+\usepackage{amsmath}        % For advanced math
+\usepackage{amssymb}        % For math symbols
+\usepackage{hyperref}       % For hyperlinks in PDF
+\usepackage{url}            % For proper URL formatting
+\usepackage{paralist}       % For better list environments
+\usepackage{csquotes}       % For proper quotation marks
+\usepackage[backend=biber, style=numeric, sorting=none]{biblatex}
+\addbibresource{biblio.bib} % Bibliography file
+\usepackage{lipsum} % bla bla bla
+
+% Header and footer styling
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\studentname\ -- \studentid}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ============================================
+% MACROS FOR STUDENT AND SUPERVISOR INFORMATION
+% ============================================
+
+% Student information
+\newcommand{\studentname}{Your Name Here}
+\newcommand{\studentid}{Your Student ID}
+\newcommand{\studentemail}{your.email@usth.vn.edu}
+
+% Supervisors:
+% - Internal supervisor (USTH, always present): just name
+% - External supervisor (optional): name + affiliation
+\newcommand{\internalSupervisor}{Prof. Internal Supervisor Name}
+\newcommand{\externalSupervisor}{} % Leave empty if no external supervisor
+\newcommand{\externalSupervisorAffiliation}{External Organization Name}
+
+% Report information
+\newcommand{\reporttitle}{Your beautiful title}
+\newcommand{\reportdate}{\today}
+\newcommand{\academicyear}{2025-2026}
+
+% ============================================
+% TITLE PAGE
+% ============================================
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    
+    % USTH Logo - download from official USTH website and place in your working directory
+    % Recommended: use a high-quality PNG or PDF version
+    {\Large\bfseries University of Science and Technology of Hanoi\par}
+    {\large\bfseries Department of Information and Communication Technology\par}
+    \vspace{0.666cm}
+    \includegraphics[width=0.25\textwidth]{usth-logo.png}\par
+    
+    \vspace{2cm}
+    
+    {\LARGE\bfseries MASTER THESIS\par}
+    
+    \vspace{1.5cm}
+    
+    {\huge\bfseries \reporttitle\par}
+    
+    \vspace{1.5cm}
+    
+    {\large {\bfseries Submitted by:} \studentname\par}
+    {\large {\bfseries Student ID:} \studentid\par}
+    {\large {\bfseries Email:} \studentemail\par}
+    
+    \vspace{2cm}
+    
+    \ifx\externalSupervisor\empty
+        % Only internal supervisor (USTH)
+    	{\large\vspace{2\baselineskip}}
+        {\large {\bfseries Internal Supervisor:} \internalSupervisor\par}
+    \else
+        % External + internal supervisors
+        {\large {\bfseries External Supervisor:} \externalSupervisor\par}
+        {\small \externalSupervisorAffiliation\par}
+        {\large {\bfseries Internal Supervisor:} \internalSupervisor\par}
+    \fi
+    
+    \vspace{1cm}
+    
+    {\large {\bfseries Academic Year:} \academicyear\par}
+    {\large {\bfseries Date:} \reportdate\par}
+    
+\end{titlepage}
+
+\pagenumbering{roman}
+
+% ============================================
+% ABSTRACT
+% ============================================
+
+\begin{abstract}
+This is the abstract of your Master 2 report. 
+It should provide a concise summary of the context, objectives, methodology, key results, and conclusions of your research. 
+The abstract should be self-contained and typically between 150-300 words.
+The report size should be 30 pages to 35 pages maximum, from chapters 1 to 5.
+Extra pages will not be considered during the reviewing process, and points removed from final mark!
+\end{abstract}
+
+\clearpage
+
+% ============================================
+% ACKNOWLEDGMENTS  (useless, boring, optional)
+% ============================================
+
+\chapter*{Acknowledgments}
+\addcontentsline{toc}{chapter}{Acknowledgments}
+
+I would like to express my sincere gratitude to my supervisor(s) for their guidance and support throughout this research project. 
+I also thank my family, friends, and colleagues for their encouragement and assistance.
+
+\clearpage
+
+% ============================================
+% TABLE OF CONTENTS
+% ============================================
+
+\tableofcontents
+
+\clearpage
+
+% ============================================
+% MAIN CONTENT
+% ============================================
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% ============================================
+% CHAPTER 1: INTRODUCTION
+% ============================================
+
+\chapter{Introduction}
+\label{chap:introduction}
+
+This chapter introduces the research project, providing the necessary background and motivation for the work.
+Its structure is mandatory, and length should be around 2-3 pages, no more.
+
+\section{Context}
+\label{sec:context}
+
+Describe the general context of your research. 
+Explain the domain, the problem area, and why it is important. 
+Provide background information that helps the reader understand the significance of your work. 
+You may do cite on or two papers here, but the related works are described in the next paper, so keep it easy and pedagogical. 
+
+\section{Contribution}
+\label{sec:contribution}
+
+Summarize the main contributions of your work. 
+What new knowledge, methods, or results have you produced? 
+How does your work advance the state of the art? For once, you may use a list or things. 
+
+\section{Plan}
+\label{sec:plan}
+
+Outline the structure of the report and how it addresses the objectives. 
+Briefly describe what each chapter covers and how they relate to each other. 
+No list, just plain text.
+
+%% remove that ;-) it is made to look at the header/footer 
+\lipsum
+
+% ============================================
+% CHAPTER 2: RELATED WORKS
+% ============================================
+
+\chapter{Related Works}
+\label{chap:related-works}
+
+This chapter reviews existing literature and research related to your topic. 
+Organize this section thematically or chronologically.
+Below is a proposal of organization.
+Length should be around 5-7 pages. 
+
+\section{Literature Review}
+\label{sec:literature-review}
+
+Discuss the most relevant previous work in your field. 
+Cite appropriate papers using the bibliography system (e.g., \cite{goodfellow2016deep} or \cite{knuth1984texbook,villalon2011some,xiao2022new,algis2024efficient,xiao2025monte,emami2026flexible}).
+
+\section{Comparison with Existing Approaches}
+\label{sec:comparison}
+
+Compare your approach with existing methods. 
+Highlight gaps in the literature that your work addresses.
+Yes, here you do recall your objective and contributions but comparing to existing things. 
+
+\lipsum
+\lipsum
+\lipsum
+\lipsum[1-3]
+
+% ============================================
+% CHAPTER 3: CONTRIBUTION
+% ============================================
+
+\chapter{Contributions}
+\label{chap:contribution}
+
+This chapter presents your main contributions in detail. 
+Adapt regarding your personal subject and your contributions. 
+It should be exact, precise (some maths?) and pedagogical. 
+All previous works should be presented before (in Chapter~\ref{chap:related-works})
+
+Remember: the reader knows nothing about what you did!
+
+Expected length: 10-12 pages.
+
+\section{Methodology}
+\label{sec:methodology}
+
+Describe the methods, algorithms, or approaches you developed or used. 
+Include equations, pseudocode, or diagrams as needed.
+
+\section{Theoretical Results}
+\label{sec:theoretical-results}
+
+Present any theoretical contributions, proofs, or analyses.
+
+\lipsum
+\lipsum
+\lipsum
+\lipsum
+\lipsum
+\lipsum
+\lipsum
+
+
+% ============================================
+% CHAPTER 4: EXPERIMENTS
+% ============================================
+
+\chapter{Experiments}
+\label{chap:experiments}
+
+This chapter describes the experimental evaluation of your work.
+No explanation here, just experimental part (if you need something to be presented, 
+it is in previous chapters~\ref{chap:related-works} or~\ref{chap:contribution}).
+
+Expected length: 8-10 pages.
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+Describe the datasets, tools, hardware, and software used in your experiments. Include implementation details.
+
+\section{Results}
+\label{sec:results}
+
+Present your experimental results using tables and figures. Use subsections to organize different experiments.
+
+\section{Discussion}
+\label{sec:discussion}
+
+Interpret the results and discuss their significance. Compare with baselines or previous work.
+
+\lipsum
+\lipsum
+\lipsum
+\lipsum
+\lipsum
+
+% ============================================
+% CHAPTER 5: CONCLUSION
+% ============================================
+
+\chapter{Conclusion}
+\label{chap:conclusion}
+
+This chapter summarizes the work and its implications.
+Expected length: 3-4 pages.
+
+\section{Summary}
+\label{sec:summary}
+
+Briefly recap the objectives, methodology, and main results. 
+This should resembles a lot to introduction, actually, a bit shorter. 
+
+\lipsum[1-2]
+
+\section{Limitations}
+\label{sec:limitations}
+
+Discuss any limitations of your work, assumptions made, or areas not covered.
+This is not discussed in the introduction, but probably in Chapters~\ref{chap:experiments}, or~\ref{chap:related-works} or~\ref{chap:contribution}
+
+\lipsum[1-2]
+
+\section{Future Work}
+\label{sec:future-work}
+
+Suggest directions for future research or improvements to your work (that's the main difference with introduction chapter actually).
+
+This was not discussed in the introduction, or before in your report.
+
+\lipsum[1]
+
+% ============================================
+% BIBLIOGRAPHY
+% ============================================
+% add the reference into file "biblio.bib" in bibtext format. 
+\clearpage
+
+\addcontentsline{toc}{chapter}{References}
+\printbibliography[title=References]
+
+\end{document}

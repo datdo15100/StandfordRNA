@@ -1,0 +1,12 @@
+{
+  "candidate_metrics_sha256": "0baf2e96fdc0118257fdfc5af7a84c059f668537b0dd6443ce393cece5631086",
+  "complete_pipeline_summary_sha256": "6082568a427982f35d20ebb13d1e9be0e6a75722876f40ee8b0895375ef922a8",
+  "created_utc": "2026-08-21T20:44:54.181737+00:00",
+  "evaluation_code_sha256": "cf61dd02b87e17479ee5329741cf2ae0824ad8b60814c0cee1ee9e3372416b36",
+  "evaluation_failure_count": 0,
+  "refined_bank_receipt_sha256": "b38551a7c6783178e6b5e1e19fd0141257d3d97970528453fa174091b64b1904",
+  "scientific_role": "development/validation",
+  "sequence_cluster_n": 11,
+  "status": "V5_CASP15_RQ3_AND_COMPLETE_PIPELINES_COMPLETE",
+  "target_n": 12
+}

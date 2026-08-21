@@ -1,0 +1,11 @@
+{
+  "created_utc": "2026-08-21T20:30:18.665363+00:00",
+  "evaluation_code_sha256": "8648f0027bbb98e8bc5cace0f49b54e63339e59e0e9109fcd600dbc23de7e98e",
+  "raw_bank_receipt_sha256": "32ecf472df55053f916ae02295adcf24315f769f47422064f1d29c8c4ec4fb8c",
+  "rq1_target_scores_sha256": "ec489ab78e9444a1c0f4203b13771793f662ddd893880ba34bcdd7853ff224c6",
+  "rq2_target_scores_sha256": "90bd2b55e706675efab6a15487a809ac11578fee61ed9f7af7e46899100e1ccd",
+  "scientific_role": "development/validation",
+  "sequence_cluster_n": 11,
+  "status": "V5_CASP15_RAW_RQ1_RQ2_COMPLETE",
+  "target_n": 12
+}
